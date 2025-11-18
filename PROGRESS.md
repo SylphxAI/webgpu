@@ -1,10 +1,10 @@
 # Development Progress
 
-## Latest Update: MSAA Anti-Aliasing! ✅
+## Latest Update: Multiple Render Targets (MRT)! ✅
 
 **Date**: 2024-11-18
-**Status**: ~94% Complete
-**Milestone**: Multi-sample anti-aliasing complete!
+**Status**: ~96% Complete
+**Milestone**: MRT and G-buffer rendering complete!
 
 ---
 
@@ -44,7 +44,8 @@
 - Depth/stencil attachments
 - **Blend modes** (alpha, additive, premultiplied)
 - **Color write masks** (per-channel control)
-- **Multi-sample anti-aliasing (MSAA)** (2x, 4x, 8x) ✅ NEW!
+- **Multi-sample anti-aliasing (MSAA)** (2x, 4x, 8x)
+- **Multiple render targets (MRT)** (G-buffer, deferred rendering) ✅ NEW!
 - Render pass execution (inline, no lifetime issues)
 - Indexed rendering support
 
@@ -71,6 +72,9 @@ Center pixel: RGBA(0, 0, 128, 255) ✅ ALPHA BLENDING VERIFIED!
 
 // MSAA: Anti-aliasing
 Center pixel: RGBA(255, 255, 255, 255) ✅ 4x MSAA VERIFIED!
+
+// MRT: Multiple render targets (G-buffer)
+Position: RGBA(0, 0, 0, 255), Normal: RGBA(128, 128, 255, 255), Albedo: RGBA(127, 64, 64, 255) ✅ MRT VERIFIED!
 ```
 
 **Working examples**:
@@ -80,7 +84,8 @@ Center pixel: RGBA(255, 255, 255, 255) ✅ 4x MSAA VERIFIED!
 - `examples/textured-quad.js` - Render textured quad with sampling
 - `examples/cube.js` - 3D cube with depth testing
 - `examples/transparency.js` - Alpha blending with overlapping quads
-- `examples/msaa.js` - Multi-sample anti-aliasing (4x MSAA) ✅ NEW!
+- `examples/msaa.js` - Multi-sample anti-aliasing (4x MSAA)
+- `examples/mrt.js` - Multiple render targets (G-buffer) ✅ NEW!
 
 ---
 
@@ -231,10 +236,10 @@ device.poll(forceWait)
 - [x] Multi-sample anti-aliasing (MSAA) ✅ COMPLETE
 
 ### Phase 5: Advanced Features (Priority: LOW)
+- [x] Multiple render targets (MRT) ✅ COMPLETE
 - [ ] Query sets (timestamp, occlusion)
 - [ ] Render bundles
 - [ ] Window surface integration
-- [ ] Multiple render targets (MRT)
 
 ---
 
@@ -296,8 +301,9 @@ All tests passing ✅
 | Depth/stencil | ✅ | ✅ |
 | Blend modes | ✅ | ✅ |
 | MSAA | ✅ | ✅ |
+| MRT | ✅ | ✅ |
 | Window rendering | ❌ | ✅ |
-| Completion | ~94% | ~95% |
+| Completion | ~96% | ~95% |
 
 ---
 
