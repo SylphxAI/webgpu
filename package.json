@@ -51,7 +51,7 @@
     "test:node": "node test/basic.test.js",
     "test:watch": "bun test --watch",
     "test:coverage": "bun test --coverage",
-    "version": "changeset version && napi version",
+    "version-packages": "changeset version && napi version",
     "release": "changeset publish",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
