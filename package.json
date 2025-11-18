@@ -67,5 +67,20 @@
   "files": [
     "index.js",
     "index.d.ts"
-  ]
+  ],
+  "optionalDependencies": {
+    "@sylphx/webgpu-win32-x64-msvc": "0.1.0",
+    "@sylphx/webgpu-darwin-x64": "0.1.0",
+    "@sylphx/webgpu-linux-x64-gnu": "0.1.0",
+    "@sylphx/webgpu-darwin-arm64": "0.1.0",
+    "@sylphx/webgpu-linux-arm64-gnu": "0.1.0",
+    "@sylphx/webgpu-linux-arm64-musl": "0.1.0",
+    "@sylphx/webgpu-win32-arm64-msvc": "0.1.0",
+    "@sylphx/webgpu-linux-arm-gnueabihf": "0.1.0",
+    "@sylphx/webgpu-linux-x64-musl": "0.1.0",
+    "@sylphx/webgpu-freebsd-x64": "0.1.0",
+    "@sylphx/webgpu-win32-ia32-msvc": "0.1.0",
+    "@sylphx/webgpu-android-arm-eabi": "0.1.0",
+    "@sylphx/webgpu-android-arm64": "0.1.0"
+  }
 }
