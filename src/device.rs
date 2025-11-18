@@ -236,13 +236,90 @@ impl GpuDevice {
         }
     }
 
-    /// Create a render pipeline (simplified - to be implemented)
+    /// Create a render pipeline (simplified)
+    /// vertex_formats: array of format strings for vertex attributes
+    /// fragment_targets: array of format strings for color targets
     #[napi]
-    pub fn create_render_pipeline(&self, _descriptor: crate::RenderPipelineDescriptor) -> Result<crate::GpuRenderPipeline> {
-        // TODO: Implement render pipeline creation
-        // The complexity here is due to lifetime issues with vertex buffers and fragment targets
-        // For now, focus on compute pipeline which is simpler
-        Err(Error::from_reason("Render pipeline not yet implemented"))
+    pub fn create_render_pipeline(
+        &self,
+        label: Option<String>,
+        layout: Option<&crate::GpuPipelineLayout>,
+        vertex_shader: &GpuShaderModule,
+        vertex_entry_point: String,
+        vertex_formats: Vec<String>,
+        fragment_shader: Option<&GpuShaderModule>,
+        fragment_entry_point: Option<String>,
+        fragment_formats: Vec<String>,
+    ) -> Result<crate::GpuRenderPipeline> {
+        // Build vertex attributes from formats
+        let attributes: Vec<wgpu::VertexAttribute> = vertex_formats
+            .iter()
+            .enumerate()
+            .map(|(i, format)| wgpu::VertexAttribute {
+                format: crate::pipeline::parse_vertex_format(format),
+                offset: 0, // Will be calculated properly later
+                shader_location: i as u32,
+            })
+            .collect();
+
+        // Calculate stride
+        let stride: u64 = attributes
+            .iter()
+            .map(|attr| match attr.format {
+                wgpu::VertexFormat::Float32 => 4,
+                wgpu::VertexFormat::Float32x2 => 8,
+                wgpu::VertexFormat::Float32x3 => 12,
+                wgpu::VertexFormat::Float32x4 => 16,
+                _ => 4,
+            })
+            .sum();
+
+        let vertex_buffer_layout = wgpu::VertexBufferLayout {
+            array_stride: stride,
+            step_mode: wgpu::VertexStepMode::Vertex,
+            attributes: &attributes,
+        };
+
+        // Build fragment targets
+        let targets: Vec<Option<wgpu::ColorTargetState>> = fragment_formats
+            .iter()
+            .map(|format| {
+                Some(wgpu::ColorTargetState {
+                    format: crate::pipeline::parse_texture_format(format),
+                    blend: Some(wgpu::BlendState::REPLACE),
+                    write_mask: wgpu::ColorWrites::ALL,
+                })
+            })
+            .collect();
+
+        let fragment = if let Some(shader) = fragment_shader {
+            Some(wgpu::FragmentState {
+                module: &shader.shader,
+                entry_point: &fragment_entry_point.unwrap_or_else(|| "main".to_string()),
+                targets: &targets,
+            })
+        } else {
+            None
+        };
+
+        let pipeline = self.device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+            label: label.as_deref(),
+            layout: layout.map(|l| l.layout.as_ref()),
+            vertex: wgpu::VertexState {
+                module: &vertex_shader.shader,
+                entry_point: &vertex_entry_point,
+                buffers: &[vertex_buffer_layout],
+            },
+            fragment,
+            primitive: wgpu::PrimitiveState::default(),
+            depth_stencil: None,
+            multisample: wgpu::MultisampleState::default(),
+            multiview: None,
+        });
+
+        Ok(crate::GpuRenderPipeline {
+            pipeline: std::sync::Arc::new(pipeline),
+        })
     }
 
     /// Destroy the device
@@ -319,6 +396,74 @@ impl GpuCommandEncoder {
                 workgroups_y.unwrap_or(1),
                 workgroups_z.unwrap_or(1),
             );
+
+            drop(pass);
+            Ok(())
+        } else {
+            Err(Error::from_reason("Command encoder already finished"))
+        }
+    }
+
+    /// Execute a render pass (simplified inline execution)
+    /// color_attachments: array of texture views to render to
+    /// clear_colors: optional array of [r, g, b, a] values for clearing
+    #[napi]
+    pub fn render_pass(
+        &mut self,
+        pipeline: &crate::GpuRenderPipeline,
+        vertex_buffers: Vec<&crate::GpuBuffer>,
+        vertex_count: u32,
+        color_attachments: Vec<&crate::GpuTextureView>,
+        clear_colors: Option<Vec<Vec<f64>>>,
+    ) -> Result<()> {
+        if let Some(ref mut enc) = self.encoder {
+            // Build color attachments
+            let attachments: Vec<_> = color_attachments
+                .iter()
+                .enumerate()
+                .map(|(i, view)| {
+                    let clear_color = if let Some(ref colors) = clear_colors {
+                        if i < colors.len() && colors[i].len() >= 4 {
+                            wgpu::Color {
+                                r: colors[i][0],
+                                g: colors[i][1],
+                                b: colors[i][2],
+                                a: colors[i][3],
+                            }
+                        } else {
+                            wgpu::Color::BLACK
+                        }
+                    } else {
+                        wgpu::Color::BLACK
+                    };
+
+                    Some(wgpu::RenderPassColorAttachment {
+                        view: &view.view,
+                        resolve_target: None,
+                        ops: wgpu::Operations {
+                            load: wgpu::LoadOp::Clear(clear_color),
+                            store: wgpu::StoreOp::Store,
+                        },
+                    })
+                })
+                .collect();
+
+            let mut pass = enc.begin_render_pass(&wgpu::RenderPassDescriptor {
+                label: None,
+                color_attachments: &attachments,
+                depth_stencil_attachment: None,
+                timestamp_writes: None,
+                occlusion_query_set: None,
+            });
+
+            pass.set_pipeline(&pipeline.pipeline);
+
+            // Set vertex buffers
+            for (index, buffer) in vertex_buffers.iter().enumerate() {
+                pass.set_vertex_buffer(index as u32, buffer.buffer.slice(..));
+            }
+
+            pass.draw(0..vertex_count, 0..1);
 
             drop(pass);
             Ok(())
