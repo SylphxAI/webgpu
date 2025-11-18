@@ -14,4 +14,4 @@ jobs:
     secrets:
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
     with:
-      build-command: "npm run build"
+      build-command: "bun run build"
