@@ -122,6 +122,15 @@ jobs:
         with:
           path: artifacts
 
+      - name: Move binaries to root
+        run: |
+          for dir in artifacts/bindings-*; do
+            if [ -d "$dir" ]; then
+              mv "$dir"/*.node . 2>/dev/null || true
+            fi
+          done
+          ls -la *.node
+
       - name: Move artifacts
         run: bun run artifacts
 
