@@ -9,7 +9,10 @@ pub struct PipelineLayoutDescriptor {
     // Note: bind_group_layouts will be passed separately to avoid External Vec issues
 }
 
-/// Pipeline layout
+/// Pipeline layout - defines bind group layouts for a pipeline
+///
+/// Pipeline layouts specify the organization of bind groups (resources like buffers, textures)
+/// that shaders can access during pipeline execution.
 #[napi]
 pub struct GpuPipelineLayout {
     pub(crate) layout: Arc<wgpu::PipelineLayout>,
@@ -29,7 +32,10 @@ pub struct ComputeStage {
     pub entry_point: String,
 }
 
-/// Compute pipeline
+/// Compute pipeline - configured compute shader program
+///
+/// Compute pipelines execute compute shaders for general-purpose GPU computation.
+/// They're created from a shader module, entry point, and pipeline layout.
 #[napi]
 pub struct GpuComputePipeline {
     pub(crate) pipeline: Arc<wgpu::ComputePipeline>,
@@ -107,7 +113,10 @@ pub struct PrimitiveState {
     pub cull_mode: Option<String>,
 }
 
-/// Render pipeline
+/// Render pipeline - configured graphics pipeline
+///
+/// Render pipelines define the complete graphics state: vertex/fragment shaders,
+/// vertex layout, blend modes, depth/stencil, and MSAA configuration.
 #[napi]
 pub struct GpuRenderPipeline {
     pub(crate) pipeline: Arc<wgpu::RenderPipeline>,
@@ -149,54 +158,3 @@ pub struct RenderPassDepthStencilAttachment {
     pub stencil_store_op: Option<String>,
 }
 
-// Helper functions for parsing
-pub(crate) fn parse_texture_format(format: &str) -> wgpu::TextureFormat {
-    match format {
-        "rgba8unorm" => wgpu::TextureFormat::Rgba8Unorm,
-        "bgra8unorm" => wgpu::TextureFormat::Bgra8Unorm,
-        "rgba16float" => wgpu::TextureFormat::Rgba16Float,
-        "rgba32float" => wgpu::TextureFormat::Rgba32Float,
-        "depth24plus" => wgpu::TextureFormat::Depth24Plus,
-        "depth32float" => wgpu::TextureFormat::Depth32Float,
-        _ => wgpu::TextureFormat::Rgba8Unorm,
-    }
-}
-
-pub(crate) fn parse_vertex_format(format: &str) -> wgpu::VertexFormat {
-    match format {
-        "float32" => wgpu::VertexFormat::Float32,
-        "float32x2" => wgpu::VertexFormat::Float32x2,
-        "float32x3" => wgpu::VertexFormat::Float32x3,
-        "float32x4" => wgpu::VertexFormat::Float32x4,
-        "uint32" => wgpu::VertexFormat::Uint32,
-        "sint32" => wgpu::VertexFormat::Sint32,
-        _ => wgpu::VertexFormat::Float32x3,
-    }
-}
-
-pub(crate) fn parse_primitive_topology(topology: Option<&String>) -> wgpu::PrimitiveTopology {
-    match topology.map(|s| s.as_str()) {
-        Some("point-list") => wgpu::PrimitiveTopology::PointList,
-        Some("line-list") => wgpu::PrimitiveTopology::LineList,
-        Some("line-strip") => wgpu::PrimitiveTopology::LineStrip,
-        Some("triangle-list") | None => wgpu::PrimitiveTopology::TriangleList,
-        Some("triangle-strip") => wgpu::PrimitiveTopology::TriangleStrip,
-        _ => wgpu::PrimitiveTopology::TriangleList,
-    }
-}
-
-pub(crate) fn parse_load_op(op: &str) -> wgpu::LoadOp<wgpu::Color> {
-    match op {
-        "load" => wgpu::LoadOp::Load,
-        "clear" => wgpu::LoadOp::Clear(wgpu::Color::BLACK),
-        _ => wgpu::LoadOp::Clear(wgpu::Color::BLACK),
-    }
-}
-
-pub(crate) fn parse_store_op(op: &str) -> wgpu::StoreOp {
-    match op {
-        "store" => wgpu::StoreOp::Store,
-        "discard" => wgpu::StoreOp::Discard,
-        _ => wgpu::StoreOp::Store,
-    }
-}

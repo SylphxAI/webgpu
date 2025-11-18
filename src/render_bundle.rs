@@ -1,6 +1,9 @@
 use napi_derive::napi;
 
 /// Render bundle - pre-recorded render commands that can be reused
+///
+/// Render bundles record draw commands once and execute them multiple times.
+/// This reduces CPU overhead by avoiding re-recording commands every frame.
 #[napi]
 pub struct GpuRenderBundle {
     pub(crate) bundle: wgpu::RenderBundle,

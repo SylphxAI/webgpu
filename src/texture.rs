@@ -15,7 +15,10 @@ pub struct TextureDescriptor {
     pub sample_count: Option<u32>,
 }
 
-/// Texture
+/// GPU texture - multi-dimensional image data on the GPU
+///
+/// Textures store image data for rendering and compute operations.
+/// Create views to bind textures to shaders.
 #[napi]
 pub struct GpuTexture {
     pub(crate) texture: Arc<wgpu::Texture>,
@@ -67,7 +70,9 @@ impl GpuTexture {
     }
 }
 
-/// Texture view
+/// Texture view - a view into a texture for binding to shaders
+///
+/// Views define how shaders access texture data (format, mip levels, array layers).
 #[napi]
 pub struct GpuTextureView {
     pub(crate) view: Arc<wgpu::TextureView>,

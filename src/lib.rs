@@ -11,6 +11,7 @@ mod pipeline;
 mod sampler;
 mod query_set;
 mod render_bundle;
+mod parse;
 
 pub use gpu::*;
 pub use adapter::*;

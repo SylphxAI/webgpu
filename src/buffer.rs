@@ -2,6 +2,10 @@ use napi::bindgen_prelude::*;
 use napi_derive::napi;
 use std::sync::Arc;
 
+/// GPU buffer - contiguous memory allocation on the GPU
+///
+/// Buffers store data for shaders (vertices, indices, uniforms, storage).
+/// They can be written from CPU (via queueWriteBuffer) and read back (via mapRead).
 #[napi]
 pub struct GpuBuffer {
     pub(crate) buffer: wgpu::Buffer,
@@ -29,6 +33,10 @@ impl GpuBuffer {
     }
 
     /// Map the buffer for reading
+    ///
+    /// Asynchronously maps the buffer for CPU read access.
+    /// Buffer must have MAP_READ usage flag.
+    /// Returns a Node.js Buffer containing the data.
     #[napi]
     pub async fn map_read(&self) -> Result<Buffer> {
         let slice = self.buffer.slice(..);
@@ -49,6 +57,8 @@ impl GpuBuffer {
     }
 
     /// Unmap the buffer
+    ///
+    /// Releases the mapped memory. Must be called after mapRead before using buffer in GPU operations.
     #[napi]
     pub fn unmap(&self) {
         self.buffer.unmap();
@@ -67,6 +77,8 @@ impl GpuBuffer {
     }
 
     /// Destroy the buffer
+    ///
+    /// Explicitly releases GPU resources. Buffers are automatically destroyed when dropped.
     #[napi]
     pub fn destroy(&self) {
         self.buffer.destroy();

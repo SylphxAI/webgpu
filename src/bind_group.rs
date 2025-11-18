@@ -21,7 +21,10 @@ pub struct BindGroupLayoutDescriptor {
     pub entries: Vec<BindGroupLayoutEntry>,
 }
 
-/// Bind group layout
+/// Bind group layout - describes resource bindings for shaders
+///
+/// Bind group layouts define the structure of bind groups: which binding indices
+/// contain buffers, textures, or samplers, and their visibility (vertex/fragment/compute).
 #[napi]
 pub struct GpuBindGroupLayout {
     pub(crate) layout: Arc<wgpu::BindGroupLayout>,
@@ -48,7 +51,10 @@ pub struct BindGroupEntry {
     pub sampler_index: Option<u32>,
 }
 
-/// Bind group
+/// Bind group - collection of resources bound to shaders
+///
+/// Bind groups connect GPU resources (buffers, textures, samplers) to shader binding points.
+/// They're bound to pipelines during command encoding.
 #[napi]
 pub struct GpuBindGroup {
     pub(crate) bind_group: Arc<wgpu::BindGroup>,

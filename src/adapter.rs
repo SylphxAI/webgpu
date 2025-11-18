@@ -1,6 +1,10 @@
 use napi::bindgen_prelude::*;
 use napi_derive::napi;
 
+/// GPU adapter - represents a physical GPU or software renderer
+///
+/// Adapters provide information about GPU capabilities (features, limits)
+/// and are used to request logical devices for GPU operations.
 #[napi]
 pub struct GpuAdapter {
     pub(crate) adapter: wgpu::Adapter,
@@ -15,6 +19,8 @@ impl GpuAdapter {
 #[napi]
 impl GpuAdapter {
     /// Get adapter information
+    ///
+    /// Returns name, vendor ID, device ID, type, and backend.
     #[napi]
     pub fn get_info(&self) -> AdapterInfo {
         let info = self.adapter.get_info();
@@ -28,6 +34,9 @@ impl GpuAdapter {
     }
 
     /// Get adapter features
+    ///
+    /// Returns a list of optional features supported by this adapter.
+    /// Features must be explicitly requested when creating a device.
     #[napi]
     pub fn get_features(&self) -> Vec<String> {
         let features = self.adapter.features();
@@ -47,6 +56,8 @@ impl GpuAdapter {
     }
 
     /// Get adapter limits
+    ///
+    /// Returns maximum resource sizes and counts supported by this adapter.
     #[napi]
     pub fn get_limits(&self) -> AdapterLimits {
         let limits = self.adapter.limits();
@@ -60,6 +71,9 @@ impl GpuAdapter {
     }
 
     /// Request a device from this adapter
+    ///
+    /// Creates a logical device for executing GPU operations.
+    /// Currently requests timestamp query feature by default.
     #[napi]
     pub async fn request_device(&self) -> Result<crate::GpuDevice> {
         let (device, queue) = self.adapter

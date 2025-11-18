@@ -208,7 +208,7 @@ impl GpuDevice {
     /// Create a texture
     #[napi]
     pub fn create_texture(&self, descriptor: crate::TextureDescriptor) -> crate::GpuTexture {
-        let format = crate::pipeline::parse_texture_format(&descriptor.format);
+        let format = crate::parse::parse_texture_format(&descriptor.format);
         let dimension = match descriptor.dimension.as_deref() {
             Some("1d") => wgpu::TextureDimension::D1,
             Some("3d") => wgpu::TextureDimension::D3,
@@ -446,7 +446,7 @@ impl GpuDevice {
             .iter()
             .enumerate()
             .map(|(i, format)| {
-                let vertex_format = crate::pipeline::parse_vertex_format(format);
+                let vertex_format = crate::parse::parse_vertex_format(format);
                 let size = match vertex_format {
                     wgpu::VertexFormat::Float32 => 4,
                     wgpu::VertexFormat::Float32x2 => 8,
@@ -478,7 +478,7 @@ impl GpuDevice {
         // Parse blend mode and write mask
         let blend_state = blend_mode
             .as_ref()
-            .map(|mode| parse_blend_mode(mode))
+            .map(|mode| crate::parse::parse_blend_mode(mode))
             .unwrap_or(wgpu::BlendState::REPLACE);
 
         let color_write_mask = write_mask
@@ -490,7 +490,7 @@ impl GpuDevice {
             .iter()
             .map(|format| {
                 Some(wgpu::ColorTargetState {
-                    format: crate::pipeline::parse_texture_format(format),
+                    format: crate::parse::parse_texture_format(format),
                     blend: Some(blend_state),
                     write_mask: color_write_mask,
                 })
@@ -510,7 +510,7 @@ impl GpuDevice {
         // Build depth/stencil state if format is provided
         let depth_stencil = depth_stencil_format.as_ref().map(|format_str| {
             wgpu::DepthStencilState {
-                format: crate::pipeline::parse_texture_format(format_str),
+                format: crate::parse::parse_texture_format(format_str),
                 depth_write_enabled: true,
                 depth_compare: wgpu::CompareFunction::Less,
                 stencil: wgpu::StencilState::default(),
@@ -560,7 +560,7 @@ impl GpuDevice {
         // Parse color formats
         let formats: Vec<Option<wgpu::TextureFormat>> = color_formats
             .iter()
-            .map(|f| Some(crate::pipeline::parse_texture_format(f)))
+            .map(|f| Some(crate::parse::parse_texture_format(f)))
             .collect();
 
         // Create render bundle encoder
@@ -614,7 +614,7 @@ impl GpuDevice {
         // Parse color formats
         let formats: Vec<Option<wgpu::TextureFormat>> = color_formats
             .iter()
-            .map(|f| Some(crate::pipeline::parse_texture_format(f)))
+            .map(|f| Some(crate::parse::parse_texture_format(f)))
             .collect();
 
         // Create render bundle encoder
@@ -664,55 +664,6 @@ impl GpuDevice {
     #[napi]
     pub fn destroy(&self) {
         // wgpu devices are automatically cleaned up
-    }
-}
-
-// Helper functions for parsing blend modes
-fn parse_blend_factor(factor: &str) -> wgpu::BlendFactor {
-    match factor {
-        "zero" => wgpu::BlendFactor::Zero,
-        "one" => wgpu::BlendFactor::One,
-        "src" => wgpu::BlendFactor::Src,
-        "one-minus-src" => wgpu::BlendFactor::OneMinusSrc,
-        "src-alpha" => wgpu::BlendFactor::SrcAlpha,
-        "one-minus-src-alpha" => wgpu::BlendFactor::OneMinusSrcAlpha,
-        "dst" => wgpu::BlendFactor::Dst,
-        "one-minus-dst" => wgpu::BlendFactor::OneMinusDst,
-        "dst-alpha" => wgpu::BlendFactor::DstAlpha,
-        "one-minus-dst-alpha" => wgpu::BlendFactor::OneMinusDstAlpha,
-        _ => wgpu::BlendFactor::One,
-    }
-}
-
-fn parse_blend_operation(op: &str) -> wgpu::BlendOperation {
-    match op {
-        "add" => wgpu::BlendOperation::Add,
-        "subtract" => wgpu::BlendOperation::Subtract,
-        "reverse-subtract" => wgpu::BlendOperation::ReverseSubtract,
-        "min" => wgpu::BlendOperation::Min,
-        "max" => wgpu::BlendOperation::Max,
-        _ => wgpu::BlendOperation::Add,
-    }
-}
-
-fn parse_blend_mode(mode: &str) -> wgpu::BlendState {
-    match mode {
-        "replace" => wgpu::BlendState::REPLACE,
-        "alpha" => wgpu::BlendState::ALPHA_BLENDING,
-        "additive" => wgpu::BlendState {
-            color: wgpu::BlendComponent {
-                src_factor: wgpu::BlendFactor::One,
-                dst_factor: wgpu::BlendFactor::One,
-                operation: wgpu::BlendOperation::Add,
-            },
-            alpha: wgpu::BlendComponent {
-                src_factor: wgpu::BlendFactor::One,
-                dst_factor: wgpu::BlendFactor::One,
-                operation: wgpu::BlendOperation::Add,
-            },
-        },
-        "premultiplied" => wgpu::BlendState::PREMULTIPLIED_ALPHA_BLENDING,
-        _ => wgpu::BlendState::REPLACE,
     }
 }
 

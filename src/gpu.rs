@@ -1,6 +1,10 @@
 use napi::bindgen_prelude::*;
 use napi_derive::napi;
 
+/// GPU instance - entry point for WebGPU API
+///
+/// This is the starting point for all WebGPU operations. Create an instance to
+/// enumerate and request GPU adapters.
 #[napi]
 pub struct Gpu {
     instance: wgpu::Instance,
@@ -48,6 +52,9 @@ impl Gpu {
     }
 
     /// Enumerate all available adapters
+    ///
+    /// Returns a list of all available GPU adapters with their backend (Metal, Vulkan, DX12).
+    /// Useful for debugging and displaying available hardware to users.
     #[napi]
     pub fn enumerate_adapters(&self) -> Vec<String> {
         self.instance

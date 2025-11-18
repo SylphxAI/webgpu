@@ -1,5 +1,8 @@
 use napi_derive::napi;
 
+/// GPU query set - for GPU performance measurement
+///
+/// Query sets collect GPU timestamps for profiling render and compute passes.
 #[napi]
 pub struct GpuQuerySet {
     pub(crate) query_set: wgpu::QuerySet,
