@@ -102,6 +102,10 @@ async function main() {
     // Create command encoder and execute compute pass
     const encoder = device.createCommandEncoder()
     encoder.computePass(pipeline, [bindGroup], input1.length)
+
+    // Copy results from resultBuffer to readBuffer
+    device.copyBufferToBuffer(encoder, resultBuffer, 0, readBuffer, 0, size)
+
     const commandBuffer = encoder.finish()
     console.log('✓ Commands encoded')
 
@@ -110,11 +114,29 @@ async function main() {
     device.poll(true)
     console.log('✓ GPU work complete\n')
 
-    // TODO: Add copy from resultBuffer to readBuffer once copyBufferToBuffer is implemented
-    // For now, we just show the pipeline is working
+    // Read results
+    console.log('Reading results...')
+    const resultData = await readBuffer.mapRead()
+    const output = new Float32Array(resultData.buffer, resultData.byteOffset, resultData.byteLength / 4)
 
-    console.log('✅ Compute pipeline successfully executed!')
-    console.log('Note: Buffer reading to verify results will be added in next iteration')
+    console.log('Expected: [ 11, 22, 33, 44, 55 ]')
+    console.log('Actual:  ', Array.from(output))
+
+    // Verify results
+    let allCorrect = true
+    for (let i = 0; i < input1.length; i++) {
+        const expected = input1[i] + input2[i]
+        if (Math.abs(output[i] - expected) > 0.001) {
+            console.log(`❌ Mismatch at index ${i}: expected ${expected}, got ${output[i]}`)
+            allCorrect = false
+        }
+    }
+
+    if (allCorrect) {
+        console.log('\n✅ All results correct! GPU compute verified!')
+    }
+
+    readBuffer.unmap()
 
     // Cleanup
     buffer1.destroy()

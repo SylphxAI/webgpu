@@ -43,3 +43,25 @@ pub fn map_mode() -> MapMode {
         write: 2,
     }
 }
+
+/// Texture usage flags object
+#[napi(object)]
+pub struct TextureUsage {
+    pub copy_src: u32,
+    pub copy_dst: u32,
+    pub texture_binding: u32,
+    pub storage_binding: u32,
+    pub render_attachment: u32,
+}
+
+/// Get texture usage constants
+#[napi]
+pub fn texture_usage() -> TextureUsage {
+    TextureUsage {
+        copy_src: 0x01,
+        copy_dst: 0x02,
+        texture_binding: 0x04,
+        storage_binding: 0x08,
+        render_attachment: 0x10,
+    }
+}

@@ -80,6 +80,66 @@ impl GpuDevice {
         self.queue.write_buffer(&buffer.buffer, offset as u64, &data);
     }
 
+    /// Copy data from one buffer to another
+    #[napi]
+    pub fn copy_buffer_to_buffer(
+        &self,
+        encoder: &mut GpuCommandEncoder,
+        source: &crate::GpuBuffer,
+        source_offset: i64,
+        destination: &crate::GpuBuffer,
+        destination_offset: i64,
+        size: i64,
+    ) -> Result<()> {
+        if let Some(ref mut enc) = encoder.encoder {
+            enc.copy_buffer_to_buffer(
+                &source.buffer,
+                source_offset as u64,
+                &destination.buffer,
+                destination_offset as u64,
+                size as u64,
+            );
+            Ok(())
+        } else {
+            Err(Error::from_reason("Command encoder already finished"))
+        }
+    }
+
+    /// Create a texture
+    #[napi]
+    pub fn create_texture(&self, descriptor: crate::TextureDescriptor) -> crate::GpuTexture {
+        let format = crate::pipeline::parse_texture_format(&descriptor.format);
+        let dimension = match descriptor.dimension.as_deref() {
+            Some("1d") => wgpu::TextureDimension::D1,
+            Some("3d") => wgpu::TextureDimension::D3,
+            _ => wgpu::TextureDimension::D2,
+        };
+
+        let texture = self.device.create_texture(&wgpu::TextureDescriptor {
+            label: descriptor.label.as_deref(),
+            size: wgpu::Extent3d {
+                width: descriptor.width,
+                height: descriptor.height,
+                depth_or_array_layers: descriptor.depth.unwrap_or(1),
+            },
+            mip_level_count: descriptor.mip_level_count.unwrap_or(1),
+            sample_count: descriptor.sample_count.unwrap_or(1),
+            dimension,
+            format,
+            usage: wgpu::TextureUsages::from_bits_truncate(descriptor.usage),
+            view_formats: &[],
+        });
+
+        crate::GpuTexture::new(texture)
+    }
+
+    /// Create a sampler
+    #[napi]
+    pub fn create_sampler(&self, descriptor: crate::SamplerDescriptor) -> crate::GpuSampler {
+        let sampler = crate::sampler::create_sampler(&self.device, &descriptor);
+        crate::GpuSampler::new(sampler)
+    }
+
     /// Create a bind group layout
     #[napi]
     pub fn create_bind_group_layout(&self, descriptor: crate::BindGroupLayoutDescriptor) -> Result<crate::GpuBindGroupLayout> {
