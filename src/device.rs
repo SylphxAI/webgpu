@@ -56,9 +56,10 @@ impl GpuDevice {
     }
 
     /// Submit commands to the queue
+    /// Note: This consumes the command buffer
     #[napi]
-    pub fn queue_submit(&self, command_buffer: &GpuCommandBuffer) {
-        if let Some(buffer) = &command_buffer.buffer {
+    pub fn queue_submit(&self, mut command_buffer: &mut GpuCommandBuffer) {
+        if let Some(buffer) = command_buffer.buffer.take() {
             self.queue.submit(std::iter::once(buffer));
         }
     }
@@ -102,5 +103,5 @@ impl GpuCommandEncoder {
 
 #[napi]
 pub struct GpuCommandBuffer {
-    pub(crate) buffer: Option<wgpu::CommandBuffer>,
+    buffer: Option<wgpu::CommandBuffer>,
 }

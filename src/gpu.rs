@@ -52,6 +52,7 @@ impl Gpu {
     pub fn enumerate_adapters(&self) -> Vec<String> {
         self.instance
             .enumerate_adapters(wgpu::Backends::all())
+            .into_iter()
             .map(|adapter| {
                 let info = adapter.get_info();
                 format!("{} ({:?})", info.name, info.backend)

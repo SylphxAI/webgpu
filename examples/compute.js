@@ -1,4 +1,5 @@
-const { Gpu, bufferUsage } = require('../index.js')
+const { Gpu, bufferUsage: getBufferUsage } = require('../index.js')
+const bufferUsage = getBufferUsage()
 
 async function main() {
     console.log('🧮 WebGPU Compute Example: Vector Addition\n')
@@ -18,16 +19,16 @@ async function main() {
 
     // Create buffers
     const size = input1.byteLength
-    const buffer1 = device.createBuffer(size, bufferUsage.STORAGE | bufferUsage.COPY_DST, false)
-    const buffer2 = device.createBuffer(size, bufferUsage.STORAGE | bufferUsage.COPY_DST, false)
+    const buffer1 = device.createBuffer(size, bufferUsage.storage | bufferUsage.copy_dst, false)
+    const buffer2 = device.createBuffer(size, bufferUsage.storage | bufferUsage.copy_dst, false)
     const resultBuffer = device.createBuffer(
         size,
-        bufferUsage.STORAGE | bufferUsage.COPY_SRC,
+        bufferUsage.storage | bufferUsage.copy_src,
         false
     )
     const readBuffer = device.createBuffer(
         size,
-        bufferUsage.COPY_DST | bufferUsage.MAP_READ,
+        bufferUsage.copy_dst | bufferUsage.map_read,
         false
     )
 

@@ -1,31 +1,45 @@
 use napi_derive::napi;
 
-/// Buffer usage flags
-#[napi]
-pub mod buffer_usage {
-    /// Buffer can be used as a source for copy operations
-    pub const COPY_SRC: u32 = 0x0004;
-    /// Buffer can be used as a destination for copy operations
-    pub const COPY_DST: u32 = 0x0008;
-    /// Buffer can be used as a storage buffer
-    pub const STORAGE: u32 = 0x0080;
-    /// Buffer can be used as a uniform buffer
-    pub const UNIFORM: u32 = 0x0040;
-    /// Buffer can be used as a vertex buffer
-    pub const VERTEX: u32 = 0x0020;
-    /// Buffer can be used as an index buffer
-    pub const INDEX: u32 = 0x0010;
-    /// Buffer can be mapped for reading
-    pub const MAP_READ: u32 = 0x0001;
-    /// Buffer can be mapped for writing
-    pub const MAP_WRITE: u32 = 0x0002;
+/// Buffer usage flags object
+#[napi(object)]
+pub struct BufferUsage {
+    pub copy_src: u32,
+    pub copy_dst: u32,
+    pub storage: u32,
+    pub uniform: u32,
+    pub vertex: u32,
+    pub index: u32,
+    pub map_read: u32,
+    pub map_write: u32,
 }
 
-/// Map mode flags
+/// Get buffer usage constants
 #[napi]
-pub mod map_mode {
-    /// Map for reading
-    pub const READ: u32 = 1;
-    /// Map for writing
-    pub const WRITE: u32 = 2;
+pub fn buffer_usage() -> BufferUsage {
+    BufferUsage {
+        copy_src: 0x0004,
+        copy_dst: 0x0008,
+        storage: 0x0080,
+        uniform: 0x0040,
+        vertex: 0x0020,
+        index: 0x0010,
+        map_read: 0x0001,
+        map_write: 0x0002,
+    }
+}
+
+/// Map mode object
+#[napi(object)]
+pub struct MapMode {
+    pub read: u32,
+    pub write: u32,
+}
+
+/// Get map mode constants
+#[napi]
+pub fn map_mode() -> MapMode {
+    MapMode {
+        read: 1,
+        write: 2,
+    }
 }

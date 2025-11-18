@@ -55,7 +55,7 @@ impl GpuAdapter {
             max_texture_dimension_2d: limits.max_texture_dimension_2d,
             max_texture_dimension_3d: limits.max_texture_dimension_3d,
             max_bind_groups: limits.max_bind_groups,
-            max_buffer_size: limits.max_buffer_size,
+            max_buffer_size: limits.max_buffer_size as i64, // Convert to i64
         }
     }
 
@@ -93,5 +93,5 @@ pub struct AdapterLimits {
     pub max_texture_dimension_2d: u32,
     pub max_texture_dimension_3d: u32,
     pub max_bind_groups: u32,
-    pub max_buffer_size: u64,
+    pub max_buffer_size: i64, // u64 not supported by napi, use i64
 }
