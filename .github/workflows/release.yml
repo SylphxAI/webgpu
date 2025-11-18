@@ -15,34 +15,21 @@ jobs:
         settings:
           - host: macos-latest
             target: x86_64-apple-darwin
-            build: pnpm build -- --target x86_64-apple-darwin
           - host: macos-latest
             target: aarch64-apple-darwin
-            build: |
-              sudo rm -Rf /Library/Developer/CommandLineTools/SDKs/*;
-              export CC=$(xcrun -f clang);
-              export CXX=$(xcrun -f clang++);
-              SYSROOT=$(xcrun --sdk macosx --show-sdk-path);
-              export CFLAGS="-isysroot $SYSROOT -isystem $SYSROOT";
-              pnpm build -- --target aarch64-apple-darwin
           - host: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian
-            build: pnpm build --target x86_64-unknown-linux-gnu
           - host: ubuntu-latest
             target: aarch64-unknown-linux-gnu
             docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian-aarch64
-            build: pnpm build --target aarch64-unknown-linux-gnu
           - host: ubuntu-latest
             target: aarch64-unknown-linux-musl
             docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-alpine
-            build: pnpm build --target aarch64-unknown-linux-musl
           - host: windows-latest
             target: x86_64-pc-windows-msvc
-            build: pnpm build --target x86_64-pc-windows-msvc
           - host: windows-latest
             target: aarch64-pc-windows-msvc
-            build: pnpm build --target aarch64-pc-windows-msvc
 
     name: Build - ${{ matrix.settings.target }}
     runs-on: ${{ matrix.settings.host }}
@@ -50,14 +37,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: pnpm
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -78,7 +64,7 @@ jobs:
           key: ${{ matrix.settings.target }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile
+        run: bun install
 
       - name: Build in docker
         if: ${{ matrix.settings.docker }}
@@ -87,11 +73,22 @@ jobs:
             -v ${{ github.workspace }}:/build \
             -w /build \
             ${{ matrix.settings.docker }} \
-            sh -c "corepack enable && corepack prepare pnpm@9.0.0 --activate && pnpm install && ${{ matrix.settings.build }}"
+            sh -c "curl -fsSL https://bun.sh/install | bash && export PATH=\$HOME/.bun/bin:\$PATH && bun install && bun run build --target ${{ matrix.settings.target }}"
 
-      - name: Build
-        if: ${{ !matrix.settings.docker }}
-        run: ${{ matrix.settings.build }}
+      - name: Build (macOS)
+        if: ${{ !matrix.settings.docker && matrix.settings.target == 'aarch64-apple-darwin' }}
+        run: |
+          sudo rm -Rf /Library/Developer/CommandLineTools/SDKs/*
+          export CC=$(xcrun -f clang)
+          export CXX=$(xcrun -f clang++)
+          SYSROOT=$(xcrun --sdk macosx --show-sdk-path)
+          export CFLAGS="-isysroot $SYSROOT -isystem $SYSROOT"
+          bun run build --target ${{ matrix.settings.target }}
+        shell: bash
+
+      - name: Build (other)
+        if: ${{ !matrix.settings.docker && matrix.settings.target != 'aarch64-apple-darwin' }}
+        run: bun run build --target ${{ matrix.settings.target }}
         shell: bash
 
       - name: Upload artifacts
@@ -111,18 +108,16 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: pnpm
-          registry-url: https://registry.npmjs.org
 
       - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile
+        run: bun install
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
@@ -130,19 +125,14 @@ jobs:
           path: artifacts
 
       - name: Move artifacts
-        run: pnpm artifacts
+        run: bun run artifacts
 
       - name: List packages
         run: ls -R ./npm
 
-      - name: Create Release Pull Request or Publish to npm
-        uses: changesets/action@v1
-        with:
-          version: pnpm changeset version
-          publish: pnpm release
-          commit: 'chore(release): version packages'
-          title: 'chore(release): version packages'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish
+        uses: SylphxAI/.github/.github/workflows/publish-npm.yml@main
+        secrets:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        with:
+          skip-build: true
