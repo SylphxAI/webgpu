@@ -159,7 +159,7 @@ jobs:
           ls -R npm/
 
       - name: Create platform packages
-        run: bun run prepublishOnly
+        run: bun run prepublishOnly --no-gh-release
 
       - name: List packages
         run: ls -R ./npm
