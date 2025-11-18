@@ -497,10 +497,12 @@ impl GpuDevice {
             })
             .collect();
 
+        // ASSUMPTION: Default entry point to "main" if not provided (WebGPU standard)
+        let fragment_entry = fragment_entry_point.unwrap_or_else(|| "main".to_string());
         let fragment = if let Some(shader) = fragment_shader {
             Some(wgpu::FragmentState {
                 module: &shader.shader,
-                entry_point: &fragment_entry_point.unwrap_or_else(|| "main".to_string()),
+                entry_point: &fragment_entry,
                 targets: &targets,
             })
         } else {
