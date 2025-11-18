@@ -545,6 +545,121 @@ impl GpuDevice {
         })
     }
 
+    /// Create a render bundle - reusable recorded render commands
+    /// This creates a bundle that can be executed multiple times in render passes
+    #[napi]
+    pub fn create_render_bundle(
+        &self,
+        label: String,
+        pipeline: &crate::GpuRenderPipeline,
+        vertex_buffers: Vec<&crate::GpuBuffer>,
+        vertex_count: u32,
+        bind_groups: Option<Vec<&crate::GpuBindGroup>>,
+        color_formats: Vec<String>,
+    ) -> Result<crate::GpuRenderBundle> {
+        // Parse color formats
+        let formats: Vec<Option<wgpu::TextureFormat>> = color_formats
+            .iter()
+            .map(|f| Some(crate::pipeline::parse_texture_format(f)))
+            .collect();
+
+        // Create render bundle encoder
+        let mut encoder = self.device.create_render_bundle_encoder(&wgpu::RenderBundleEncoderDescriptor {
+            label: Some(&label),
+            color_formats: &formats,
+            depth_stencil: None,
+            sample_count: 1,
+            multiview: None,
+        });
+
+        // Set pipeline
+        encoder.set_pipeline(&pipeline.pipeline);
+
+        // Set bind groups if provided
+        if let Some(groups) = bind_groups {
+            for (index, group) in groups.iter().enumerate() {
+                encoder.set_bind_group(index as u32, &group.bind_group, &[]);
+            }
+        }
+
+        // Set vertex buffers
+        for (index, buffer) in vertex_buffers.iter().enumerate() {
+            encoder.set_vertex_buffer(index as u32, buffer.buffer.slice(..));
+        }
+
+        // Draw
+        encoder.draw(0..vertex_count, 0..1);
+
+        // Finish and return bundle
+        let bundle = encoder.finish(&wgpu::RenderBundleDescriptor {
+            label: Some(&label),
+        });
+
+        Ok(crate::GpuRenderBundle::new(bundle))
+    }
+
+    /// Create an indexed render bundle
+    #[napi]
+    pub fn create_render_bundle_indexed(
+        &self,
+        label: String,
+        pipeline: &crate::GpuRenderPipeline,
+        vertex_buffers: Vec<&crate::GpuBuffer>,
+        index_buffer: &crate::GpuBuffer,
+        index_format: String,
+        index_count: u32,
+        bind_groups: Option<Vec<&crate::GpuBindGroup>>,
+        color_formats: Vec<String>,
+    ) -> Result<crate::GpuRenderBundle> {
+        // Parse color formats
+        let formats: Vec<Option<wgpu::TextureFormat>> = color_formats
+            .iter()
+            .map(|f| Some(crate::pipeline::parse_texture_format(f)))
+            .collect();
+
+        // Create render bundle encoder
+        let mut encoder = self.device.create_render_bundle_encoder(&wgpu::RenderBundleEncoderDescriptor {
+            label: Some(&label),
+            color_formats: &formats,
+            depth_stencil: None,
+            sample_count: 1,
+            multiview: None,
+        });
+
+        // Set pipeline
+        encoder.set_pipeline(&pipeline.pipeline);
+
+        // Set bind groups if provided
+        if let Some(groups) = bind_groups {
+            for (index, group) in groups.iter().enumerate() {
+                encoder.set_bind_group(index as u32, &group.bind_group, &[]);
+            }
+        }
+
+        // Set vertex buffers
+        for (index, buffer) in vertex_buffers.iter().enumerate() {
+            encoder.set_vertex_buffer(index as u32, buffer.buffer.slice(..));
+        }
+
+        // Set index buffer
+        let idx_format = match index_format.as_str() {
+            "uint16" => wgpu::IndexFormat::Uint16,
+            "uint32" => wgpu::IndexFormat::Uint32,
+            _ => wgpu::IndexFormat::Uint16,
+        };
+        encoder.set_index_buffer(index_buffer.buffer.slice(..), idx_format);
+
+        // Draw indexed
+        encoder.draw_indexed(0..index_count, 0, 0..1);
+
+        // Finish and return bundle
+        let bundle = encoder.finish(&wgpu::RenderBundleDescriptor {
+            label: Some(&label),
+        });
+
+        Ok(crate::GpuRenderBundle::new(bundle))
+    }
+
     /// Destroy the device
     #[napi]
     pub fn destroy(&self) {
@@ -1130,6 +1245,66 @@ impl GpuCommandEncoder {
                 &destination.buffer,
                 destination_offset as u64,
             );
+            Ok(())
+        } else {
+            Err(Error::from_reason("Command encoder already finished"))
+        }
+    }
+
+    /// Execute render bundles in a render pass
+    /// This is more efficient than recording the same commands multiple times
+    #[napi]
+    pub fn render_pass_bundles(
+        &mut self,
+        bundles: Vec<&crate::GpuRenderBundle>,
+        color_attachments: Vec<&crate::GpuTextureView>,
+        clear_colors: Option<Vec<Vec<f64>>>,
+    ) -> Result<()> {
+        if let Some(ref mut enc) = self.encoder {
+            // Build color attachments
+            let attachments: Vec<_> = color_attachments
+                .iter()
+                .enumerate()
+                .map(|(i, view)| {
+                    let clear_color = if let Some(ref colors) = clear_colors {
+                        if i < colors.len() && colors[i].len() >= 4 {
+                            wgpu::Color {
+                                r: colors[i][0],
+                                g: colors[i][1],
+                                b: colors[i][2],
+                                a: colors[i][3],
+                            }
+                        } else {
+                            wgpu::Color::BLACK
+                        }
+                    } else {
+                        wgpu::Color::BLACK
+                    };
+
+                    Some(wgpu::RenderPassColorAttachment {
+                        view: &view.view,
+                        resolve_target: None,
+                        ops: wgpu::Operations {
+                            load: wgpu::LoadOp::Clear(clear_color),
+                            store: wgpu::StoreOp::Store,
+                        },
+                    })
+                })
+                .collect();
+
+            let mut pass = enc.begin_render_pass(&wgpu::RenderPassDescriptor {
+                label: None,
+                color_attachments: &attachments,
+                depth_stencil_attachment: None,
+                timestamp_writes: None,
+                occlusion_query_set: None,
+            });
+
+            // Execute bundles
+            let bundle_refs: Vec<&wgpu::RenderBundle> = bundles.iter().map(|b| &b.bundle).collect();
+            pass.execute_bundles(bundle_refs);
+
+            drop(pass);
             Ok(())
         } else {
             Err(Error::from_reason("Command encoder already finished"))

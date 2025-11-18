@@ -10,6 +10,7 @@ mod bind_group;
 mod pipeline;
 mod sampler;
 mod query_set;
+mod render_bundle;
 
 pub use gpu::*;
 pub use adapter::*;
@@ -21,3 +22,4 @@ pub use bind_group::*;
 pub use pipeline::*;
 pub use sampler::*;
 pub use query_set::*;
+pub use render_bundle::*;
