@@ -105,6 +105,106 @@ impl GpuDevice {
         }
     }
 
+    /// Copy data from buffer to texture
+    #[napi]
+    pub fn copy_buffer_to_texture(
+        &self,
+        encoder: &mut GpuCommandEncoder,
+        source: &crate::GpuBuffer,
+        source_offset: i64,
+        bytes_per_row: u32,
+        rows_per_image: Option<u32>,
+        destination: &crate::GpuTexture,
+        mip_level: Option<u32>,
+        origin_x: Option<u32>,
+        origin_y: Option<u32>,
+        origin_z: Option<u32>,
+        width: u32,
+        height: u32,
+        depth: Option<u32>,
+    ) -> Result<()> {
+        if let Some(ref mut enc) = encoder.encoder {
+            enc.copy_buffer_to_texture(
+                wgpu::ImageCopyBuffer {
+                    buffer: &source.buffer,
+                    layout: wgpu::ImageDataLayout {
+                        offset: source_offset as u64,
+                        bytes_per_row: Some(bytes_per_row),
+                        rows_per_image,
+                    },
+                },
+                wgpu::ImageCopyTexture {
+                    texture: &destination.texture,
+                    mip_level: mip_level.unwrap_or(0),
+                    origin: wgpu::Origin3d {
+                        x: origin_x.unwrap_or(0),
+                        y: origin_y.unwrap_or(0),
+                        z: origin_z.unwrap_or(0),
+                    },
+                    aspect: wgpu::TextureAspect::All,
+                },
+                wgpu::Extent3d {
+                    width,
+                    height,
+                    depth_or_array_layers: depth.unwrap_or(1),
+                },
+            );
+            Ok(())
+        } else {
+            Err(Error::from_reason("Command encoder already finished"))
+        }
+    }
+
+    /// Copy data from texture to buffer
+    #[napi]
+    pub fn copy_texture_to_buffer(
+        &self,
+        encoder: &mut GpuCommandEncoder,
+        source: &crate::GpuTexture,
+        mip_level: Option<u32>,
+        origin_x: Option<u32>,
+        origin_y: Option<u32>,
+        origin_z: Option<u32>,
+        destination: &crate::GpuBuffer,
+        destination_offset: i64,
+        bytes_per_row: u32,
+        rows_per_image: Option<u32>,
+        width: u32,
+        height: u32,
+        depth: Option<u32>,
+    ) -> Result<()> {
+        if let Some(ref mut enc) = encoder.encoder {
+            enc.copy_texture_to_buffer(
+                wgpu::ImageCopyTexture {
+                    texture: &source.texture,
+                    mip_level: mip_level.unwrap_or(0),
+                    origin: wgpu::Origin3d {
+                        x: origin_x.unwrap_or(0),
+                        y: origin_y.unwrap_or(0),
+                        z: origin_z.unwrap_or(0),
+                    },
+                    aspect: wgpu::TextureAspect::All,
+                },
+                wgpu::ImageCopyBuffer {
+                    buffer: &destination.buffer,
+                    layout: wgpu::ImageDataLayout {
+                        offset: destination_offset as u64,
+                        bytes_per_row: Some(bytes_per_row),
+                        rows_per_image,
+                    },
+                },
+                wgpu::Extent3d {
+                    width,
+                    height,
+                    depth_or_array_layers: depth.unwrap_or(1),
+                },
+            );
+            Ok(())
+        } else {
+            Err(Error::from_reason("Command encoder already finished"))
+        }
+    }
+
     /// Create a texture
     #[napi]
     pub fn create_texture(&self, descriptor: crate::TextureDescriptor) -> crate::GpuTexture {
@@ -464,6 +564,82 @@ impl GpuCommandEncoder {
             }
 
             pass.draw(0..vertex_count, 0..1);
+
+            drop(pass);
+            Ok(())
+        } else {
+            Err(Error::from_reason("Command encoder already finished"))
+        }
+    }
+
+    /// Execute a render pass with indexed drawing
+    #[napi]
+    pub fn render_pass_indexed(
+        &mut self,
+        pipeline: &crate::GpuRenderPipeline,
+        vertex_buffers: Vec<&crate::GpuBuffer>,
+        index_buffer: &crate::GpuBuffer,
+        index_format: String,
+        index_count: u32,
+        color_attachments: Vec<&crate::GpuTextureView>,
+        clear_colors: Option<Vec<Vec<f64>>>,
+    ) -> Result<()> {
+        if let Some(ref mut enc) = self.encoder {
+            // Build color attachments
+            let attachments: Vec<_> = color_attachments
+                .iter()
+                .enumerate()
+                .map(|(i, view)| {
+                    let clear_color = if let Some(ref colors) = clear_colors {
+                        if i < colors.len() && colors[i].len() >= 4 {
+                            wgpu::Color {
+                                r: colors[i][0],
+                                g: colors[i][1],
+                                b: colors[i][2],
+                                a: colors[i][3],
+                            }
+                        } else {
+                            wgpu::Color::BLACK
+                        }
+                    } else {
+                        wgpu::Color::BLACK
+                    };
+
+                    Some(wgpu::RenderPassColorAttachment {
+                        view: &view.view,
+                        resolve_target: None,
+                        ops: wgpu::Operations {
+                            load: wgpu::LoadOp::Clear(clear_color),
+                            store: wgpu::StoreOp::Store,
+                        },
+                    })
+                })
+                .collect();
+
+            let mut pass = enc.begin_render_pass(&wgpu::RenderPassDescriptor {
+                label: None,
+                color_attachments: &attachments,
+                depth_stencil_attachment: None,
+                timestamp_writes: None,
+                occlusion_query_set: None,
+            });
+
+            pass.set_pipeline(&pipeline.pipeline);
+
+            // Set vertex buffers
+            for (index, buffer) in vertex_buffers.iter().enumerate() {
+                pass.set_vertex_buffer(index as u32, buffer.buffer.slice(..));
+            }
+
+            // Set index buffer
+            let idx_format = match index_format.as_str() {
+                "uint32" => wgpu::IndexFormat::Uint32,
+                _ => wgpu::IndexFormat::Uint16,
+            };
+            pass.set_index_buffer(index_buffer.buffer.slice(..), idx_format);
+
+            // Draw indexed
+            pass.draw_indexed(0..index_count, 0, 0..1);
 
             drop(pass);
             Ok(())

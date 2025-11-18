@@ -56,7 +56,7 @@ impl GpuBuffer {
 
     /// Write data to buffer using mapped memory
     #[napi]
-    pub async fn write_buffer(&self, data: Buffer) -> Result<()> {
+    pub async fn write_buffer(&self, _data: Buffer) -> Result<()> {
         // For buffers created with MAP_WRITE, we can map and write
         // But for now, we'll use the queue.write_buffer approach which is simpler
         // This requires the buffer to have COPY_DST usage
