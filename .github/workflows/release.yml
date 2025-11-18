@@ -122,14 +122,41 @@ jobs:
         with:
           path: artifacts
 
-      - name: Move binaries to root
+      - name: Organize binaries into npm/ structure
         run: |
+          mkdir -p npm
           for dir in artifacts/bindings-*; do
             if [ -d "$dir" ]; then
-              mv "$dir"/*.node . 2>/dev/null || true
+              platform=$(basename "$dir" | sed 's/bindings-//')
+              case "$platform" in
+                "x86_64-apple-darwin")
+                  mkdir -p npm/darwin-x64
+                  mv "$dir"/*.node npm/darwin-x64/webgpu.darwin-x64.node
+                  ;;
+                "aarch64-apple-darwin")
+                  mkdir -p npm/darwin-arm64
+                  mv "$dir"/*.node npm/darwin-arm64/webgpu.darwin-arm64.node
+                  ;;
+                "x86_64-unknown-linux-gnu")
+                  mkdir -p npm/linux-x64-gnu
+                  mv "$dir"/*.node npm/linux-x64-gnu/webgpu.linux-x64-gnu.node
+                  ;;
+                "aarch64-unknown-linux-gnu")
+                  mkdir -p npm/linux-arm64-gnu
+                  mv "$dir"/*.node npm/linux-arm64-gnu/webgpu.linux-arm64-gnu.node
+                  ;;
+                "x86_64-pc-windows-msvc")
+                  mkdir -p npm/win32-x64-msvc
+                  mv "$dir"/*.node npm/win32-x64-msvc/webgpu.win32-x64-msvc.node
+                  ;;
+                "aarch64-pc-windows-msvc")
+                  mkdir -p npm/win32-arm64-msvc
+                  mv "$dir"/*.node npm/win32-arm64-msvc/webgpu.win32-arm64-msvc.node
+                  ;;
+              esac
             fi
           done
-          ls -la *.node
+          ls -R npm/
 
       - name: Create platform packages
         run: bun run prepublishOnly

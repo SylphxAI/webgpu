@@ -1,8 +1,5 @@
 # Build artifacts
 target/
-*.node
-index.js
-index.d.ts
 
 # Dependencies
 node_modules/
