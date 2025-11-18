@@ -11,6 +11,7 @@ pub struct BufferUsage {
     pub index: u32,
     pub map_read: u32,
     pub map_write: u32,
+    pub query_resolve: u32,
 }
 
 /// Get buffer usage constants
@@ -25,6 +26,7 @@ pub fn buffer_usage() -> BufferUsage {
         index: 0x0010,
         map_read: 0x0001,
         map_write: 0x0002,
+        query_resolve: 0x0200,
     }
 }
 

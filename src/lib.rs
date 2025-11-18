@@ -9,6 +9,7 @@ mod constants;
 mod bind_group;
 mod pipeline;
 mod sampler;
+mod query_set;
 
 pub use gpu::*;
 pub use adapter::*;
@@ -19,3 +20,4 @@ pub use constants::*;
 pub use bind_group::*;
 pub use pipeline::*;
 pub use sampler::*;
+pub use query_set::*;

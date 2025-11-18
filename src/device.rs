@@ -240,6 +240,26 @@ impl GpuDevice {
         crate::GpuSampler::new(sampler)
     }
 
+    /// Create a query set for timestamp or occlusion queries
+    /// query_type: "timestamp" or "occlusion"
+    /// count: number of queries in the set
+    #[napi]
+    pub fn create_query_set(&self, query_type: String, count: u32) -> Result<crate::GpuQuerySet> {
+        let ty = match query_type.as_str() {
+            "timestamp" => wgpu::QueryType::Timestamp,
+            "occlusion" => wgpu::QueryType::Occlusion,
+            _ => return Err(Error::from_reason(format!("Invalid query type: {}", query_type))),
+        };
+
+        let query_set = self.device.create_query_set(&wgpu::QuerySetDescriptor {
+            label: None,
+            ty,
+            count,
+        });
+
+        Ok(crate::GpuQuerySet::new(query_set))
+    }
+
     /// Create a bind group layout
     #[napi]
     pub fn create_bind_group_layout(&self, descriptor: crate::BindGroupLayoutDescriptor) -> Result<crate::GpuBindGroupLayout> {
@@ -834,6 +854,51 @@ impl GpuCommandEncoder {
             pass.draw_indexed(0..index_count, 0, 0..1);
 
             drop(pass);
+            Ok(())
+        } else {
+            Err(Error::from_reason("Command encoder already finished"))
+        }
+    }
+
+    /// Write a timestamp to a query set
+    /// query_set: the query set to write to
+    /// query_index: the index of the query to write (0 to count-1)
+    #[napi]
+    pub fn write_timestamp(
+        &mut self,
+        query_set: &crate::GpuQuerySet,
+        query_index: u32,
+    ) -> Result<()> {
+        if let Some(ref mut enc) = self.encoder {
+            enc.write_timestamp(&query_set.query_set, query_index);
+            Ok(())
+        } else {
+            Err(Error::from_reason("Command encoder already finished"))
+        }
+    }
+
+    /// Resolve query results to a buffer
+    /// query_set: the query set to resolve
+    /// first_query: the first query index to resolve
+    /// query_count: the number of queries to resolve
+    /// destination: the buffer to write results to
+    /// destination_offset: the byte offset in the destination buffer
+    #[napi]
+    pub fn resolve_query_set(
+        &mut self,
+        query_set: &crate::GpuQuerySet,
+        first_query: u32,
+        query_count: u32,
+        destination: &crate::GpuBuffer,
+        destination_offset: u32,
+    ) -> Result<()> {
+        if let Some(ref mut enc) = self.encoder {
+            enc.resolve_query_set(
+                &query_set.query_set,
+                first_query..first_query + query_count,
+                &destination.buffer,
+                destination_offset as u64,
+            );
             Ok(())
         } else {
             Err(Error::from_reason("Command encoder already finished"))

@@ -66,7 +66,7 @@ impl GpuAdapter {
             .request_device(
                 &wgpu::DeviceDescriptor {
                     label: None,
-                    required_features: wgpu::Features::empty(),
+                    required_features: wgpu::Features::TIMESTAMP_QUERY,
                     required_limits: wgpu::Limits::default(),
                 },
                 None,

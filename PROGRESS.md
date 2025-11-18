@@ -1,10 +1,10 @@
 # Development Progress
 
-## Latest Update: Multiple Render Targets (MRT)! ✅
+## Latest Update: Query Sets & Timestamp Queries! ✅
 
 **Date**: 2024-11-18
-**Status**: ~96% Complete
-**Milestone**: MRT and G-buffer rendering complete!
+**Status**: ~98% Complete
+**Milestone**: Timestamp queries and GPU profiling support complete!
 
 ---
 
@@ -33,9 +33,10 @@
   - Buffer-to-buffer copying
   - Buffer-to-texture uploading
   - Texture-to-buffer readback
-- **Bind Groups**: ✅ NEW!
+- **Bind Groups**:
   - Mixed resources (buffers, textures, samplers)
   - Texture and sampler binding in shaders
+- **Query Sets**: Timestamp queries for GPU profiling ✅ NEW!
 
 ### Render Pipeline ✅
 - Render pipeline creation with vertex/fragment shaders
@@ -85,7 +86,8 @@ Position: RGBA(0, 0, 0, 255), Normal: RGBA(128, 128, 255, 255), Albedo: RGBA(127
 - `examples/cube.js` - 3D cube with depth testing
 - `examples/transparency.js` - Alpha blending with overlapping quads
 - `examples/msaa.js` - Multi-sample anti-aliasing (4x MSAA)
-- `examples/mrt.js` - Multiple render targets (G-buffer) ✅ NEW!
+- `examples/mrt.js` - Multiple render targets (G-buffer)
+- `examples/timestamp-queries.js` - GPU profiling with timestamp queries ✅ NEW!
 
 ---
 
@@ -237,7 +239,7 @@ device.poll(forceWait)
 
 ### Phase 5: Advanced Features (Priority: LOW)
 - [x] Multiple render targets (MRT) ✅ COMPLETE
-- [ ] Query sets (timestamp, occlusion)
+- [x] Query sets (timestamp queries) ✅ COMPLETE
 - [ ] Render bundles
 - [ ] Window surface integration
 
@@ -302,8 +304,9 @@ All tests passing ✅
 | Blend modes | ✅ | ✅ |
 | MSAA | ✅ | ✅ |
 | MRT | ✅ | ✅ |
+| Query sets | ✅ | ✅ |
 | Window rendering | ❌ | ✅ |
-| Completion | ~96% | ~95% |
+| Completion | ~98% | ~95% |
 
 ---
 
