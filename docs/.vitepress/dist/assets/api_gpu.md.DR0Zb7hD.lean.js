@@ -1,0 +1,1 @@
+import{_ as i,c as a,o as n,ag as e}from"./chunks/framework.Cycwnjj0.js";const c=JSON.parse('{"title":"GPU","description":"","frontmatter":{},"headers":[],"relativePath":"api/gpu.md","filePath":"api/gpu.md"}'),p={name:"api/gpu.md"};function l(h,s,t,r,k,d){return n(),a("div",null,[...s[0]||(s[0]=[e("",48)])])}const g=i(p,[["render",l]]);export{c as __pageData,g as default};

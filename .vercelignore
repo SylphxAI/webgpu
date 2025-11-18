@@ -1,0 +1,13 @@
+node_modules
+target
+*.node
+examples
+test
+src
+build.rs
+Cargo.toml
+Cargo.lock
+.cargo
+REFACTORING.md
+TESTING.md
+COVERAGE.md

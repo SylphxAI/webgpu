@@ -51,10 +51,15 @@
     "test:node": "node test/basic.test.js",
     "test:watch": "bun test --watch",
     "test:coverage": "bun test --coverage",
-    "version": "napi version"
+    "version": "napi version",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
   },
   "devDependencies": {
-    "@napi-rs/cli": "^2.18.0"
+    "@napi-rs/cli": "^2.18.0",
+    "vercel": "^48.10.3",
+    "vitepress": "^1.6.4"
   },
   "packageManager": "npm@10.2.5",
   "files": [
