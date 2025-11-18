@@ -47,7 +47,10 @@
     "build": "napi build --platform --release",
     "build:debug": "napi build --platform",
     "prepublishOnly": "napi prepublish -t npm",
-    "test": "node test/basic.test.js",
+    "test": "bun test",
+    "test:node": "node test/basic.test.js",
+    "test:watch": "bun test --watch",
+    "test:coverage": "bun test --coverage",
     "version": "napi version"
   },
   "devDependencies": {
