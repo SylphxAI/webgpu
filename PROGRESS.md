@@ -1,10 +1,10 @@
 # Development Progress
 
-## Latest Update: Render Pipeline + Texture Operations Complete! ✅
+## Latest Update: Textured Rendering Complete! ✅
 
 **Date**: 2024-11-18
-**Status**: ~80% Complete
-**Milestone**: Full compute + render pipelines with texture operations!
+**Status**: ~85% Complete
+**Milestone**: Full texture support with bind groups and sampling!
 
 ---
 
@@ -31,8 +31,11 @@
 - **Samplers**: Filtering modes, address modes, LOD control
 - **Copy Operations**:
   - Buffer-to-buffer copying
-  - Buffer-to-texture uploading ✅ NEW!
-  - Texture-to-buffer readback ✅ NEW!
+  - Buffer-to-texture uploading
+  - Texture-to-buffer readback
+- **Bind Groups**: ✅ NEW!
+  - Mixed resources (buffers, textures, samplers)
+  - Texture and sampler binding in shaders
 
 ### Render Pipeline ✅ NEW!
 - Render pipeline creation with vertex/fragment shaders
@@ -52,12 +55,16 @@ Center pixel: RGBA(255, 0, 0, 255) ✅ RED TRIANGLE VERIFIED!
 
 // Texture: Checkerboard upload
 All 16 pixels match round-trip ✅ VERIFIED!
+
+// Textured quad: Sampling with bind groups
+Center pixel: RGBA(0, 0, 255, 255) ✅ BLUE TEXTURE VERIFIED!
 ```
 
 **Working examples**:
 - `examples/compute.js` - GPU compute shader
 - `examples/triangle.js` - Render red triangle with readback
 - `examples/texture-upload.js` - Upload checkerboard pattern
+- `examples/textured-quad.js` - Render textured quad with sampling ✅ NEW!
 
 ---
 
@@ -201,9 +208,9 @@ device.poll(forceWait)
 - [x] Indexed rendering
 - [x] Texture copy operations
 
-### Phase 4: Advanced Features (Priority: MEDIUM - Next)
-- [ ] Depth/stencil attachments
-- [ ] Bind groups with textures/samplers
+### Phase 4: Advanced Features (Priority: MEDIUM)
+- [x] Bind groups with textures/samplers ✅ COMPLETE
+- [ ] Depth/stencil attachments (Next)
 - [ ] Multi-sample anti-aliasing (MSAA)
 - [ ] Blend modes and color write masks
 
@@ -217,13 +224,12 @@ device.poll(forceWait)
 
 ## Known Limitations
 
-1. **Sequential buffer binding** - Bind groups bind buffers starting from index 0
-2. **No buffer offset/size control** - Binds entire buffer (offset=0, size=None)
-3. **No texture/sampler binding in bind groups** - Only buffer bindings supported
-4. **No depth/stencil yet** - Only color attachments
-5. **No blend modes** - Uses default replace blend
+1. **No buffer offset/size control** - Binds entire buffer (offset=0, size=None)
+2. **No depth/stencil yet** - Only color attachments
+3. **No blend modes** - Uses default replace blend
+4. **No MSAA** - Only single-sample rendering
 
-These will be addressed in Phase 4.
+These will be addressed in Phase 4-5.
 
 ---
 
@@ -250,11 +256,12 @@ Rust's borrow checker makes it difficult to expose certain WebGPU objects:
 ## Testing
 
 ```bash
-npm test                      # Unit tests
-npm run build                 # Build native module
-node examples/compute.js      # GPU compute: vector addition
-node examples/triangle.js     # GPU render: red triangle
+npm test                         # Unit tests
+npm run build                    # Build native module
+node examples/compute.js         # GPU compute: vector addition
+node examples/triangle.js        # GPU render: red triangle
 node examples/texture-upload.js  # Texture upload: checkerboard
+node examples/textured-quad.js   # Textured rendering with sampling
 ```
 
 All tests passing ✅
@@ -272,8 +279,9 @@ All tests passing ✅
 | Texture/Sampler | ✅ | ✅ |
 | Texture copy ops | ✅ | ✅ |
 | Indexed rendering | ✅ | ✅ |
+| Bind groups (tex/samp) | ✅ | ✅ |
 | Window rendering | ❌ | ✅ |
-| Completion | ~80% | ~95% |
+| Completion | ~85% | ~95% |
 
 ---
 
