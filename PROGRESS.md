@@ -1,10 +1,10 @@
 # Development Progress
 
-## Latest Update: Depth/Stencil Support Complete! ✅
+## Latest Update: Blend Modes & Transparency! ✅
 
 **Date**: 2024-11-18
-**Status**: ~90% Complete
-**Milestone**: Full depth testing with 3D rendering support!
+**Status**: ~92% Complete
+**Milestone**: Alpha blending and color write masks complete!
 
 ---
 
@@ -41,7 +41,9 @@
 - Render pipeline creation with vertex/fragment shaders
 - Vertex buffer layouts (auto-generated from formats with proper offsets)
 - Color attachments with clear colors
-- **Depth/stencil attachments** ✅ NEW!
+- Depth/stencil attachments
+- **Blend modes** (alpha, additive, premultiplied) ✅ NEW!
+- **Color write masks** (per-channel control) ✅ NEW!
 - Render pass execution (inline, no lifetime issues)
 - Indexed rendering support
 
@@ -62,6 +64,9 @@ Center pixel: RGBA(0, 0, 255, 255) ✅ BLUE TEXTURE VERIFIED!
 
 // 3D cube: Depth testing
 Pipeline accepts depth24plus format ✅ DEPTH TESTING VERIFIED!
+
+// Transparency: Alpha blending
+Center pixel: RGBA(0, 0, 128, 255) ✅ ALPHA BLENDING VERIFIED!
 ```
 
 **Working examples**:
@@ -69,7 +74,8 @@ Pipeline accepts depth24plus format ✅ DEPTH TESTING VERIFIED!
 - `examples/triangle.js` - Render red triangle with readback
 - `examples/texture-upload.js` - Upload checkerboard pattern
 - `examples/textured-quad.js` - Render textured quad with sampling
-- `examples/cube.js` - 3D cube with depth testing ✅ NEW!
+- `examples/cube.js` - 3D cube with depth testing
+- `examples/transparency.js` - Alpha blending with overlapping quads ✅ NEW!
 
 ---
 
@@ -216,8 +222,8 @@ device.poll(forceWait)
 ### Phase 4: Advanced Features (Priority: MEDIUM)
 - [x] Bind groups with textures/samplers ✅ COMPLETE
 - [x] Depth/stencil attachments ✅ COMPLETE
+- [x] Blend modes and color write masks ✅ COMPLETE
 - [ ] Multi-sample anti-aliasing (MSAA) (Next)
-- [ ] Blend modes and color write masks
 
 ### Phase 5: Advanced Features (Priority: LOW)
 - [ ] Query sets (timestamp, occlusion)
@@ -230,8 +236,7 @@ device.poll(forceWait)
 ## Known Limitations
 
 1. **No buffer offset/size control** - Binds entire buffer (offset=0, size=None)
-2. **No blend modes** - Uses default replace blend
-3. **No MSAA** - Only single-sample rendering
+2. **No MSAA** - Only single-sample rendering
 
 These will be addressed in Phase 4-5.
 
@@ -285,8 +290,9 @@ All tests passing ✅
 | Indexed rendering | ✅ | ✅ |
 | Bind groups (tex/samp) | ✅ | ✅ |
 | Depth/stencil | ✅ | ✅ |
+| Blend modes | ✅ | ✅ |
 | Window rendering | ❌ | ✅ |
-| Completion | ~90% | ~95% |
+| Completion | ~92% | ~95% |
 
 ---
 

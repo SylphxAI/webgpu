@@ -192,7 +192,9 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4f {
     shaderModule,
     'fs_main',
     ['rgba8unorm'],
-    'depth24plus' // depth/stencil format
+    'depth24plus', // depth/stencil format
+    null,          // default blend mode
+    null           // default write mask
   )
   console.log('✓ Pipeline created')
 

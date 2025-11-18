@@ -401,6 +401,8 @@ impl GpuDevice {
     /// vertex_formats: array of format strings for vertex attributes
     /// fragment_targets: array of format strings for color targets
     /// depth_stencil_format: optional depth/stencil format (e.g., "depth24plus")
+    /// blend_mode: optional blend mode ("replace", "alpha", "additive", "premultiplied")
+    /// write_mask: optional color write mask (0-15, default 15 = all channels)
     #[napi]
     pub fn create_render_pipeline(
         &self,
@@ -413,6 +415,8 @@ impl GpuDevice {
         fragment_entry_point: Option<String>,
         fragment_formats: Vec<String>,
         depth_stencil_format: Option<String>,
+        blend_mode: Option<String>,
+        write_mask: Option<u32>,
     ) -> Result<crate::GpuRenderPipeline> {
         // Build vertex attributes from formats with proper offsets
         let mut current_offset: u64 = 0;
@@ -449,14 +453,24 @@ impl GpuDevice {
             attributes: &attributes,
         };
 
+        // Parse blend mode and write mask
+        let blend_state = blend_mode
+            .as_ref()
+            .map(|mode| parse_blend_mode(mode))
+            .unwrap_or(wgpu::BlendState::REPLACE);
+
+        let color_write_mask = write_mask
+            .map(|mask| wgpu::ColorWrites::from_bits(mask).unwrap_or(wgpu::ColorWrites::ALL))
+            .unwrap_or(wgpu::ColorWrites::ALL);
+
         // Build fragment targets
         let targets: Vec<Option<wgpu::ColorTargetState>> = fragment_formats
             .iter()
             .map(|format| {
                 Some(wgpu::ColorTargetState {
                     format: crate::pipeline::parse_texture_format(format),
-                    blend: Some(wgpu::BlendState::REPLACE),
-                    write_mask: wgpu::ColorWrites::ALL,
+                    blend: Some(blend_state),
+                    write_mask: color_write_mask,
                 })
             })
             .collect();
@@ -534,6 +548,27 @@ fn parse_blend_operation(op: &str) -> wgpu::BlendOperation {
         "min" => wgpu::BlendOperation::Min,
         "max" => wgpu::BlendOperation::Max,
         _ => wgpu::BlendOperation::Add,
+    }
+}
+
+fn parse_blend_mode(mode: &str) -> wgpu::BlendState {
+    match mode {
+        "replace" => wgpu::BlendState::REPLACE,
+        "alpha" => wgpu::BlendState::ALPHA_BLENDING,
+        "additive" => wgpu::BlendState {
+            color: wgpu::BlendComponent {
+                src_factor: wgpu::BlendFactor::One,
+                dst_factor: wgpu::BlendFactor::One,
+                operation: wgpu::BlendOperation::Add,
+            },
+            alpha: wgpu::BlendComponent {
+                src_factor: wgpu::BlendFactor::One,
+                dst_factor: wgpu::BlendFactor::One,
+                operation: wgpu::BlendOperation::Add,
+            },
+        },
+        "premultiplied" => wgpu::BlendState::PREMULTIPLIED_ALPHA_BLENDING,
+        _ => wgpu::BlendState::REPLACE,
     }
 }
 

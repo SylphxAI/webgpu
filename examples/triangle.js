@@ -43,7 +43,9 @@ fn fs_main() -> @location(0) vec4f {
     shaderModule,
     'fs_main',
     ['rgba8unorm'], // render target format
-    null // no depth/stencil
+    null, // no depth/stencil
+    null, // default blend mode (replace)
+    null  // default write mask (all channels)
   )
   console.log('✓ Render pipeline created')
 
