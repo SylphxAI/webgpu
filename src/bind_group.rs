@@ -38,6 +38,16 @@ impl GpuBindGroupLayout {
 // Note: Bind group creation simplified to avoid napi-rs External/reference issues
 // Use create_bind_group_buffers on GpuDevice instead
 
+/// Bind group entry for mixed resources
+#[napi(object)]
+pub struct BindGroupEntry {
+    pub binding: u32,
+    pub resource_type: String, // "buffer", "texture", "sampler"
+    pub buffer_index: Option<u32>,
+    pub texture_index: Option<u32>,
+    pub sampler_index: Option<u32>,
+}
+
 /// Bind group
 #[napi]
 pub struct GpuBindGroup {

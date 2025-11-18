@@ -94,7 +94,8 @@ fn fs_main() -> @location(0) vec4f {
     [vertexBuffer],
     3, // vertex count
     [textureView],
-    [[0.0, 0.0, 0.0, 1.0]] // Clear color: black
+    [[0.0, 0.0, 0.0, 1.0]], // Clear color: black
+    null // No bind groups
   )
   console.log('✓ Render pass executed')
 

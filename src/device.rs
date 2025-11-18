@@ -290,6 +290,67 @@ impl GpuDevice {
         Ok(crate::GpuBindGroup::new(bind_group))
     }
 
+    /// Create a bind group with mixed resources (buffers, textures, samplers)
+    #[napi]
+    pub fn create_bind_group(
+        &self,
+        label: Option<String>,
+        layout: &crate::GpuBindGroupLayout,
+        entries: Vec<crate::BindGroupEntry>,
+        buffers: Vec<&crate::GpuBuffer>,
+        textures: Vec<&crate::GpuTextureView>,
+        samplers: Vec<&crate::GpuSampler>,
+    ) -> Result<crate::GpuBindGroup> {
+        let bind_entries: Vec<_> = entries
+            .iter()
+            .map(|entry| {
+                let resource = match entry.resource_type.as_str() {
+                    "buffer" => {
+                        let idx = entry.buffer_index.unwrap_or(0) as usize;
+                        if idx >= buffers.len() {
+                            return Err(Error::from_reason(format!("Buffer index {} out of range", idx)));
+                        }
+                        wgpu::BindingResource::Buffer(wgpu::BufferBinding {
+                            buffer: &buffers[idx].buffer,
+                            offset: 0,
+                            size: None,
+                        })
+                    }
+                    "texture" => {
+                        let idx = entry.texture_index.unwrap_or(0) as usize;
+                        if idx >= textures.len() {
+                            return Err(Error::from_reason(format!("Texture index {} out of range", idx)));
+                        }
+                        wgpu::BindingResource::TextureView(&textures[idx].view)
+                    }
+                    "sampler" => {
+                        let idx = entry.sampler_index.unwrap_or(0) as usize;
+                        if idx >= samplers.len() {
+                            return Err(Error::from_reason(format!("Sampler index {} out of range", idx)));
+                        }
+                        wgpu::BindingResource::Sampler(&samplers[idx].sampler)
+                    }
+                    _ => {
+                        return Err(Error::from_reason(format!("Unknown resource type: {}", entry.resource_type)));
+                    }
+                };
+
+                Ok(wgpu::BindGroupEntry {
+                    binding: entry.binding,
+                    resource,
+                })
+            })
+            .collect::<Result<Vec<_>>>()?;
+
+        let bind_group = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: label.as_deref(),
+            layout: &layout.layout,
+            entries: &bind_entries,
+        });
+
+        Ok(crate::GpuBindGroup::new(bind_group))
+    }
+
     /// Create a pipeline layout
     #[napi]
     pub fn create_pipeline_layout(
@@ -507,6 +568,7 @@ impl GpuCommandEncoder {
     /// Execute a render pass (simplified inline execution)
     /// color_attachments: array of texture views to render to
     /// clear_colors: optional array of [r, g, b, a] values for clearing
+    /// bind_groups: optional array of bind groups to set
     #[napi]
     pub fn render_pass(
         &mut self,
@@ -515,6 +577,7 @@ impl GpuCommandEncoder {
         vertex_count: u32,
         color_attachments: Vec<&crate::GpuTextureView>,
         clear_colors: Option<Vec<Vec<f64>>>,
+        bind_groups: Option<Vec<&crate::GpuBindGroup>>,
     ) -> Result<()> {
         if let Some(ref mut enc) = self.encoder {
             // Build color attachments
@@ -557,6 +620,13 @@ impl GpuCommandEncoder {
             });
 
             pass.set_pipeline(&pipeline.pipeline);
+
+            // Set bind groups
+            if let Some(groups) = bind_groups {
+                for (index, group) in groups.iter().enumerate() {
+                    pass.set_bind_group(index as u32, &group.bind_group, &[]);
+                }
+            }
 
             // Set vertex buffers
             for (index, buffer) in vertex_buffers.iter().enumerate() {
@@ -583,6 +653,7 @@ impl GpuCommandEncoder {
         index_count: u32,
         color_attachments: Vec<&crate::GpuTextureView>,
         clear_colors: Option<Vec<Vec<f64>>>,
+        bind_groups: Option<Vec<&crate::GpuBindGroup>>,
     ) -> Result<()> {
         if let Some(ref mut enc) = self.encoder {
             // Build color attachments
@@ -625,6 +696,13 @@ impl GpuCommandEncoder {
             });
 
             pass.set_pipeline(&pipeline.pipeline);
+
+            // Set bind groups
+            if let Some(groups) = bind_groups {
+                for (index, group) in groups.iter().enumerate() {
+                    pass.set_bind_group(index as u32, &group.bind_group, &[]);
+                }
+            }
 
             // Set vertex buffers
             for (index, buffer) in vertex_buffers.iter().enumerate() {
