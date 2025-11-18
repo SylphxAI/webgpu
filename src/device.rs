@@ -403,6 +403,7 @@ impl GpuDevice {
     /// depth_stencil_format: optional depth/stencil format (e.g., "depth24plus")
     /// blend_mode: optional blend mode ("replace", "alpha", "additive", "premultiplied")
     /// write_mask: optional color write mask (0-15, default 15 = all channels)
+    /// sample_count: optional MSAA sample count (1, 2, 4, 8, default 1)
     #[napi]
     pub fn create_render_pipeline(
         &self,
@@ -417,6 +418,7 @@ impl GpuDevice {
         depth_stencil_format: Option<String>,
         blend_mode: Option<String>,
         write_mask: Option<u32>,
+        sample_count: Option<u32>,
     ) -> Result<crate::GpuRenderPipeline> {
         // Build vertex attributes from formats with proper offsets
         let mut current_offset: u64 = 0;
@@ -496,6 +498,13 @@ impl GpuDevice {
             }
         });
 
+        // Configure MSAA sample count
+        let multisample_state = wgpu::MultisampleState {
+            count: sample_count.unwrap_or(1),
+            mask: !0,
+            alpha_to_coverage_enabled: false,
+        };
+
         let pipeline = self.device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: label.as_deref(),
             layout: layout.map(|l| l.layout.as_ref()),
@@ -507,7 +516,7 @@ impl GpuDevice {
             fragment,
             primitive: wgpu::PrimitiveState::default(),
             depth_stencil,
-            multisample: wgpu::MultisampleState::default(),
+            multisample: multisample_state,
             multiview: None,
         });
 
@@ -620,11 +629,12 @@ impl GpuCommandEncoder {
     }
 
     /// Execute a render pass (simplified inline execution)
-    /// color_attachments: array of texture views to render to
+    /// color_attachments: array of texture views to render to (MSAA textures if using MSAA)
     /// clear_colors: optional array of [r, g, b, a] values for clearing
     /// bind_groups: optional array of bind groups to set
     /// depth_stencil_attachment: optional depth/stencil texture view
     /// clear_depth: optional depth clear value (0.0 to 1.0)
+    /// resolve_targets: optional array of texture views to resolve MSAA to (must match color_attachments length)
     #[napi]
     pub fn render_pass(
         &mut self,
@@ -636,6 +646,7 @@ impl GpuCommandEncoder {
         bind_groups: Option<Vec<&crate::GpuBindGroup>>,
         depth_stencil_attachment: Option<&crate::GpuTextureView>,
         clear_depth: Option<f64>,
+        resolve_targets: Option<Vec<&crate::GpuTextureView>>,
     ) -> Result<()> {
         if let Some(ref mut enc) = self.encoder {
             // Build color attachments
@@ -658,9 +669,18 @@ impl GpuCommandEncoder {
                         wgpu::Color::BLACK
                     };
 
+                    // Get resolve target if MSAA is being used
+                    let resolve_target = resolve_targets.as_ref().and_then(|targets| {
+                        if i < targets.len() {
+                            Some(&*targets[i].view)
+                        } else {
+                            None
+                        }
+                    });
+
                     Some(wgpu::RenderPassColorAttachment {
                         view: &view.view,
-                        resolve_target: None,
+                        resolve_target,
                         ops: wgpu::Operations {
                             load: wgpu::LoadOp::Clear(clear_color),
                             store: wgpu::StoreOp::Store,
@@ -726,6 +746,7 @@ impl GpuCommandEncoder {
         bind_groups: Option<Vec<&crate::GpuBindGroup>>,
         depth_stencil_attachment: Option<&crate::GpuTextureView>,
         clear_depth: Option<f64>,
+        resolve_targets: Option<Vec<&crate::GpuTextureView>>,
     ) -> Result<()> {
         if let Some(ref mut enc) = self.encoder {
             // Build color attachments
@@ -748,9 +769,18 @@ impl GpuCommandEncoder {
                         wgpu::Color::BLACK
                     };
 
+                    // Get resolve target if MSAA is being used
+                    let resolve_target = resolve_targets.as_ref().and_then(|targets| {
+                        if i < targets.len() {
+                            Some(&*targets[i].view)
+                        } else {
+                            None
+                        }
+                    });
+
                     Some(wgpu::RenderPassColorAttachment {
                         view: &view.view,
-                        resolve_target: None,
+                        resolve_target,
                         ops: wgpu::Operations {
                             load: wgpu::LoadOp::Clear(clear_color),
                             store: wgpu::StoreOp::Store,

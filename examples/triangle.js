@@ -45,7 +45,8 @@ fn fs_main() -> @location(0) vec4f {
     ['rgba8unorm'], // render target format
     null, // no depth/stencil
     null, // default blend mode (replace)
-    null  // default write mask (all channels)
+    null, // default write mask (all channels)
+    null  // no MSAA (sample_count = 1)
   )
   console.log('✓ Render pipeline created')
 
@@ -98,7 +99,10 @@ fn fs_main() -> @location(0) vec4f {
     3, // vertex count
     [textureView],
     [[0.0, 0.0, 0.0, 1.0]], // Clear color: black
-    null // No bind groups
+    null, // No bind groups
+    null, // No depth/stencil
+    null, // No depth clear
+    null  // No MSAA resolve targets
   )
   console.log('✓ Render pass executed')
 

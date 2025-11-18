@@ -158,7 +158,8 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4f {
     ['rgba8unorm'],
     null, // no depth/stencil
     null, // default blend mode
-    null  // default write mask
+    null, // default write mask
+    null  // no MSAA
   )
   console.log('✓ Pipeline created')
 
@@ -221,7 +222,10 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4f {
     6, // index count
     [renderView],
     [[0.2, 0.2, 0.2, 1.0]], // Dark gray background
-    [bindGroup] // Bind group with texture and sampler
+    [bindGroup], // Bind group with texture and sampler
+    null,        // No depth/stencil
+    null,        // No depth clear
+    null         // No MSAA resolve targets
   )
   console.log('✓ Textured quad rendered')
 

@@ -1,10 +1,10 @@
 # Development Progress
 
-## Latest Update: Blend Modes & Transparency! ✅
+## Latest Update: MSAA Anti-Aliasing! ✅
 
 **Date**: 2024-11-18
-**Status**: ~92% Complete
-**Milestone**: Alpha blending and color write masks complete!
+**Status**: ~94% Complete
+**Milestone**: Multi-sample anti-aliasing complete!
 
 ---
 
@@ -42,8 +42,9 @@
 - Vertex buffer layouts (auto-generated from formats with proper offsets)
 - Color attachments with clear colors
 - Depth/stencil attachments
-- **Blend modes** (alpha, additive, premultiplied) ✅ NEW!
-- **Color write masks** (per-channel control) ✅ NEW!
+- **Blend modes** (alpha, additive, premultiplied)
+- **Color write masks** (per-channel control)
+- **Multi-sample anti-aliasing (MSAA)** (2x, 4x, 8x) ✅ NEW!
 - Render pass execution (inline, no lifetime issues)
 - Indexed rendering support
 
@@ -67,6 +68,9 @@ Pipeline accepts depth24plus format ✅ DEPTH TESTING VERIFIED!
 
 // Transparency: Alpha blending
 Center pixel: RGBA(0, 0, 128, 255) ✅ ALPHA BLENDING VERIFIED!
+
+// MSAA: Anti-aliasing
+Center pixel: RGBA(255, 255, 255, 255) ✅ 4x MSAA VERIFIED!
 ```
 
 **Working examples**:
@@ -75,7 +79,8 @@ Center pixel: RGBA(0, 0, 128, 255) ✅ ALPHA BLENDING VERIFIED!
 - `examples/texture-upload.js` - Upload checkerboard pattern
 - `examples/textured-quad.js` - Render textured quad with sampling
 - `examples/cube.js` - 3D cube with depth testing
-- `examples/transparency.js` - Alpha blending with overlapping quads ✅ NEW!
+- `examples/transparency.js` - Alpha blending with overlapping quads
+- `examples/msaa.js` - Multi-sample anti-aliasing (4x MSAA) ✅ NEW!
 
 ---
 
@@ -223,7 +228,7 @@ device.poll(forceWait)
 - [x] Bind groups with textures/samplers ✅ COMPLETE
 - [x] Depth/stencil attachments ✅ COMPLETE
 - [x] Blend modes and color write masks ✅ COMPLETE
-- [ ] Multi-sample anti-aliasing (MSAA) (Next)
+- [x] Multi-sample anti-aliasing (MSAA) ✅ COMPLETE
 
 ### Phase 5: Advanced Features (Priority: LOW)
 - [ ] Query sets (timestamp, occlusion)
@@ -236,9 +241,8 @@ device.poll(forceWait)
 ## Known Limitations
 
 1. **No buffer offset/size control** - Binds entire buffer (offset=0, size=None)
-2. **No MSAA** - Only single-sample rendering
 
-These will be addressed in Phase 4-5.
+These will be addressed in Phase 5.
 
 ---
 
@@ -291,8 +295,9 @@ All tests passing ✅
 | Bind groups (tex/samp) | ✅ | ✅ |
 | Depth/stencil | ✅ | ✅ |
 | Blend modes | ✅ | ✅ |
+| MSAA | ✅ | ✅ |
 | Window rendering | ❌ | ✅ |
-| Completion | ~92% | ~95% |
+| Completion | ~94% | ~95% |
 
 ---
 

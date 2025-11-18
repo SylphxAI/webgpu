@@ -50,7 +50,8 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4f {
     ['rgba8unorm'],
     null,     // no depth/stencil
     'alpha',  // alpha blending mode
-    null      // all channels
+    null,     // all channels
+    null      // no MSAA
   )
   console.log('✓ Pipeline created with alpha blending')
 

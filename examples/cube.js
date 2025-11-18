@@ -194,7 +194,8 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4f {
     ['rgba8unorm'],
     'depth24plus', // depth/stencil format
     null,          // default blend mode
-    null           // default write mask
+    null,          // default write mask
+    null           // no MSAA
   )
   console.log('✓ Pipeline created')
 
@@ -245,7 +246,8 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4f {
     [[0.1, 0.1, 0.1, 1.0]], // Dark background
     [bindGroup],
     depthView, // Depth attachment
-    1.0 // Clear depth to 1.0
+    1.0,       // Clear depth to 1.0
+    null       // No MSAA resolve targets
   )
   console.log('✓ Cube rendered with depth testing')
 
