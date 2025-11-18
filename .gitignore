@@ -7,9 +7,6 @@ index.d.ts
 # Dependencies
 node_modules/
 
-# Cargo lock for libraries
-Cargo.lock
-
 # npm
 npm-debug.log
 package-lock.json
