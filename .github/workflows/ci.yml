@@ -72,7 +72,7 @@ jobs:
             -v ${{ github.workspace }}:/build \
             -w /build \
             ${{ matrix.settings.docker }} \
-            sh -c "curl -fsSL https://bun.sh/install | bash && export PATH=\$HOME/.bun/bin:\$PATH && bun install && bun run build --target ${{ matrix.settings.target }}"
+            sh -c "npm install && npm run build -- --target ${{ matrix.settings.target }}"
 
       - name: Build (macOS ARM64)
         if: ${{ !matrix.settings.docker && matrix.settings.target == 'aarch64-apple-darwin' }}
