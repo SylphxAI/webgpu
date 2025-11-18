@@ -1,10 +1,10 @@
 # Development Progress
 
-## Latest Update: Render Pipeline Implemented! ✅
+## Latest Update: Render Pipeline + Texture Operations Complete! ✅
 
 **Date**: 2024-11-18
-**Status**: ~70% Complete
-**Milestone**: Both compute and render pipelines working!
+**Status**: ~80% Complete
+**Milestone**: Full compute + render pipelines with texture operations!
 
 ---
 
@@ -25,20 +25,39 @@
 - Compute pass execution
 - Queue operations (submit, write buffer, poll)
 
-### Resource Management ✅ (NEW!)
+### Resource Management ✅
 - **Textures**: Create textures with format, size, usage
 - **Texture Views**: Create views for binding to shaders
 - **Samplers**: Filtering modes, address modes, LOD control
-- **Copy Operations**: Buffer-to-buffer copying
+- **Copy Operations**:
+  - Buffer-to-buffer copying
+  - Buffer-to-texture uploading ✅ NEW!
+  - Texture-to-buffer readback ✅ NEW!
 
-### Verified GPU Computation ✅ (NEW!)
+### Render Pipeline ✅ NEW!
+- Render pipeline creation with vertex/fragment shaders
+- Vertex buffer layouts (auto-generated from formats)
+- Color attachments with clear colors
+- Render pass execution (inline, no lifetime issues)
+- Indexed rendering support
+
+### Verified GPU Operations ✅
 ```javascript
-// Complete working example with result verification
+// Compute: Vector addition
 Input:  [1, 2, 3, 4, 5] + [10, 20, 30, 40, 50]
 Output: [11, 22, 33, 44, 55] ✅ VERIFIED!
+
+// Render: Triangle rendering
+Center pixel: RGBA(255, 0, 0, 255) ✅ RED TRIANGLE VERIFIED!
+
+// Texture: Checkerboard upload
+All 16 pixels match round-trip ✅ VERIFIED!
 ```
 
-**Full working example with verification**: `examples/compute.js`
+**Working examples**:
+- `examples/compute.js` - GPU compute shader
+- `examples/triangle.js` - Render red triangle with readback
+- `examples/texture-upload.js` - Upload checkerboard pattern
 
 ---
 
@@ -122,12 +141,33 @@ device.createBindGroupBuffers(label, layout, buffers) -> BindGroup
 ```javascript
 device.createPipelineLayout(label, bindGroupLayouts) -> PipelineLayout
 device.createComputePipeline(label, layout, module, entryPoint) -> ComputePipeline
+device.createRenderPipeline(
+  label, layout,
+  vertexShader, vertexEntry, vertexFormats,
+  fragmentShader, fragmentEntry, fragmentFormats
+) -> RenderPipeline
+```
+
+#### Textures & Samplers
+```javascript
+device.createTexture(descriptor) -> Texture
+texture.createView(label) -> TextureView
+device.createSampler(descriptor) -> Sampler
+```
+
+#### Copy Operations
+```javascript
+device.copyBufferToBuffer(encoder, src, srcOff, dst, dstOff, size)
+device.copyBufferToTexture(encoder, src, srcOff, bytesPerRow, rowsPerImage, dst, mipLevel, originX, originY, originZ, width, height, depth)
+device.copyTextureToBuffer(encoder, src, mipLevel, originX, originY, originZ, dst, dstOff, bytesPerRow, rowsPerImage, width, height, depth)
 ```
 
 #### Command Encoding
 ```javascript
 device.createCommandEncoder() -> CommandEncoder
 encoder.computePass(pipeline, bindGroups, x, y?, z?)
+encoder.renderPass(pipeline, vertexBuffers, vertexCount, colorAttachments, clearColors?)
+encoder.renderPassIndexed(pipeline, vertexBuffers, indexBuffer, indexFormat, indexCount, colorAttachments, clearColors?)
 encoder.finish() -> CommandBuffer
 device.queueSubmit(commandBuffer)
 device.poll(forceWait)
@@ -152,29 +192,38 @@ device.poll(forceWait)
 - [x] Texture views
 - [x] Samplers
 
-### Phase 3: Render Pipeline (Priority: HIGH - IN PROGRESS)
-- [ ] Render pipeline creation
-- [ ] Vertex buffer layouts
-- [ ] Fragment shaders
-- [ ] Color attachments
-- [ ] Depth/stencil
-- [ ] Render pass execution
+### Phase 3: Render Pipeline ✅ COMPLETE
+- [x] Render pipeline creation
+- [x] Vertex buffer layouts
+- [x] Fragment shaders
+- [x] Color attachments
+- [x] Render pass execution
+- [x] Indexed rendering
+- [x] Texture copy operations
 
-### Phase 4: Advanced Features (Priority: LOW)
-- [ ] Query sets
+### Phase 4: Advanced Features (Priority: MEDIUM - Next)
+- [ ] Depth/stencil attachments
+- [ ] Bind groups with textures/samplers
+- [ ] Multi-sample anti-aliasing (MSAA)
+- [ ] Blend modes and color write masks
+
+### Phase 5: Advanced Features (Priority: LOW)
+- [ ] Query sets (timestamp, occlusion)
 - [ ] Render bundles
 - [ ] Window surface integration
+- [ ] Multiple render targets (MRT)
 
 ---
 
 ## Known Limitations
 
-1. **No render pipeline yet** - Only compute pipelines work currently
-2. **Sequential buffer binding** - Bind groups bind buffers starting from index 0
-3. **No buffer offset/size control** - Binds entire buffer (offset=0, size=None)
-4. **No texture/sampler binding** - Only buffer bindings supported
+1. **Sequential buffer binding** - Bind groups bind buffers starting from index 0
+2. **No buffer offset/size control** - Binds entire buffer (offset=0, size=None)
+3. **No texture/sampler binding in bind groups** - Only buffer bindings supported
+4. **No depth/stencil yet** - Only color attachments
+5. **No blend modes** - Uses default replace blend
 
-These will be addressed in Phase 2 and 3.
+These will be addressed in Phase 4.
 
 ---
 
@@ -201,9 +250,11 @@ Rust's borrow checker makes it difficult to expose certain WebGPU objects:
 ## Testing
 
 ```bash
-npm test              # Unit tests
-npm run build         # Build native module
-node examples/compute.js   # Run compute shader example
+npm test                      # Unit tests
+npm run build                 # Build native module
+node examples/compute.js      # GPU compute: vector addition
+node examples/triangle.js     # GPU render: red triangle
+node examples/texture-upload.js  # Texture upload: checkerboard
 ```
 
 All tests passing ✅
@@ -217,11 +268,12 @@ All tests passing ✅
 | Binary size | 1.7MB | 87MB |
 | Build time | 11 sec | 3 hours |
 | Compute pipeline | ✅ | ✅ |
+| Render pipeline | ✅ | ✅ |
 | Texture/Sampler | ✅ | ✅ |
-| Copy operations | ✅ | ✅ |
-| Render pipeline | 🚧 | ✅ |
+| Texture copy ops | ✅ | ✅ |
+| Indexed rendering | ✅ | ✅ |
 | Window rendering | ❌ | ✅ |
-| Completion | ~70% | ~95% |
+| Completion | ~80% | ~95% |
 
 ---
 
