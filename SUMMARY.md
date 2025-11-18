@@ -1,12 +1,12 @@
 # WebGPU Node.js Binding - Development Summary
 
-## 🎉 Major Milestone: 80% Complete!
+## 🎉 Major Milestone: 85% Complete!
 
 從 Dawn (C++) 遷移到 wgpu (Rust) + napi-rs 的現代化 WebGPU 綁定
 
 ---
 
-## ✅ 已完成功能 (80%)
+## ✅ 已完成功能 (85%)
 
 ### 核心 GPU 操作
 - ✅ GPU 實例創建
@@ -41,6 +41,9 @@
   - Buffer-to-Buffer
   - **Buffer-to-Texture** 上傳紋理數據
   - **Texture-to-Buffer** 回讀渲染結果
+- ✅ **Bind Groups**: ✅ NEW!
+  - 混合資源（緩衝區、紋理、採樣器）
+  - 紋理和採樣器在 Shader 中綁定
 
 ### Queue Operations
 - ✅ Command Encoding
@@ -57,7 +60,7 @@
 | **二進制大小** | 1.7 MB | 87 MB | **50x 更小** |
 | **編譯時間** | 11 秒 | 3 小時 | **18x 更快** |
 | **工具鏈** | Cargo only | depot_tools + gclient + cmake + ninja | **極簡** |
-| **完成度** | 80% | 95% | 快速追趕中 |
+| **完成度** | 85% | 95% | 快速追趕中 |
 
 ---
 
@@ -74,6 +77,9 @@ Center pixel: RGBA(255, 0, 0, 255) ✅ 三角形已渲染！
 
 // 3. Texture Upload - 棋盤格紋理
 All 16 pixels match round-trip ✅ 上傳成功！
+
+// 4. Textured Quad - 紋理採樣與綁定
+Center pixel: RGBA(0, 0, 255, 255) ✅ 藍色紋理驗證！
 ```
 
 **運行示例**:
@@ -81,6 +87,7 @@ All 16 pixels match round-trip ✅ 上傳成功！
 node examples/compute.js        # GPU 計算
 node examples/triangle.js       # 三角形渲染
 node examples/texture-upload.js # 紋理上傳
+node examples/textured-quad.js  # 紋理渲染與採樣 ✅ NEW!
 ```
 
 ---
@@ -214,14 +221,14 @@ poll(forceWait)
 
 ---
 
-## 📈 下一步 (20% 剩餘)
+## 📈 下一步 (15% 剩餘)
 
 ### 高優先級
 - [x] ~~Copy 操作~~ ✅ 完成
 - [x] ~~Index buffers~~ ✅ 完成
 - [x] ~~三角形渲染示例~~ ✅ 完成
-- [ ] Bind groups with textures and samplers
-- [ ] Depth/stencil attachments
+- [x] ~~Bind groups with textures/samplers~~ ✅ 完成
+- [ ] Depth/stencil attachments (下一個)
 
 ### 中優先級
 - [ ] Query sets (timestamp, occlusion)
@@ -271,6 +278,6 @@ npm run example  # 運行示例
 ---
 
 **開發時間**: 1 天
-**完成度**: 80%
+**完成度**: 85%
 **性能**: 產品級
-**狀態**: Compute + Render Pipeline 完全可用，紋理操作已驗證
+**狀態**: 完整紋理支持，Bind Groups 可用，紋理採樣已驗證
