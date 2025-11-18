@@ -1,0 +1,30 @@
+# Build artifacts
+target/
+*.node
+index.js
+index.d.ts
+
+# Dependencies
+node_modules/
+
+# Cargo lock for libraries
+Cargo.lock
+
+# npm
+npm-debug.log
+package-lock.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test output
+coverage/
+.nyc_output/
