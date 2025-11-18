@@ -54,6 +54,18 @@ impl GpuBuffer {
         self.buffer.unmap();
     }
 
+    /// Write data to buffer using mapped memory
+    #[napi]
+    pub async fn write_buffer(&self, data: Buffer) -> Result<()> {
+        // For buffers created with MAP_WRITE, we can map and write
+        // But for now, we'll use the queue.write_buffer approach which is simpler
+        // This requires the buffer to have COPY_DST usage
+
+        // Note: This implementation requires passing the queue, but we don't have it
+        // For now, we'll use a different approach - create buffer with mapped_at_creation
+        Err(Error::from_reason("writeBuffer not yet implemented - use device.queueWriteBuffer instead"))
+    }
+
     /// Destroy the buffer
     #[napi]
     pub fn destroy(&self) {

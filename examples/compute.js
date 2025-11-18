@@ -19,18 +19,23 @@ async function main() {
 
     // Create buffers
     const size = input1.byteLength
-    const buffer1 = device.createBuffer(size, bufferUsage.storage | bufferUsage.copy_dst, false)
-    const buffer2 = device.createBuffer(size, bufferUsage.storage | bufferUsage.copy_dst, false)
+    const buffer1 = device.createBuffer(size, bufferUsage.storage | bufferUsage.copyDst, false)
+    const buffer2 = device.createBuffer(size, bufferUsage.storage | bufferUsage.copyDst, false)
     const resultBuffer = device.createBuffer(
         size,
-        bufferUsage.storage | bufferUsage.copy_src,
+        bufferUsage.storage | bufferUsage.copySrc,
         false
     )
     const readBuffer = device.createBuffer(
         size,
-        bufferUsage.copy_dst | bufferUsage.map_read,
+        bufferUsage.copyDst | bufferUsage.mapRead,
         false
     )
+
+    // Write input data
+    device.queueWriteBuffer(buffer1, 0, Buffer.from(input1.buffer))
+    device.queueWriteBuffer(buffer2, 0, Buffer.from(input2.buffer))
+    console.log('\n✓ Input data written to buffers')
 
     // Compute shader: simple vector addition
     const shaderCode = `
@@ -48,12 +53,68 @@ async function main() {
     `
 
     const shaderModule = device.createShaderModule(shaderCode)
-    console.log('\n✓ Shader compiled')
+    console.log('✓ Shader compiled')
 
-    // TODO: Complete compute pipeline setup once implemented
+    // Create bind group layout
+    const bindGroupLayout = device.createBindGroupLayout({
+        label: 'Compute Bind Group Layout',
+        entries: [
+            {
+                binding: 0,
+                visibility: 0x4, // COMPUTE
+                bufferType: 'read-only-storage',
+            },
+            {
+                binding: 1,
+                visibility: 0x4, // COMPUTE
+                bufferType: 'read-only-storage',
+            },
+            {
+                binding: 2,
+                visibility: 0x4, // COMPUTE
+                bufferType: 'storage',
+            },
+        ],
+    })
+    console.log('✓ Bind group layout created')
 
-    console.log('\n⚠️  Note: Compute pipeline implementation in progress')
-    console.log('This example demonstrates the API structure.')
+    // Create pipeline layout
+    const pipelineLayout = device.createPipelineLayout('Compute Pipeline Layout', [bindGroupLayout])
+    console.log('✓ Pipeline layout created')
+
+    // Create compute pipeline
+    const pipeline = device.createComputePipeline(
+        'Vector Addition Pipeline',
+        pipelineLayout,
+        shaderModule,
+        'main'
+    )
+    console.log('✓ Compute pipeline created')
+
+    // Create bind group
+    const bindGroup = device.createBindGroupBuffers(
+        'Compute Bind Group',
+        bindGroupLayout,
+        [buffer1, buffer2, resultBuffer]
+    )
+    console.log('✓ Bind group created')
+
+    // Create command encoder and execute compute pass
+    const encoder = device.createCommandEncoder()
+    encoder.computePass(pipeline, [bindGroup], input1.length)
+    const commandBuffer = encoder.finish()
+    console.log('✓ Commands encoded')
+
+    // Submit to queue
+    device.queueSubmit(commandBuffer)
+    device.poll(true)
+    console.log('✓ GPU work complete\n')
+
+    // TODO: Add copy from resultBuffer to readBuffer once copyBufferToBuffer is implemented
+    // For now, we just show the pipeline is working
+
+    console.log('✅ Compute pipeline successfully executed!')
+    console.log('Note: Buffer reading to verify results will be added in next iteration')
 
     // Cleanup
     buffer1.destroy()
