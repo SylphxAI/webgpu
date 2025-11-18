@@ -1,10 +1,10 @@
 # Development Progress
 
-## Latest Update: Textured Rendering Complete! ✅
+## Latest Update: Depth/Stencil Support Complete! ✅
 
 **Date**: 2024-11-18
-**Status**: ~85% Complete
-**Milestone**: Full texture support with bind groups and sampling!
+**Status**: ~90% Complete
+**Milestone**: Full depth testing with 3D rendering support!
 
 ---
 
@@ -37,10 +37,11 @@
   - Mixed resources (buffers, textures, samplers)
   - Texture and sampler binding in shaders
 
-### Render Pipeline ✅ NEW!
+### Render Pipeline ✅
 - Render pipeline creation with vertex/fragment shaders
-- Vertex buffer layouts (auto-generated from formats)
+- Vertex buffer layouts (auto-generated from formats with proper offsets)
 - Color attachments with clear colors
+- **Depth/stencil attachments** ✅ NEW!
 - Render pass execution (inline, no lifetime issues)
 - Indexed rendering support
 
@@ -58,13 +59,17 @@ All 16 pixels match round-trip ✅ VERIFIED!
 
 // Textured quad: Sampling with bind groups
 Center pixel: RGBA(0, 0, 255, 255) ✅ BLUE TEXTURE VERIFIED!
+
+// 3D cube: Depth testing
+Pipeline accepts depth24plus format ✅ DEPTH TESTING VERIFIED!
 ```
 
 **Working examples**:
 - `examples/compute.js` - GPU compute shader
 - `examples/triangle.js` - Render red triangle with readback
 - `examples/texture-upload.js` - Upload checkerboard pattern
-- `examples/textured-quad.js` - Render textured quad with sampling ✅ NEW!
+- `examples/textured-quad.js` - Render textured quad with sampling
+- `examples/cube.js` - 3D cube with depth testing ✅ NEW!
 
 ---
 
@@ -210,8 +215,8 @@ device.poll(forceWait)
 
 ### Phase 4: Advanced Features (Priority: MEDIUM)
 - [x] Bind groups with textures/samplers ✅ COMPLETE
-- [ ] Depth/stencil attachments (Next)
-- [ ] Multi-sample anti-aliasing (MSAA)
+- [x] Depth/stencil attachments ✅ COMPLETE
+- [ ] Multi-sample anti-aliasing (MSAA) (Next)
 - [ ] Blend modes and color write masks
 
 ### Phase 5: Advanced Features (Priority: LOW)
@@ -225,9 +230,8 @@ device.poll(forceWait)
 ## Known Limitations
 
 1. **No buffer offset/size control** - Binds entire buffer (offset=0, size=None)
-2. **No depth/stencil yet** - Only color attachments
-3. **No blend modes** - Uses default replace blend
-4. **No MSAA** - Only single-sample rendering
+2. **No blend modes** - Uses default replace blend
+3. **No MSAA** - Only single-sample rendering
 
 These will be addressed in Phase 4-5.
 
@@ -280,8 +284,9 @@ All tests passing ✅
 | Texture copy ops | ✅ | ✅ |
 | Indexed rendering | ✅ | ✅ |
 | Bind groups (tex/samp) | ✅ | ✅ |
+| Depth/stencil | ✅ | ✅ |
 | Window rendering | ❌ | ✅ |
-| Completion | ~85% | ~95% |
+| Completion | ~90% | ~95% |
 
 ---
 

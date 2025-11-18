@@ -42,7 +42,8 @@ fn fs_main() -> @location(0) vec4f {
     ['float32x2'], // vertex format: 2D positions
     shaderModule,
     'fs_main',
-    ['rgba8unorm'] // render target format
+    ['rgba8unorm'], // render target format
+    null // no depth/stencil
   )
   console.log('✓ Render pipeline created')
 

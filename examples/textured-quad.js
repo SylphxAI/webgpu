@@ -155,7 +155,8 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4f {
     ['float32x2', 'float32x2'], // position + uv
     shaderModule,
     'fs_main',
-    ['rgba8unorm']
+    ['rgba8unorm'],
+    null // no depth/stencil
   )
   console.log('✓ Pipeline created')
 

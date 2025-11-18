@@ -400,6 +400,7 @@ impl GpuDevice {
     /// Create a render pipeline (simplified)
     /// vertex_formats: array of format strings for vertex attributes
     /// fragment_targets: array of format strings for color targets
+    /// depth_stencil_format: optional depth/stencil format (e.g., "depth24plus")
     #[napi]
     pub fn create_render_pipeline(
         &self,
@@ -411,29 +412,36 @@ impl GpuDevice {
         fragment_shader: Option<&GpuShaderModule>,
         fragment_entry_point: Option<String>,
         fragment_formats: Vec<String>,
+        depth_stencil_format: Option<String>,
     ) -> Result<crate::GpuRenderPipeline> {
-        // Build vertex attributes from formats
+        // Build vertex attributes from formats with proper offsets
+        let mut current_offset: u64 = 0;
         let attributes: Vec<wgpu::VertexAttribute> = vertex_formats
             .iter()
             .enumerate()
-            .map(|(i, format)| wgpu::VertexAttribute {
-                format: crate::pipeline::parse_vertex_format(format),
-                offset: 0, // Will be calculated properly later
-                shader_location: i as u32,
+            .map(|(i, format)| {
+                let vertex_format = crate::pipeline::parse_vertex_format(format);
+                let size = match vertex_format {
+                    wgpu::VertexFormat::Float32 => 4,
+                    wgpu::VertexFormat::Float32x2 => 8,
+                    wgpu::VertexFormat::Float32x3 => 12,
+                    wgpu::VertexFormat::Float32x4 => 16,
+                    _ => 4,
+                };
+
+                let attr = wgpu::VertexAttribute {
+                    format: vertex_format,
+                    offset: current_offset,
+                    shader_location: i as u32,
+                };
+
+                current_offset += size;
+                attr
             })
             .collect();
 
-        // Calculate stride
-        let stride: u64 = attributes
-            .iter()
-            .map(|attr| match attr.format {
-                wgpu::VertexFormat::Float32 => 4,
-                wgpu::VertexFormat::Float32x2 => 8,
-                wgpu::VertexFormat::Float32x3 => 12,
-                wgpu::VertexFormat::Float32x4 => 16,
-                _ => 4,
-            })
-            .sum();
+        // Stride is the total size of all attributes
+        let stride: u64 = current_offset;
 
         let vertex_buffer_layout = wgpu::VertexBufferLayout {
             array_stride: stride,
@@ -463,6 +471,17 @@ impl GpuDevice {
             None
         };
 
+        // Build depth/stencil state if format is provided
+        let depth_stencil = depth_stencil_format.as_ref().map(|format_str| {
+            wgpu::DepthStencilState {
+                format: crate::pipeline::parse_texture_format(format_str),
+                depth_write_enabled: true,
+                depth_compare: wgpu::CompareFunction::Less,
+                stencil: wgpu::StencilState::default(),
+                bias: wgpu::DepthBiasState::default(),
+            }
+        });
+
         let pipeline = self.device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: label.as_deref(),
             layout: layout.map(|l| l.layout.as_ref()),
@@ -473,7 +492,7 @@ impl GpuDevice {
             },
             fragment,
             primitive: wgpu::PrimitiveState::default(),
-            depth_stencil: None,
+            depth_stencil,
             multisample: wgpu::MultisampleState::default(),
             multiview: None,
         });
@@ -569,6 +588,8 @@ impl GpuCommandEncoder {
     /// color_attachments: array of texture views to render to
     /// clear_colors: optional array of [r, g, b, a] values for clearing
     /// bind_groups: optional array of bind groups to set
+    /// depth_stencil_attachment: optional depth/stencil texture view
+    /// clear_depth: optional depth clear value (0.0 to 1.0)
     #[napi]
     pub fn render_pass(
         &mut self,
@@ -578,6 +599,8 @@ impl GpuCommandEncoder {
         color_attachments: Vec<&crate::GpuTextureView>,
         clear_colors: Option<Vec<Vec<f64>>>,
         bind_groups: Option<Vec<&crate::GpuBindGroup>>,
+        depth_stencil_attachment: Option<&crate::GpuTextureView>,
+        clear_depth: Option<f64>,
     ) -> Result<()> {
         if let Some(ref mut enc) = self.encoder {
             // Build color attachments
@@ -611,10 +634,22 @@ impl GpuCommandEncoder {
                 })
                 .collect();
 
+            // Build depth/stencil attachment if provided
+            let depth_stencil = depth_stencil_attachment.map(|view| {
+                wgpu::RenderPassDepthStencilAttachment {
+                    view: &view.view,
+                    depth_ops: Some(wgpu::Operations {
+                        load: wgpu::LoadOp::Clear(clear_depth.unwrap_or(1.0) as f32),
+                        store: wgpu::StoreOp::Store,
+                    }),
+                    stencil_ops: None,
+                }
+            });
+
             let mut pass = enc.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: None,
                 color_attachments: &attachments,
-                depth_stencil_attachment: None,
+                depth_stencil_attachment: depth_stencil,
                 timestamp_writes: None,
                 occlusion_query_set: None,
             });
@@ -654,6 +689,8 @@ impl GpuCommandEncoder {
         color_attachments: Vec<&crate::GpuTextureView>,
         clear_colors: Option<Vec<Vec<f64>>>,
         bind_groups: Option<Vec<&crate::GpuBindGroup>>,
+        depth_stencil_attachment: Option<&crate::GpuTextureView>,
+        clear_depth: Option<f64>,
     ) -> Result<()> {
         if let Some(ref mut enc) = self.encoder {
             // Build color attachments
@@ -687,10 +724,22 @@ impl GpuCommandEncoder {
                 })
                 .collect();
 
+            // Build depth/stencil attachment if provided
+            let depth_stencil = depth_stencil_attachment.map(|view| {
+                wgpu::RenderPassDepthStencilAttachment {
+                    view: &view.view,
+                    depth_ops: Some(wgpu::Operations {
+                        load: wgpu::LoadOp::Clear(clear_depth.unwrap_or(1.0) as f32),
+                        store: wgpu::StoreOp::Store,
+                    }),
+                    stencil_ops: None,
+                }
+            });
+
             let mut pass = enc.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: None,
                 color_attachments: &attachments,
-                depth_stencil_attachment: None,
+                depth_stencil_attachment: depth_stencil,
                 timestamp_writes: None,
                 occlusion_query_set: None,
             });
