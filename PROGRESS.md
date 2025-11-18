@@ -1,10 +1,10 @@
 # Development Progress
 
-## Latest Update: Query Sets & Timestamp Queries! ✅
+## Latest Update: Indirect Draw & Dispatch! ✅
 
 **Date**: 2024-11-18
-**Status**: ~98% Complete
-**Milestone**: Timestamp queries and GPU profiling support complete!
+**Status**: ~99% Complete
+**Milestone**: Indirect draw/dispatch and GPU-driven rendering complete!
 
 ---
 
@@ -23,6 +23,7 @@
 - Pipeline layouts
 - Compute pipelines
 - Compute pass execution
+- **Indirect compute dispatch** (GPU-driven compute) ✅ NEW!
 - Queue operations (submit, write buffer, poll)
 
 ### Resource Management ✅
@@ -46,9 +47,11 @@
 - **Blend modes** (alpha, additive, premultiplied)
 - **Color write masks** (per-channel control)
 - **Multi-sample anti-aliasing (MSAA)** (2x, 4x, 8x)
-- **Multiple render targets (MRT)** (G-buffer, deferred rendering) ✅ NEW!
+- **Multiple render targets (MRT)** (G-buffer, deferred rendering)
 - Render pass execution (inline, no lifetime issues)
 - Indexed rendering support
+- **Indirect draw** (GPU-driven rendering) ✅ NEW!
+- **Indexed indirect draw** (GPU-driven indexed rendering) ✅ NEW!
 
 ### Verified GPU Operations ✅
 ```javascript
@@ -76,6 +79,12 @@ Center pixel: RGBA(255, 255, 255, 255) ✅ 4x MSAA VERIFIED!
 
 // MRT: Multiple render targets (G-buffer)
 Position: RGBA(0, 0, 0, 255), Normal: RGBA(128, 128, 255, 255), Albedo: RGBA(127, 64, 64, 255) ✅ MRT VERIFIED!
+
+// Indirect Draw: GPU-driven rendering
+Center pixel: RGBA(127, 63, 65, 255) ✅ INDIRECT DRAW VERIFIED!
+
+// Indirect Compute: GPU-driven dispatch
+0 + 0 = 0, 1 + 10 = 11, 2 + 20 = 22 ✅ INDIRECT COMPUTE VERIFIED!
 ```
 
 **Working examples**:
@@ -87,7 +96,9 @@ Position: RGBA(0, 0, 0, 255), Normal: RGBA(128, 128, 255, 255), Albedo: RGBA(127
 - `examples/transparency.js` - Alpha blending with overlapping quads
 - `examples/msaa.js` - Multi-sample anti-aliasing (4x MSAA)
 - `examples/mrt.js` - Multiple render targets (G-buffer)
-- `examples/timestamp-queries.js` - GPU profiling with timestamp queries ✅ NEW!
+- `examples/timestamp-queries.js` - GPU profiling with timestamp queries
+- `examples/indirect-draw.js` - GPU-driven rendering with indirect draw ✅ NEW!
+- `examples/indirect-compute.js` - GPU-driven compute dispatch ✅ NEW!
 
 ---
 
@@ -240,6 +251,7 @@ device.poll(forceWait)
 ### Phase 5: Advanced Features (Priority: LOW)
 - [x] Multiple render targets (MRT) ✅ COMPLETE
 - [x] Query sets (timestamp queries) ✅ COMPLETE
+- [x] Indirect draw/dispatch ✅ COMPLETE
 - [ ] Render bundles
 - [ ] Window surface integration
 
@@ -305,8 +317,9 @@ All tests passing ✅
 | MSAA | ✅ | ✅ |
 | MRT | ✅ | ✅ |
 | Query sets | ✅ | ✅ |
+| Indirect draw/dispatch | ✅ | ✅ |
 | Window rendering | ❌ | ✅ |
-| Completion | ~98% | ~95% |
+| Completion | ~99% | ~95% |
 
 ---
 

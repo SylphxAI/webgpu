@@ -648,6 +648,37 @@ impl GpuCommandEncoder {
         }
     }
 
+    /// Execute a compute pass with indirect dispatch
+    /// The indirect buffer contains dispatch parameters (workgroups_x, workgroups_y, workgroups_z)
+    #[napi]
+    pub fn compute_pass_indirect(
+        &mut self,
+        pipeline: &crate::GpuComputePipeline,
+        bind_groups: Vec<&crate::GpuBindGroup>,
+        indirect_buffer: &crate::GpuBuffer,
+        indirect_offset: u32,
+    ) -> Result<()> {
+        if let Some(ref mut enc) = self.encoder {
+            let mut pass = enc.begin_compute_pass(&wgpu::ComputePassDescriptor {
+                label: None,
+                timestamp_writes: None,
+            });
+
+            pass.set_pipeline(&pipeline.pipeline);
+
+            for (index, bind_group) in bind_groups.iter().enumerate() {
+                pass.set_bind_group(index as u32, &bind_group.bind_group, &[]);
+            }
+
+            pass.dispatch_workgroups_indirect(&indirect_buffer.buffer, indirect_offset as u64);
+
+            drop(pass);
+            Ok(())
+        } else {
+            Err(Error::from_reason("Command encoder already finished"))
+        }
+    }
+
     /// Execute a render pass (simplified inline execution)
     /// color_attachments: array of texture views to render to (MSAA textures if using MSAA)
     /// clear_colors: optional array of [r, g, b, a] values for clearing
@@ -852,6 +883,206 @@ impl GpuCommandEncoder {
 
             // Draw indexed
             pass.draw_indexed(0..index_count, 0, 0..1);
+
+            drop(pass);
+            Ok(())
+        } else {
+            Err(Error::from_reason("Command encoder already finished"))
+        }
+    }
+
+    /// Execute a render pass with indirect drawing
+    /// The indirect buffer contains draw parameters (vertex_count, instance_count, first_vertex, first_instance)
+    #[napi]
+    pub fn render_pass_indirect(
+        &mut self,
+        pipeline: &crate::GpuRenderPipeline,
+        vertex_buffers: Vec<&crate::GpuBuffer>,
+        indirect_buffer: &crate::GpuBuffer,
+        indirect_offset: u32,
+        color_attachments: Vec<&crate::GpuTextureView>,
+        clear_colors: Option<Vec<Vec<f64>>>,
+        bind_groups: Option<Vec<&crate::GpuBindGroup>>,
+        depth_stencil_attachment: Option<&crate::GpuTextureView>,
+        clear_depth: Option<f64>,
+        resolve_targets: Option<Vec<&crate::GpuTextureView>>,
+    ) -> Result<()> {
+        if let Some(ref mut enc) = self.encoder {
+            // Build color attachments (same as render_pass)
+            let attachments: Vec<_> = color_attachments
+                .iter()
+                .enumerate()
+                .map(|(i, view)| {
+                    let clear_color = if let Some(ref colors) = clear_colors {
+                        if i < colors.len() && colors[i].len() >= 4 {
+                            wgpu::Color {
+                                r: colors[i][0],
+                                g: colors[i][1],
+                                b: colors[i][2],
+                                a: colors[i][3],
+                            }
+                        } else {
+                            wgpu::Color::BLACK
+                        }
+                    } else {
+                        wgpu::Color::BLACK
+                    };
+
+                    let resolve_target = resolve_targets.as_ref().and_then(|targets| {
+                        if i < targets.len() {
+                            Some(&*targets[i].view)
+                        } else {
+                            None
+                        }
+                    });
+
+                    Some(wgpu::RenderPassColorAttachment {
+                        view: &view.view,
+                        resolve_target,
+                        ops: wgpu::Operations {
+                            load: wgpu::LoadOp::Clear(clear_color),
+                            store: wgpu::StoreOp::Store,
+                        },
+                    })
+                })
+                .collect();
+
+            let depth_stencil = depth_stencil_attachment.map(|view| {
+                wgpu::RenderPassDepthStencilAttachment {
+                    view: &view.view,
+                    depth_ops: Some(wgpu::Operations {
+                        load: wgpu::LoadOp::Clear(clear_depth.unwrap_or(1.0) as f32),
+                        store: wgpu::StoreOp::Store,
+                    }),
+                    stencil_ops: None,
+                }
+            });
+
+            let mut pass = enc.begin_render_pass(&wgpu::RenderPassDescriptor {
+                label: None,
+                color_attachments: &attachments,
+                depth_stencil_attachment: depth_stencil,
+                timestamp_writes: None,
+                occlusion_query_set: None,
+            });
+
+            pass.set_pipeline(&pipeline.pipeline);
+
+            if let Some(groups) = bind_groups {
+                for (index, group) in groups.iter().enumerate() {
+                    pass.set_bind_group(index as u32, &group.bind_group, &[]);
+                }
+            }
+
+            for (index, buffer) in vertex_buffers.iter().enumerate() {
+                pass.set_vertex_buffer(index as u32, buffer.buffer.slice(..));
+            }
+
+            pass.draw_indirect(&indirect_buffer.buffer, indirect_offset as u64);
+
+            drop(pass);
+            Ok(())
+        } else {
+            Err(Error::from_reason("Command encoder already finished"))
+        }
+    }
+
+    /// Execute a render pass with indexed indirect drawing
+    /// The indirect buffer contains draw parameters (index_count, instance_count, first_index, base_vertex, first_instance)
+    #[napi]
+    pub fn render_pass_indexed_indirect(
+        &mut self,
+        pipeline: &crate::GpuRenderPipeline,
+        vertex_buffers: Vec<&crate::GpuBuffer>,
+        index_buffer: &crate::GpuBuffer,
+        index_format: String,
+        indirect_buffer: &crate::GpuBuffer,
+        indirect_offset: u32,
+        color_attachments: Vec<&crate::GpuTextureView>,
+        clear_colors: Option<Vec<Vec<f64>>>,
+        bind_groups: Option<Vec<&crate::GpuBindGroup>>,
+        depth_stencil_attachment: Option<&crate::GpuTextureView>,
+        clear_depth: Option<f64>,
+        resolve_targets: Option<Vec<&crate::GpuTextureView>>,
+    ) -> Result<()> {
+        if let Some(ref mut enc) = self.encoder {
+            let attachments: Vec<_> = color_attachments
+                .iter()
+                .enumerate()
+                .map(|(i, view)| {
+                    let clear_color = if let Some(ref colors) = clear_colors {
+                        if i < colors.len() && colors[i].len() >= 4 {
+                            wgpu::Color {
+                                r: colors[i][0],
+                                g: colors[i][1],
+                                b: colors[i][2],
+                                a: colors[i][3],
+                            }
+                        } else {
+                            wgpu::Color::BLACK
+                        }
+                    } else {
+                        wgpu::Color::BLACK
+                    };
+
+                    let resolve_target = resolve_targets.as_ref().and_then(|targets| {
+                        if i < targets.len() {
+                            Some(&*targets[i].view)
+                        } else {
+                            None
+                        }
+                    });
+
+                    Some(wgpu::RenderPassColorAttachment {
+                        view: &view.view,
+                        resolve_target,
+                        ops: wgpu::Operations {
+                            load: wgpu::LoadOp::Clear(clear_color),
+                            store: wgpu::StoreOp::Store,
+                        },
+                    })
+                })
+                .collect();
+
+            let depth_stencil = depth_stencil_attachment.map(|view| {
+                wgpu::RenderPassDepthStencilAttachment {
+                    view: &view.view,
+                    depth_ops: Some(wgpu::Operations {
+                        load: wgpu::LoadOp::Clear(clear_depth.unwrap_or(1.0) as f32),
+                        store: wgpu::StoreOp::Store,
+                    }),
+                    stencil_ops: None,
+                }
+            });
+
+            let mut pass = enc.begin_render_pass(&wgpu::RenderPassDescriptor {
+                label: None,
+                color_attachments: &attachments,
+                depth_stencil_attachment: depth_stencil,
+                timestamp_writes: None,
+                occlusion_query_set: None,
+            });
+
+            pass.set_pipeline(&pipeline.pipeline);
+
+            if let Some(groups) = bind_groups {
+                for (index, group) in groups.iter().enumerate() {
+                    pass.set_bind_group(index as u32, &group.bind_group, &[]);
+                }
+            }
+
+            for (index, buffer) in vertex_buffers.iter().enumerate() {
+                pass.set_vertex_buffer(index as u32, buffer.buffer.slice(..));
+            }
+
+            let format = match index_format.as_str() {
+                "uint16" => wgpu::IndexFormat::Uint16,
+                "uint32" => wgpu::IndexFormat::Uint32,
+                _ => wgpu::IndexFormat::Uint16,
+            };
+            pass.set_index_buffer(index_buffer.buffer.slice(..), format);
+
+            pass.draw_indexed_indirect(&indirect_buffer.buffer, indirect_offset as u64);
 
             drop(pass);
             Ok(())
