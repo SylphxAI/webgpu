@@ -51,12 +51,14 @@
     "test:node": "node test/basic.test.js",
     "test:watch": "bun test --watch",
     "test:coverage": "bun test --coverage",
-    "version": "napi version",
+    "version": "changeset version && napi version",
+    "release": "changeset publish",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.29.7",
     "@napi-rs/cli": "^2.18.0",
     "vercel": "^48.10.3",
     "vitepress": "^1.6.4"

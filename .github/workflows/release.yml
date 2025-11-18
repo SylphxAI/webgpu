@@ -2,116 +2,16 @@ name: Release
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
 
 jobs:
-  build:
-    strategy:
-      fail-fast: false
-      matrix:
-        settings:
-          - host: macos-latest
-            target: x86_64-apple-darwin
-            build: npm run build -- --target x86_64-apple-darwin
-          - host: macos-latest
-            target: aarch64-apple-darwin
-            build: |
-              sudo rm -Rf /Library/Developer/CommandLineTools/SDKs/*;
-              export CC=$(xcrun -f clang);
-              export CXX=$(xcrun -f clang++);
-              SYSROOT=$(xcrun --sdk macosx --show-sdk-path);
-              export CFLAGS="-isysroot $SYSROOT -isystem $SYSROOT";
-              npm run build -- --target aarch64-apple-darwin
-          - host: ubuntu-latest
-            target: x86_64-unknown-linux-gnu
-            docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian
-            build: npm run build -- --target x86_64-unknown-linux-gnu
-          - host: ubuntu-latest
-            target: aarch64-unknown-linux-gnu
-            docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian-aarch64
-            build: npm run build -- --target aarch64-unknown-linux-gnu
-          - host: windows-latest
-            target: x86_64-pc-windows-msvc
-            build: npm run build -- --target x86_64-pc-windows-msvc
-
-    name: Build - ${{ matrix.settings.target }}
-    runs-on: ${{ matrix.settings.host }}
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.settings.target }}
-
-      - name: Cache cargo
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: ${{ matrix.settings.target }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Build
-        run: ${{ matrix.settings.build }}
-        shell: bash
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: bindings-${{ matrix.settings.target }}
-          path: '*.node'
-          if-no-files-found: error
-
-  publish:
-    name: Publish to NPM
-    needs: build
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          registry-url: 'https://registry.npmjs.org'
-
-      - name: Download all artifacts
-        uses: actions/download-artifact@v3
-        with:
-          path: artifacts
-
-      - name: Move artifacts to npm package
-        run: |
-          mkdir -p npm
-          for dir in artifacts/bindings-*; do
-            cp $dir/*.node npm/
-          done
-
-      - name: List artifacts
-        run: ls -lah npm/
-
-      - name: Install dependencies
-        run: npm install --ignore-scripts
-
-      - name: Publish to NPM
-        run: |
-          npm config set //registry.npmjs.org/:_authToken=$NPM_TOKEN
-          npm run artifacts
-          npm publish --access public
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+  release:
+    name: Release
+    uses: SylphxAI/.github/.github/workflows/publish-npm.yml@main
+    secrets:
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+    with:
+      build-command: "npm run build"
