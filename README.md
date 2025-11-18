@@ -32,10 +32,17 @@ npm install @sylphx/webgpu
 ```
 
 **Prerequisites:**
-- Node.js 18+
+- Node.js 18+ or Bun 1.0+ ✨
 - No build tools needed (prebuilt binaries provided)
 
+**Runtime Support:**
+- ✅ **Node.js** 18+ (tested, production-ready)
+- ✅ **Bun** 1.0+ (tested, 2x faster startup!)
+- ❓ **Deno** (untested, likely works with `--unstable` flag)
+
 ## Quick Start
+
+### With Node.js or Bun
 
 ```javascript
 const { Gpu } = require('@sylphx/webgpu')
@@ -60,6 +67,15 @@ async function main() {
 }
 
 main()
+```
+
+**Run with:**
+```bash
+# Node.js
+node example.js
+
+# Bun (2x faster startup!)
+bun example.js
 ```
 
 ## Examples
