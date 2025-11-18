@@ -13,9 +13,9 @@ jobs:
       fail-fast: false
       matrix:
         settings:
-          - host: macos-13
+          - host: macos-latest
             target: x86_64-apple-darwin
-            build: bun run build -- --target x86_64-apple-darwin
+            build: pnpm build -- --target x86_64-apple-darwin
           - host: macos-latest
             target: aarch64-apple-darwin
             build: |
@@ -24,25 +24,25 @@ jobs:
               export CXX=$(xcrun -f clang++);
               SYSROOT=$(xcrun --sdk macosx --show-sdk-path);
               export CFLAGS="-isysroot $SYSROOT -isystem $SYSROOT";
-              bun run build -- --target aarch64-apple-darwin
+              pnpm build -- --target aarch64-apple-darwin
           - host: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian
-            build: bun run build -- --target x86_64-unknown-linux-gnu
+            build: pnpm build --target x86_64-unknown-linux-gnu
           - host: ubuntu-latest
             target: aarch64-unknown-linux-gnu
             docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian-aarch64
-            build: bun run build -- --target aarch64-unknown-linux-gnu
+            build: pnpm build --target aarch64-unknown-linux-gnu
           - host: ubuntu-latest
             target: aarch64-unknown-linux-musl
             docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-alpine
-            build: bun run build -- --target aarch64-unknown-linux-musl
+            build: pnpm build --target aarch64-unknown-linux-musl
           - host: windows-latest
             target: x86_64-pc-windows-msvc
-            build: bun run build -- --target x86_64-pc-windows-msvc
+            build: pnpm build --target x86_64-pc-windows-msvc
           - host: windows-latest
             target: aarch64-pc-windows-msvc
-            build: bun run build -- --target aarch64-pc-windows-msvc
+            build: pnpm build --target aarch64-pc-windows-msvc
 
     name: Build - ${{ matrix.settings.target }}
     runs-on: ${{ matrix.settings.host }}
@@ -50,16 +50,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
         with:
-          bun-version: latest
+          version: 9
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          registry-url: https://registry.npmjs.org
+          cache: pnpm
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -80,7 +80,7 @@ jobs:
           key: ${{ matrix.settings.target }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Install dependencies
-        run: bun install
+        run: pnpm install
 
       - name: Build in docker
         if: ${{ matrix.settings.docker }}
@@ -89,11 +89,7 @@ jobs:
             -v ${{ github.workspace }}:/build \
             -w /build \
             ${{ matrix.settings.docker }} \
-            bash -c "apt-get update && apt-get install -y curl unzip && \
-            curl -fsSL https://bun.sh/install | bash && \
-            export PATH=\$HOME/.bun/bin:\$PATH && \
-            bun install && \
-            ${{ matrix.settings.build }}"
+            sh -c "corepack enable && corepack prepare pnpm@9.0.0 --activate && pnpm install && ${{ matrix.settings.build }}"
 
       - name: Build
         if: ${{ !matrix.settings.docker }}
@@ -117,19 +113,20 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
         with:
-          bun-version: latest
+          version: 9
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: pnpm
           registry-url: https://registry.npmjs.org
 
       - name: Install dependencies
-        run: bun install
+        run: pnpm install
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
@@ -137,7 +134,7 @@ jobs:
           path: artifacts
 
       - name: Move artifacts
-        run: bun run artifacts
+        run: pnpm artifacts
 
       - name: List packages
         run: ls -R ./npm
@@ -145,8 +142,8 @@ jobs:
       - name: Create Release Pull Request or Publish to npm
         uses: changesets/action@v1
         with:
-          version: bun run version-packages
-          publish: bun run release
+          version: pnpm changeset version
+          publish: pnpm release
           commit: 'chore(release): version packages'
           title: 'chore(release): version packages'
         env:

@@ -63,7 +63,7 @@
     "vercel": "^48.10.3",
     "vitepress": "^1.6.4"
   },
-  "packageManager": "npm@10.2.5",
+  "packageManager": "pnpm@9.0.0",
   "files": [
     "index.js",
     "index.d.ts"
