@@ -1,5 +1,11 @@
 # @sylphx/webgpu
 
+## 0.7.2
+
+### Patch Changes
+
+- Rebuild v0.7.1 binaries with automatic optionalDependencies version syncing. Previous releases (v0.7.0 and v0.7.1) had optionalDependencies pointing to old 0.6.0 binaries instead of matching the release version. The release workflow now automatically updates optionalDependencies after publishing platform packages.
+
 ## 0.7.1
 
 ### Patch Changes
