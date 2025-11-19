@@ -1,5 +1,13 @@
 # @sylphx/webgpu
 
+## 0.6.1
+
+### Patch Changes
+
+- Critical fix: Update optional dependencies to 0.6.0 native bindings
+
+  v0.6.0 had a packaging error where TypeScript definitions included beginComputePass() but native binaries were still 0.4.0 (without the method). This patch updates optional dependencies to correctly reference 0.6.0 native bindings.
+
 ## 0.6.0
 
 ### Minor Changes
