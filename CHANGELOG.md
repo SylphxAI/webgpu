@@ -1,5 +1,21 @@
 # @sylphx/webgpu
 
+## 0.8.1
+
+### Patch Changes
+
+- Fix createBindGroup resource mapping and add getBindGroupLayout methods
+
+  Fixes two critical bugs in v0.8.0:
+
+  1. **createBindGroup() fatal bug**: The previous implementation tried to sequentially consume resources from flat arrays without knowing which binding needs which resource type. This broke when bind groups had mixed resource types in non-sequential order.
+
+     Fixed by adding explicit `resource_type` field to BindGroupEntry. Each binding now explicitly specifies its resource type ("buffer" | "texture" | "sampler"), and resources are correctly mapped based on this field.
+
+  2. **Missing TypeScript definitions**: getBindGroupLayout() methods existed in Rust code but were not in TypeScript definitions (index.d.ts). Fixed by rebuilding native module to regenerate definitions.
+
+  All descriptor types have been audited - no other ExternalObject serialization issues found.
+
 ## 0.8.0
 
 ### Minor Changes
