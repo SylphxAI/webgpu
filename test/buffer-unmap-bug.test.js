@@ -47,20 +47,20 @@ async function verifyBufferUnmapFix() {
     buffer1.unmap()
     buffer1.destroy()
 
-    // Test 2: Using writeMappedRange() workaround (works)
-    console.log('📝 Test 2: Using writeMappedRange() workaround')
+    // Test 2: Alternative pattern using queue.writeBuffer (standard)
+    console.log('📝 Test 2: Using queue.writeBuffer (standard WebGPU)')
     const buffer2 = device.createBuffer({
         size: 16,
-        usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
-        mappedAtCreation: true
+        usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ
     })
 
     const data2 = new Float32Array([5, 6, 7, 8])
-    buffer2.writeMappedRange(Buffer.from(data2.buffer))
-    console.log('   ✅ Written via writeMappedRange:', Array.from(data2))
+    device.queue.writeBuffer(buffer2, 0, Buffer.from(data2.buffer))
+    console.log('   ✅ Written via queue.writeBuffer:', Array.from(data2))
 
-    buffer2.unmap()
-    console.log('   ✅ Buffer unmapped')
+    // Flush queue
+    const encoder = device.createCommandEncoder()
+    device.queue.submit(encoder.finish())
 
     await buffer2.mapAsync('READ')
     const readRange2 = buffer2.getMappedRange()  // Returns ArrayBuffer (WebGPU standard)
@@ -68,9 +68,9 @@ async function verifyBufferUnmapFix() {
     console.log('   📖 GPU data:', Array.from(readArr2))
 
     if (readArr2[0] === 5 && readArr2[1] === 6 && readArr2[2] === 7 && readArr2[3] === 8) {
-        console.log('   ✅ Workaround works correctly\n')
+        console.log('   ✅ queue.writeBuffer works correctly\n')
     } else {
-        console.log('   ❌ Workaround also broken!\n')
+        console.log('   ❌ queue.writeBuffer also broken!\n')
     }
 
     buffer2.unmap()

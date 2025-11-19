@@ -98,38 +98,6 @@ impl GpuBuffer {
         Ok(Buffer::from(vec))
     }
 
-    /// Write data to the mapped range
-    ///
-    /// Writes data from a Node.js Buffer to the GPU buffer's mapped memory.
-    /// Must be called while the buffer is mapped (after mapAsync or if created with mappedAtCreation: true).
-    /// After writing, call unmap() to make the data available to GPU operations.
-    ///
-    /// IMPLEMENTATION: Data is accumulated and written via queue.write_buffer() when unmap() is called.
-    ///
-    /// # Arguments
-    /// * `data` - The data to write
-    /// * `offset` - Byte offset into the buffer (optional, default 0)
-    #[napi(js_name = "writeMappedRange")]
-    pub fn write_mapped_range(&self, data: Buffer, offset: Option<u32>) -> Result<()> {
-        let offset = offset.unwrap_or(0) as u64;
-        let data_vec = data.as_ref().to_vec();
-
-        // Check bounds (buffer size check)
-        let buffer_size = self.buffer.size();
-        if offset + data_vec.len() as u64 > buffer_size {
-            return Err(Error::from_reason(format!(
-                "Data size ({} bytes) + offset ({} bytes) exceeds buffer size ({} bytes)",
-                data_vec.len(), offset, buffer_size
-            )));
-        }
-
-        // Store the write to be applied later in unmap() via queue.write_buffer()
-        let mut pending = self.pending_writes.lock()
-            .map_err(|_| Error::from_reason("Failed to lock pending writes"))?;
-        pending.push((offset, data_vec));
-
-        Ok(())
-    }
 
     /// Unmap the buffer
     ///

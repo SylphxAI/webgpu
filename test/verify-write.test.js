@@ -1,7 +1,7 @@
 const { Gpu, GPUBufferUsage } = require('../webgpu.js')
 
-async function verifyWriteMappedRange() {
-    console.log('🧪 Verifying writeMappedRange() actually writes to GPU...')
+async function verifyMappedWrite() {
+    console.log('🧪 Verifying standard getMappedRange() pattern writes to GPU...')
 
     const gpu = Gpu()
     const adapter = await gpu.requestAdapter()
@@ -15,10 +15,11 @@ async function verifyWriteMappedRange() {
         mappedAtCreation: true
     })
 
-    // Write data using writeMappedRange
-    const data = new Float32Array([1.0, 2.0, 3.0, 4.0])
-    buffer.writeMappedRange(Buffer.from(data.buffer))
-    console.log('   ✅ Written data:', Array.from(data))
+    // Standard WebGPU pattern: getMappedRange() + modify TypedArray
+    const range = buffer.getMappedRange()  // Returns ArrayBuffer
+    const view = new Float32Array(range)
+    view.set([1.0, 2.0, 3.0, 4.0])
+    console.log('   ✅ Written data:', Array.from(view))
 
     buffer.unmap()
     console.log('   ✅ Buffer unmapped')
@@ -39,10 +40,10 @@ async function verifyWriteMappedRange() {
     }
 
     buffer.unmap()
-    console.log('\n✅ TEST PASSED: writeMappedRange() correctly writes data to GPU')
+    console.log('\n✅ TEST PASSED: Standard getMappedRange() pattern correctly writes data to GPU')
 }
 
-verifyWriteMappedRange().catch(err => {
+verifyMappedWrite().catch(err => {
     console.error('❌ Test failed:', err)
     process.exit(1)
 })

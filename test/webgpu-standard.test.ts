@@ -210,24 +210,26 @@ describe('WebGPU Standard: Buffer Mapping', () => {
     // Standard: mapAsync('WRITE')
     await buffer.mapAsync('WRITE')
 
-    // Write using writeMappedRange (standard)
-    const data = new Float32Array([1, 2, 3, 4])
-    buffer.writeMappedRange(Buffer.from(data.buffer))
+    // Standard: Write using getMappedRange() + TypedArray
+    const range = buffer.getMappedRange()  // Returns ArrayBuffer
+    const view = new Float32Array(range)
+    view.set([1, 2, 3, 4])
 
     buffer.unmap()
     buffer.destroy()
   })
 
-  test('should use mappedAtCreation and writeMappedRange (standard)', () => {
+  test('should use mappedAtCreation (standard)', () => {
     const buffer = device.createBuffer({
       size: 16,
       usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
       mappedAtCreation: true
     })
 
-    // Standard: Write to mapped buffer
-    const data = new Float32Array([1.0, 2.0, 3.0, 4.0])
-    buffer.writeMappedRange(Buffer.from(data.buffer))
+    // Standard: Write to mapped buffer using getMappedRange()
+    const range = buffer.getMappedRange()  // Returns ArrayBuffer
+    const view = new Float32Array(range)
+    view.set([1.0, 2.0, 3.0, 4.0])
 
     // Standard: Unmap to flush changes
     buffer.unmap()

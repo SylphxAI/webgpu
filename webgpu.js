@@ -73,10 +73,6 @@ class GpuBuffer {
         return this._native.mapAsync(mode)
     }
 
-    writeMappedRange(data, offset) {
-        return this._native.writeMappedRange(data, offset)
-    }
-
     destroy() {
         return this._native.destroy()
     }
