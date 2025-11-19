@@ -1,5 +1,18 @@
 # @sylphx/webgpu
 
+## 0.9.1
+
+### Patch Changes
+
+- Fix critical mappedAtCreation bug where data was not being flushed to GPU
+
+  - Added `writeMappedRange(data, offset?)` method to GpuBuffer for writing to mapped buffers
+  - Fixed GPUBufferUsage constants mapping (now properly maps camelCase natives to UPPER_SNAKE_CASE)
+  - `getMappedRange()` returns a copy - modifications must use `writeMappedRange()` to write back to GPU
+  - `unmap()` now properly flushes data written via `writeMappedRange()`
+
+  **Breaking behavior fix**: Previously, data written to buffers created with `mappedAtCreation: true` was not being flushed to GPU. Now requires explicit `writeMappedRange()` call to write data to mapped buffers before `unmap()`.
+
 ## 0.9.0
 
 ### Minor Changes
