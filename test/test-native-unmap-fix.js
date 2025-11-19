@@ -27,7 +27,7 @@ async function testNativeUnmapFix() {
 
     // Get mapped range and write data
     const range = buffer.getMappedRange()
-    const arr = new Float32Array(range.buffer, range.byteOffset, 4)
+    const arr = new Float32Array(range, 0, 4)
     arr.set([1, 2, 3, 4])
 
     console.log('   ✅ Before unmap:', Array.from(arr))

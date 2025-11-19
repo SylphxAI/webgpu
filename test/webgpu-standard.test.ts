@@ -253,8 +253,8 @@ describe('WebGPU Standard: Buffer Mapping', () => {
 
     // Map for reading (this should wait for pending operations)
     await buffer.mapAsync('READ')
-    const readRange = buffer.getMappedRange()
-    const readView = new Float32Array(readRange.buffer, readRange.byteOffset, 4)
+    const readRange = buffer.getMappedRange()  // Returns ArrayBuffer (WebGPU standard)
+    const readView = new Float32Array(readRange, 0, 4)
 
     expect(readView[0]).toBe(1.0)
     expect(readView[1]).toBe(2.0)

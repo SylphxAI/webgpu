@@ -30,14 +30,25 @@ class GpuBuffer {
     }
 
     /**
-     * Get mapped range as a Buffer
+     * Get mapped range as an ArrayBuffer
      *
-     * Returns a Node.js Buffer representing the mapped GPU memory.
-     * Modifications to this buffer will be flushed to GPU when unmap() is called.
+     * Returns an ArrayBuffer representing the mapped GPU memory (WebGPU standard).
+     * Modifications to TypedArray views of this ArrayBuffer will be flushed to GPU when unmap() is called.
+     *
+     * Standard usage:
+     *   const arrayBuffer = buffer.getMappedRange()
+     *   const view = new Float32Array(arrayBuffer)
+     *   view[0] = 1.0  // Modifications are tracked
      */
     getMappedRange() {
+        // Native returns a Node.js Buffer (Uint8Array subclass)
+        // Store it for unmap()
         this._mappedRange = this._native.getMappedRange()
-        return this._mappedRange
+
+        // Return the underlying ArrayBuffer (WebGPU standard)
+        // The Buffer always uses the full ArrayBuffer (byteOffset=0, byteLength=buffer.byteLength)
+        // so we can safely return buffer.buffer
+        return this._mappedRange.buffer
     }
 
     /**

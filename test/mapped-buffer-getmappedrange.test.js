@@ -16,22 +16,22 @@ async function testGetMappedRange() {
     })
 
     // Get mapped range and write to it
-    const range = buffer.getMappedRange()
-    const view = new Float32Array(range.buffer)
+    const range = buffer.getMappedRange()  // Returns ArrayBuffer (WebGPU standard)
+    const view = new Float32Array(range)
     view[0] = 1.0
     view[1] = 2.0
     view[2] = 3.0
     view[3] = 4.0
     console.log('   ✅ Written data:', Array.from(view))
 
-    // Pass modified buffer back to unmap()
-    buffer.unmap(range)
+    // Unmap to flush changes to GPU
+    buffer.unmap()
     console.log('   ✅ Buffer unmapped with modified data')
 
     // Verify data was written by reading it back
     await buffer.mapAsync('READ')
-    const readRange = buffer.getMappedRange()
-    const readView = new Float32Array(readRange.buffer)
+    const readRange = buffer.getMappedRange()  // Returns ArrayBuffer (WebGPU standard)
+    const readView = new Float32Array(readRange)
     console.log('   📖 Read back data:', Array.from(readView))
 
     if (readView[0] === 1.0 && readView[1] === 2.0 && readView[2] === 3.0 && readView[3] === 4.0) {
@@ -50,15 +50,15 @@ async function testGetMappedRange() {
     })
 
     await buffer2.mapAsync('WRITE')
-    const range2 = buffer2.getMappedRange()
-    const view2 = new Float32Array(range2.buffer)
+    const range2 = buffer2.getMappedRange()  // Returns ArrayBuffer (WebGPU standard)
+    const view2 = new Float32Array(range2)
     view2[0] = 10.0
     view2[1] = 20.0
     view2[2] = 30.0
     view2[3] = 40.0
     console.log('   ✅ Written data:', Array.from(view2))
 
-    buffer2.unmap(range2)
+    buffer2.unmap()
     console.log('   ✅ Buffer unmapped with modified data')
 
     // Note: Cannot verify MAP_WRITE buffer by reading (would need separate read buffer + copy)
