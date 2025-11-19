@@ -25,8 +25,9 @@ impl GpuBindGroupLayout {
 #[napi(object)]
 pub struct BindGroupEntry {
     pub binding: u32,
-    pub offset: Option<i64>,      // For buffer bindings
-    pub size: Option<i64>,        // For buffer bindings
+    pub resource_type: String,    // "buffer" | "texture" | "sampler"
+    pub offset: Option<i64>,      // For buffer bindings only
+    pub size: Option<i64>,        // For buffer bindings only
 }
 
 /// Bind group - collection of resources bound to shaders

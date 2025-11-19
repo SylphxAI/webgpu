@@ -194,7 +194,7 @@ impl GpuDevice {
 
     /// Create a bind group following WebGPU spec
     /// Resources are passed separately to avoid napi-rs External serialization issues
-    /// Supports mixed buffer/texture/sampler entries in one call
+    /// Each entry specifies resource_type ("buffer" | "texture" | "sampler")
     #[napi(js_name = "createBindGroup")]
     pub fn create_bind_group(
         &self,
@@ -205,7 +205,7 @@ impl GpuDevice {
         textures: Option<Vec<&crate::GpuTextureView>>,
         samplers: Option<Vec<&crate::GpuSampler>>,
     ) -> Result<crate::GpuBindGroup> {
-        // Build bind group entries by matching binding numbers to resources
+        // Track resource indices for each type
         let mut buffer_idx = 0;
         let mut texture_idx = 0;
         let mut sampler_idx = 0;
@@ -213,63 +213,39 @@ impl GpuDevice {
         let wgpu_entries: Result<Vec<_>> = entries
             .iter()
             .map(|entry| {
-                // Determine resource type based on which index we're at
-                // This is a simplified approach - in a real implementation you'd want
-                // to explicitly specify the resource type per entry
-                let resource = if let Some(ref bufs) = buffers {
-                    if buffer_idx < bufs.len() {
-                        let buf = bufs[buffer_idx];
+                // Use resource_type to determine which resource array to pull from
+                let resource = match entry.resource_type.as_str() {
+                    "buffer" => {
+                        let bufs = buffers.as_ref()
+                            .ok_or_else(|| Error::from_reason("No buffers provided for buffer binding"))?;
+                        let buf = bufs.get(buffer_idx)
+                            .ok_or_else(|| Error::from_reason("Not enough buffers provided"))?;
                         buffer_idx += 1;
                         wgpu::BindingResource::Buffer(wgpu::BufferBinding {
                             buffer: &buf.buffer,
                             offset: entry.offset.unwrap_or(0) as u64,
                             size: entry.size.map(|s| std::num::NonZeroU64::new(s as u64)).flatten(),
                         })
-                    } else if let Some(ref texs) = textures {
-                        if texture_idx < texs.len() {
-                            let tex = texs[texture_idx];
-                            texture_idx += 1;
-                            wgpu::BindingResource::TextureView(&tex.view)
-                        } else if let Some(ref samps) = samplers {
-                            if sampler_idx < samps.len() {
-                                let samp = samps[sampler_idx];
-                                sampler_idx += 1;
-                                wgpu::BindingResource::Sampler(&samp.sampler)
-                            } else {
-                                return Err(Error::from_reason("Not enough resources for bind group entries"));
-                            }
-                        } else {
-                            return Err(Error::from_reason("Not enough resources for bind group entries"));
-                        }
-                    } else {
-                        return Err(Error::from_reason("Not enough resources for bind group entries"));
                     }
-                } else if let Some(ref texs) = textures {
-                    if texture_idx < texs.len() {
-                        let tex = texs[texture_idx];
+                    "texture" => {
+                        let texs = textures.as_ref()
+                            .ok_or_else(|| Error::from_reason("No textures provided for texture binding"))?;
+                        let tex = texs.get(texture_idx)
+                            .ok_or_else(|| Error::from_reason("Not enough textures provided"))?;
                         texture_idx += 1;
                         wgpu::BindingResource::TextureView(&tex.view)
-                    } else if let Some(ref samps) = samplers {
-                        if sampler_idx < samps.len() {
-                            let samp = samps[sampler_idx];
-                            sampler_idx += 1;
-                            wgpu::BindingResource::Sampler(&samp.sampler)
-                        } else {
-                            return Err(Error::from_reason("Not enough resources for bind group entries"));
-                        }
-                    } else {
-                        return Err(Error::from_reason("Not enough resources for bind group entries"));
                     }
-                } else if let Some(ref samps) = samplers {
-                    if sampler_idx < samps.len() {
-                        let samp = samps[sampler_idx];
+                    "sampler" => {
+                        let samps = samplers.as_ref()
+                            .ok_or_else(|| Error::from_reason("No samplers provided for sampler binding"))?;
+                        let samp = samps.get(sampler_idx)
+                            .ok_or_else(|| Error::from_reason("Not enough samplers provided"))?;
                         sampler_idx += 1;
                         wgpu::BindingResource::Sampler(&samp.sampler)
-                    } else {
-                        return Err(Error::from_reason("Not enough resources for bind group entries"));
                     }
-                } else {
-                    return Err(Error::from_reason("No resources provided for bind group"));
+                    _ => {
+                        return Err(Error::from_reason(format!("Invalid resource_type: {}", entry.resource_type)));
+                    }
                 };
 
                 Ok(wgpu::BindGroupEntry {
