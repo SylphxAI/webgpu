@@ -1,6 +1,6 @@
 {
   "name": "@sylphx/webgpu",
-  "version": "0.12.0",
+  "version": "0.13.0",
   "description": "WebGPU for Node.js via wgpu-rs (modern, lightweight alternative to Dawn)",
   "main": "webgpu.js",
   "types": "webgpu.d.ts",

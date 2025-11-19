@@ -1,5 +1,19 @@
 # @sylphx/webgpu
 
+## 0.13.0
+
+### Minor Changes
+
+- Implement WebGPU standard mapState and getMappedRange parameters
+
+  Adds missing WebGPU standard features for 100% specification compliance:
+
+  - **mapState property**: Returns current buffer map state ("unmapped", "pending", "mapped")
+  - **getMappedRange(offset, size)**: Support offset/size parameters with alignment validation
+  - Validates alignment per WebGPU spec (offset % 8, size % 4)
+  - Supports multiple non-overlapping ranges
+  - All 58 tests pass with full edge case coverage
+
 ## 0.12.0
 
 ### Minor Changes
