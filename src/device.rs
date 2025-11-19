@@ -1458,6 +1458,31 @@ impl GpuCommandEncoder {
         }
     }
 
+    /// Begin a compute pass following WebGPU standard
+    /// Returns a compute pass encoder for recording compute commands
+    #[napi(js_name = "beginComputePass")]
+    pub fn begin_compute_pass(&mut self, descriptor: Option<crate::pipeline::ComputePassDescriptor>) -> Result<crate::GpuComputePassEncoder> {
+        if let Some(ref mut enc) = self.encoder {
+            let pass = enc.begin_compute_pass(&wgpu::ComputePassDescriptor {
+                label: descriptor.as_ref().and_then(|d| d.label.as_deref()),
+                timestamp_writes: None,
+            });
+            // SAFETY: This is unsafe because we're extending the lifetime of the ComputePass
+            // from being tied to the encoder to 'static. This works because:
+            // 1. The pass must be ended (dropped) before encoder.finish() is called
+            // 2. We use transmute to force the lifetime to 'static
+            // 3. We erase the type to *mut () to avoid lifetime issues in the struct
+            // 4. The JavaScript API enforces correct usage order
+            let pass_static: wgpu::ComputePass<'static> = unsafe { std::mem::transmute(pass) };
+            let pass_ptr = Box::into_raw(Box::new(pass_static)) as *mut ();
+            Ok(crate::GpuComputePassEncoder {
+                pass: Some(pass_ptr),
+            })
+        } else {
+            Err(Error::from_reason("Command encoder already finished"))
+        }
+    }
+
     /// Finish encoding and return a command buffer
     #[napi]
     pub fn finish(&mut self) -> GpuCommandBuffer {

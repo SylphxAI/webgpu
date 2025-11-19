@@ -16,6 +16,7 @@ mod descriptors;
 mod queue;
 mod features;
 mod limits;
+mod compute_pass;
 
 pub use gpu::*;
 pub use adapter::*;
@@ -32,3 +33,4 @@ pub use descriptors::*;
 pub use queue::*;
 pub use features::*;
 pub use limits::*;
+pub use compute_pass::*;
