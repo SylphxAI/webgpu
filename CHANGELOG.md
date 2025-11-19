@@ -1,5 +1,27 @@
 # @sylphx/webgpu
 
+## 0.9.2
+
+### Patch Changes
+
+- Fix critical mappedAtCreation bug - data now correctly writes to GPU
+
+  **Root Cause**: `get_mapped_range_mut()` writes weren't being flushed to GPU memory
+
+  **Solution**: Hybrid approach based on buffer usage flags:
+
+  - Buffers with `COPY_DST`: Use `queue.write_buffer()` + `queue.submit()` + `device.poll()` (reliable, requires COPY_DST usage)
+  - Buffers without `COPY_DST`: Use mapped memory writes before unmap (WebGPU standard compliant for `mappedAtCreation`)
+
+  **API**: 100% WebGPU standard compliant - no breaking changes
+
+  - `buffer.writeMappedRange(data, offset?)` - accumulate writes
+  - `buffer.unmap()` - flush all writes to GPU
+
+  **Verified**: All tests pass with data correctly written and read back from GPU
+
+  **Previous versions affected**: v0.9.0, v0.9.1, v1.0.0 all had this bug
+
 ## 0.9.1
 
 ### Patch Changes
