@@ -54,6 +54,29 @@ impl GpuDevice {
         None // wgpu doesn't expose device labels after creation
     }
 
+    /// Push an error scope for error handling (WebGPU standard method)
+    /// NOTE: wgpu only supports "validation" and "out-of-memory" filters
+    #[napi(js_name = "pushErrorScope")]
+    pub fn push_error_scope(&self, filter: String) -> Result<()> {
+        let filter = match filter.as_str() {
+            "validation" => wgpu::ErrorFilter::Validation,
+            "out-of-memory" => wgpu::ErrorFilter::OutOfMemory,
+            "internal" => return Err(Error::from_reason("wgpu does not support 'internal' error filter")),
+            _ => return Err(Error::from_reason(format!("Invalid error filter: {}", filter))),
+        };
+        self.device.push_error_scope(filter);
+        Ok(())
+    }
+
+    /// Pop an error scope and return any error (WebGPU standard method)
+    #[napi(js_name = "popErrorScope")]
+    pub async fn pop_error_scope(&self) -> Result<Option<String>> {
+        match self.device.pop_error_scope().await {
+            Some(error) => Ok(Some(error.to_string())),
+            None => Ok(None),
+        }
+    }
+
     /// Create a GPU buffer
     #[napi(js_name = "createBuffer")]
     pub fn create_buffer(&self, descriptor: crate::BufferDescriptor) -> crate::GpuBuffer {
