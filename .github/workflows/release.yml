@@ -122,13 +122,20 @@ jobs:
         with:
           path: artifacts
 
-      - name: Move artifacts to root
-        run: mv artifacts/bindings-*/*.node .
+      - name: Create npm directories
+        run: |
+          mkdir -p npm/darwin-x64 npm/darwin-arm64 npm/linux-x64-gnu npm/linux-arm64-gnu npm/win32-x64-msvc npm/win32-arm64-msvc
 
-      - name: List artifacts
-        run: ls -la *.node
+      - name: Move artifacts into npm packages
+        run: |
+          mv artifacts/bindings-x86_64-apple-darwin/*.node npm/darwin-x64/
+          mv artifacts/bindings-aarch64-apple-darwin/*.node npm/darwin-arm64/
+          mv artifacts/bindings-x86_64-unknown-linux-gnu/*.node npm/linux-x64-gnu/
+          mv artifacts/bindings-aarch64-unknown-linux-gnu/*.node npm/linux-arm64-gnu/
+          mv artifacts/bindings-x86_64-pc-windows-msvc/*.node npm/win32-x64-msvc/
+          mv artifacts/bindings-aarch64-pc-windows-msvc/*.node npm/win32-arm64-msvc/
 
-      - name: Run prepublishOnly to create npm packages
+      - name: Run prepublishOnly to create package.json files
         run: bun run prepublishOnly
 
       - name: List packages
