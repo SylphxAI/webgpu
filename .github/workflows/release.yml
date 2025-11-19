@@ -135,8 +135,8 @@ jobs:
           mv artifacts/bindings-x86_64-pc-windows-msvc/*.node npm/win32-x64-msvc/
           mv artifacts/bindings-aarch64-pc-windows-msvc/*.node npm/win32-arm64-msvc/
 
-      - name: Run prepublishOnly to create package.json files
-        run: bun run prepublishOnly
+      - name: Create package.json files for platform packages
+        run: node scripts/create-platform-packages.js
 
       - name: List packages
         run: ls -R ./npm
