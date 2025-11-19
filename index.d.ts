@@ -387,27 +387,21 @@ export declare class GpuDevice {
   get limits(): GpuSupportedLimits
   /** Get the label of this device (WebGPU standard property) */
   get label(): string | null
+  /**
+   * Push an error scope for error handling (WebGPU standard method)
+   * NOTE: wgpu only supports "validation" and "out-of-memory" filters
+   */
+  pushErrorScope(filter: string): void
+  /** Pop an error scope and return any error (WebGPU standard method) */
+  popErrorScope(): Promise<string | null>
   /** Create a GPU buffer */
   createBuffer(descriptor: BufferDescriptor): GpuBuffer
   /** Create a shader module */
   createShaderModule(descriptor: ShaderModuleDescriptor): GpuShaderModule
   /** Create a command encoder */
   createCommandEncoder(descriptor?: CommandEncoderDescriptor | undefined | null): GpuCommandEncoder
-  /**
-   * Submit commands to the queue (deprecated - use device.queue.submit() instead)
-   * Note: This consumes the command buffer
-   */
-  queueSubmit(commandBuffer: GpuCommandBuffer): void
   /** Poll the device */
   poll(forceWait?: boolean | undefined | null): void
-  /** Write data to a buffer using the queue (deprecated - use device.queue.writeBuffer() instead) */
-  queueWriteBuffer(buffer: GpuBuffer, offset: number, data: Buffer): void
-  /** Copy data from one buffer to another (deprecated - use encoder.copyBufferToBuffer() instead) */
-  copyBufferToBuffer(encoder: GpuCommandEncoder, source: GpuBuffer, sourceOffset: number, destination: GpuBuffer, destinationOffset: number, size: number): void
-  /** Copy data from buffer to texture (deprecated - use encoder.copyBufferToTexture() instead) */
-  copyBufferToTexture(encoder: GpuCommandEncoder, source: GpuBuffer, sourceOffset: number, bytesPerRow: number, rowsPerImage: number | undefined | null, destination: GpuTexture, mipLevel: number | undefined | null, originX: number | undefined | null, originY: number | undefined | null, originZ: number | undefined | null, width: number, height: number, depth?: number | undefined | null): void
-  /** Copy data from texture to buffer (deprecated - use encoder.copyTextureToBuffer() instead) */
-  copyTextureToBuffer(encoder: GpuCommandEncoder, source: GpuTexture, mipLevel: number | undefined | null, originX: number | undefined | null, originY: number | undefined | null, originZ: number | undefined | null, destination: GpuBuffer, destinationOffset: number, bytesPerRow: number, rowsPerImage: number | undefined | null, width: number, height: number, depth?: number | undefined | null): void
   /** Create a texture */
   createTexture(descriptor: TextureDescriptor): GpuTexture
   /** Create a sampler */
@@ -428,47 +422,11 @@ export declare class GpuDevice {
   createComputePipeline(descriptor: ComputePipelineDescriptor): GpuComputePipeline
   /** Create a render pipeline following WebGPU spec */
   createRenderPipeline(descriptor: RenderPipelineDescriptor): GpuRenderPipeline
-  /**
-   * Create a render bundle - reusable recorded render commands
-   * This creates a bundle that can be executed multiple times in render passes
-   */
-  createRenderBundle(label: string, pipeline: GpuRenderPipeline, vertexBuffers: Array<GpuBuffer>, vertexCount: number, bindGroups: Array<GpuBindGroup> | undefined | null, colorFormats: Array<string>): GpuRenderBundle
-  /** Create an indexed render bundle */
-  createRenderBundleIndexed(label: string, pipeline: GpuRenderPipeline, vertexBuffers: Array<GpuBuffer>, indexBuffer: GpuBuffer, indexFormat: string, indexCount: number, bindGroups: Array<GpuBindGroup> | undefined | null, colorFormats: Array<string>): GpuRenderBundle
   /** Destroy the device */
   destroy(): void
 }
 export declare class GpuShaderModule { }
 export declare class GpuCommandEncoder {
-  /** Begin a compute pass and execute it with the given pipeline and bind groups */
-  computePass(pipeline: GpuComputePipeline, bindGroups: Array<GpuBindGroup>, workgroupsX: number, workgroupsY?: number | undefined | null, workgroupsZ?: number | undefined | null): void
-  /**
-   * Execute a compute pass with indirect dispatch
-   * The indirect buffer contains dispatch parameters (workgroups_x, workgroups_y, workgroups_z)
-   */
-  computePassIndirect(pipeline: GpuComputePipeline, bindGroups: Array<GpuBindGroup>, indirectBuffer: GpuBuffer, indirectOffset: number): void
-  /**
-   * Execute a render pass (simplified inline execution)
-   * color_attachments: array of texture views to render to (MSAA textures if using MSAA)
-   * clear_colors: optional array of [r, g, b, a] values for clearing
-   * bind_groups: optional array of bind groups to set
-   * depth_stencil_attachment: optional depth/stencil texture view
-   * clear_depth: optional depth clear value (0.0 to 1.0)
-   * resolve_targets: optional array of texture views to resolve MSAA to (must match color_attachments length)
-   */
-  renderPass(pipeline: GpuRenderPipeline, vertexBuffers: Array<GpuBuffer>, vertexCount: number, colorAttachments: Array<GpuTextureView>, clearColors?: Array<Array<number>> | undefined | null, bindGroups?: Array<GpuBindGroup> | undefined | null, depthStencilAttachment?: GpuTextureView | undefined | null, clearDepth?: number | undefined | null, resolveTargets?: Array<GpuTextureView> | undefined | null): void
-  /** Execute a render pass with indexed drawing */
-  renderPassIndexed(pipeline: GpuRenderPipeline, vertexBuffers: Array<GpuBuffer>, indexBuffer: GpuBuffer, indexFormat: string, indexCount: number, colorAttachments: Array<GpuTextureView>, clearColors?: Array<Array<number>> | undefined | null, bindGroups?: Array<GpuBindGroup> | undefined | null, depthStencilAttachment?: GpuTextureView | undefined | null, clearDepth?: number | undefined | null, resolveTargets?: Array<GpuTextureView> | undefined | null): void
-  /**
-   * Execute a render pass with indirect drawing
-   * The indirect buffer contains draw parameters (vertex_count, instance_count, first_vertex, first_instance)
-   */
-  renderPassIndirect(pipeline: GpuRenderPipeline, vertexBuffers: Array<GpuBuffer>, indirectBuffer: GpuBuffer, indirectOffset: number, colorAttachments: Array<GpuTextureView>, clearColors?: Array<Array<number>> | undefined | null, bindGroups?: Array<GpuBindGroup> | undefined | null, depthStencilAttachment?: GpuTextureView | undefined | null, clearDepth?: number | undefined | null, resolveTargets?: Array<GpuTextureView> | undefined | null): void
-  /**
-   * Execute a render pass with indexed indirect drawing
-   * The indirect buffer contains draw parameters (index_count, instance_count, first_index, base_vertex, first_instance)
-   */
-  renderPassIndexedIndirect(pipeline: GpuRenderPipeline, vertexBuffers: Array<GpuBuffer>, indexBuffer: GpuBuffer, indexFormat: string, indirectBuffer: GpuBuffer, indirectOffset: number, colorAttachments: Array<GpuTextureView>, clearColors?: Array<Array<number>> | undefined | null, bindGroups?: Array<GpuBindGroup> | undefined | null, depthStencilAttachment?: GpuTextureView | undefined | null, clearDepth?: number | undefined | null, resolveTargets?: Array<GpuTextureView> | undefined | null): void
   /**
    * Write a timestamp to a query set
    * query_set: the query set to write to
@@ -484,17 +442,22 @@ export declare class GpuCommandEncoder {
    * destination_offset: the byte offset in the destination buffer
    */
   resolveQuerySet(querySet: GpuQuerySet, firstQuery: number, queryCount: number, destination: GpuBuffer, destinationOffset: number): void
-  /**
-   * Execute render bundles in a render pass
-   * This is more efficient than recording the same commands multiple times
-   */
-  renderPassBundles(bundles: Array<GpuRenderBundle>, colorAttachments: Array<GpuTextureView>, clearColors?: Array<Array<number>> | undefined | null): void
   /** Copy data from one buffer to another (WebGPU standard method) */
   copyBufferToBuffer(source: GpuBuffer, sourceOffset: number, destination: GpuBuffer, destinationOffset: number, size: number): void
   /** Copy data from buffer to texture (WebGPU standard method) */
   copyBufferToTexture(source: GpuBuffer, sourceOffset: number, bytesPerRow: number, rowsPerImage: number | undefined | null, destination: GpuTexture, mipLevel: number | undefined | null, originX: number | undefined | null, originY: number | undefined | null, originZ: number | undefined | null, width: number, height: number, depth?: number | undefined | null): void
   /** Copy data from texture to buffer (WebGPU standard method) */
   copyTextureToBuffer(source: GpuTexture, mipLevel: number | undefined | null, originX: number | undefined | null, originY: number | undefined | null, originZ: number | undefined | null, destination: GpuBuffer, destinationOffset: number, bytesPerRow: number, rowsPerImage: number | undefined | null, width: number, height: number, depth?: number | undefined | null): void
+  /**
+   * Begin a compute pass following WebGPU standard
+   * Returns a compute pass encoder for recording compute commands
+   */
+  beginComputePass(descriptor?: ComputePassDescriptor | undefined | null): GpuComputePassEncoder
+  /**
+   * Begin a render pass following WebGPU standard
+   * Returns a render pass encoder for recording render commands
+   */
+  beginRenderPass(descriptor: RenderPassDescriptor): GpuRenderPassEncoder
   /** Finish encoding and return a command buffer */
   finish(): GpuCommandBuffer
 }
@@ -639,4 +602,72 @@ export declare class GpuSupportedFeatures {
   has(feature: string): boolean
   /** Get the number of features supported */
   get size(): number
+}
+/**
+ * Compute pass encoder following WebGPU spec
+ * Records commands for compute shader execution
+ */
+export declare class GpuComputePassEncoder {
+  /** Set the pipeline for this compute pass (WebGPU standard method) */
+  setPipeline(pipeline: GpuComputePipeline): void
+  /** Set a bind group for this compute pass (WebGPU standard method) */
+  setBindGroup(index: number, bindGroup: GpuBindGroup, dynamicOffsets?: Array<number> | undefined | null): void
+  /** Dispatch work to the compute shader (WebGPU standard method) */
+  dispatchWorkgroups(workgroupCountX: number, workgroupCountY?: number | undefined | null, workgroupCountZ?: number | undefined | null): void
+  /** Dispatch work using parameters from a buffer (WebGPU standard method) */
+  dispatchWorkgroupsIndirect(indirectBuffer: GpuBuffer, indirectOffset: number): void
+  /**
+   * End the compute pass (WebGPU standard method)
+   * After calling this, the pass encoder can no longer be used
+   */
+  end(): void
+  /** Push a debug group (WebGPU standard method) */
+  pushDebugGroup(label: string): void
+  /** Pop a debug group (WebGPU standard method) */
+  popDebugGroup(): void
+  /** Insert a debug marker (WebGPU standard method) */
+  insertDebugMarker(label: string): void
+}
+/**
+ * Render pass encoder following WebGPU spec
+ * Records commands for rendering operations
+ */
+export declare class GpuRenderPassEncoder {
+  /** Set the pipeline for this render pass (WebGPU standard method) */
+  setPipeline(pipeline: GpuRenderPipeline): void
+  /** Set a bind group for this render pass (WebGPU standard method) */
+  setBindGroup(index: number, bindGroup: GpuBindGroup, dynamicOffsets?: Array<number> | undefined | null): void
+  /** Set the vertex buffer for this render pass (WebGPU standard method) */
+  setVertexBuffer(slot: number, buffer: GpuBuffer, offset?: number | undefined | null, size?: number | undefined | null): void
+  /** Set the index buffer for this render pass (WebGPU standard method) */
+  setIndexBuffer(buffer: GpuBuffer, indexFormat: string, offset?: number | undefined | null, size?: number | undefined | null): void
+  /** Draw primitives (WebGPU standard method) */
+  draw(vertexCount: number, instanceCount?: number | undefined | null, firstVertex?: number | undefined | null, firstInstance?: number | undefined | null): void
+  /** Draw indexed primitives (WebGPU standard method) */
+  drawIndexed(indexCount: number, instanceCount?: number | undefined | null, firstIndex?: number | undefined | null, baseVertex?: number | undefined | null, firstInstance?: number | undefined | null): void
+  /** Draw primitives using parameters from a buffer (WebGPU standard method) */
+  drawIndirect(indirectBuffer: GpuBuffer, indirectOffset: number): void
+  /** Draw indexed primitives using parameters from a buffer (WebGPU standard method) */
+  drawIndexedIndirect(indirectBuffer: GpuBuffer, indirectOffset: number): void
+  /** Execute render bundles (WebGPU standard method) */
+  executeBundles(bundles: Array<GpuRenderBundle>): void
+  /** Set the viewport for this render pass (WebGPU standard method) */
+  setViewport(x: number, y: number, width: number, height: number, minDepth: number, maxDepth: number): void
+  /** Set the scissor rectangle for this render pass (WebGPU standard method) */
+  setScissorRect(x: number, y: number, width: number, height: number): void
+  /** Set the blend constant for this render pass (WebGPU standard method) */
+  setBlendConstant(color: Array<number>): void
+  /** Set the stencil reference value for this render pass (WebGPU standard method) */
+  setStencilReference(reference: number): void
+  /**
+   * End the render pass (WebGPU standard method)
+   * After calling this, the pass encoder can no longer be used
+   */
+  end(): void
+  /** Push a debug group (WebGPU standard method) */
+  pushDebugGroup(label: string): void
+  /** Pop a debug group (WebGPU standard method) */
+  popDebugGroup(): void
+  /** Insert a debug marker (WebGPU standard method) */
+  insertDebugMarker(label: string): void
 }

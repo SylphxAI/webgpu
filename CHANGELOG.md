@@ -35,9 +35,9 @@
 
   ## ⚠️ Breaking Changes
 
-  ### Deprecated Methods (Still functional but emit warnings)
+  ### REMOVED Methods
 
-  All immediate-execution methods are now deprecated in favor of WebGPU standard deferred execution:
+  All non-standard immediate-execution methods have been removed. Use WebGPU standard deferred execution instead:
 
   **GpuCommandEncoder:**
 
@@ -94,13 +94,12 @@
 
   - Deferred execution (command recording) now fully supported
   - Pass encoders use type-erased pointers with safe lifetime management
-  - All deprecated methods marked with `#[deprecated]` attribute
-  - Compiler warnings guide users to standard alternatives
+  - Removed 816 lines of non-standard code
+  - Codebase reduced from 1618 to 801 lines in device.rs
 
   ## 📝 Notes
 
-  - This is the last minor release before 1.0.0
-  - Deprecated methods will be removed in v1.0.0
+  - Breaking changes acceptable in pre-1.0 versions
   - 91% compliance meets production-ready threshold
   - Remaining 9%: occlusion queries, async pipeline creation, device.lost
 

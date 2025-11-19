@@ -310,7 +310,7 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
-const { Gpu, GpuAdapter, GpuDevice, GpuShaderModule, GpuCommandEncoder, GpuCommandBuffer, GpuBuffer, GpuTexture, GpuTextureView, bufferUsage, mapMode, textureUsage, GpuBindGroupLayout, GpuBindGroup, GpuPipelineLayout, GpuComputePipeline, GpuRenderPipeline, GpuSampler, GpuQuerySet, GpuRenderBundle, GpuQueue, GpuSupportedFeatures } = nativeBinding
+const { Gpu, GpuAdapter, GpuDevice, GpuShaderModule, GpuCommandEncoder, GpuCommandBuffer, GpuBuffer, GpuTexture, GpuTextureView, bufferUsage, mapMode, textureUsage, GpuBindGroupLayout, GpuBindGroup, GpuPipelineLayout, GpuComputePipeline, GpuRenderPipeline, GpuSampler, GpuQuerySet, GpuRenderBundle, GpuQueue, GpuSupportedFeatures, GpuComputePassEncoder, GpuRenderPassEncoder } = nativeBinding
 
 module.exports.Gpu = Gpu
 module.exports.GpuAdapter = GpuAdapter
@@ -334,3 +334,5 @@ module.exports.GpuQuerySet = GpuQuerySet
 module.exports.GpuRenderBundle = GpuRenderBundle
 module.exports.GpuQueue = GpuQueue
 module.exports.GpuSupportedFeatures = GpuSupportedFeatures
+module.exports.GpuComputePassEncoder = GpuComputePassEncoder
+module.exports.GpuRenderPassEncoder = GpuRenderPassEncoder
