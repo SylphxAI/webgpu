@@ -1,3 +1,4 @@
+use napi::bindgen_prelude::External;
 use napi_derive::napi;
 
 /// Buffer descriptor following WebGPU spec
@@ -21,20 +22,21 @@ pub struct ShaderModuleDescriptor {
 #[napi(object)]
 pub struct PipelineLayoutDescriptor {
     pub label: Option<String>,
-    // Note: bindGroupLayouts will be passed separately as External references
+    #[napi(js_name = "bindGroupLayouts")]
+    pub bind_group_layouts: Vec<External<crate::GpuBindGroupLayout>>,
 }
 
 /// Compute pipeline descriptor following WebGPU spec
 #[napi(object)]
 pub struct ComputePipelineDescriptor {
     pub label: Option<String>,
-    // layout will be passed separately as External reference
+    pub layout: Option<External<crate::GpuPipelineLayout>>,
     pub compute: ComputeStage,
 }
 
 #[napi(object)]
 pub struct ComputeStage {
-    // module will be passed as External reference
+    pub module: External<crate::GpuShaderModule>,
     #[napi(js_name = "entryPoint")]
     pub entry_point: String,
 }
@@ -58,7 +60,8 @@ pub struct QuerySetDescriptor {
 #[napi(object)]
 pub struct BindGroupDescriptor {
     pub label: Option<String>,
-    // layout and entries will be passed separately
+    pub layout: External<crate::GpuBindGroupLayout>,
+    // entries will be passed separately due to union type complexity
 }
 
 /// Bind group layout descriptor following WebGPU spec
@@ -116,6 +119,7 @@ pub struct StorageTextureBindingLayout {
 #[napi(object)]
 pub struct RenderPipelineDescriptor {
     pub label: Option<String>,
+    pub layout: Option<External<crate::GpuPipelineLayout>>,
     pub vertex: VertexState,
     pub primitive: Option<PrimitiveState>,
     #[napi(js_name = "depthStencil")]
@@ -126,6 +130,7 @@ pub struct RenderPipelineDescriptor {
 
 #[napi(object)]
 pub struct VertexState {
+    pub module: External<crate::GpuShaderModule>,
     #[napi(js_name = "entryPoint")]
     pub entry_point: String,
     pub buffers: Option<Vec<VertexBufferLayout>>,
@@ -203,6 +208,7 @@ pub struct MultisampleState {
 
 #[napi(object)]
 pub struct FragmentState {
+    pub module: External<crate::GpuShaderModule>,
     #[napi(js_name = "entryPoint")]
     pub entry_point: String,
     pub targets: Vec<ColorTargetState>,

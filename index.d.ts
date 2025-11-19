@@ -148,13 +148,16 @@ export interface ShaderModuleDescriptor {
 /** Pipeline layout descriptor following WebGPU spec */
 export interface PipelineLayoutDescriptor {
   label?: string
+  bindGroupLayouts: Array<ExternalObject<GpuBindGroupLayout>>
 }
 /** Compute pipeline descriptor following WebGPU spec */
 export interface ComputePipelineDescriptor {
   label?: string
+  layout?: ExternalObject<GpuPipelineLayout>
   compute: ComputeStage
 }
 export interface ComputeStage {
+  module: ExternalObject<GpuShaderModule>
   entryPoint: string
 }
 /** Command encoder descriptor following WebGPU spec */
@@ -170,6 +173,7 @@ export interface QuerySetDescriptor {
 /** Bind group descriptor following WebGPU spec */
 export interface BindGroupDescriptor {
   label?: string
+  layout: ExternalObject<GpuBindGroupLayout>
 }
 /** Bind group layout descriptor following WebGPU spec */
 export interface BindGroupLayoutDescriptor {
@@ -205,6 +209,7 @@ export interface StorageTextureBindingLayout {
 /** Render pipeline descriptor following WebGPU spec */
 export interface RenderPipelineDescriptor {
   label?: string
+  layout?: ExternalObject<GpuPipelineLayout>
   vertex: VertexState
   primitive?: PrimitiveState
   depthStencil?: DepthStencilState
@@ -212,6 +217,7 @@ export interface RenderPipelineDescriptor {
   fragment?: FragmentState
 }
 export interface VertexState {
+  module: ExternalObject<GpuShaderModule>
   entryPoint: string
   buffers?: Array<VertexBufferLayout>
 }
@@ -255,6 +261,7 @@ export interface MultisampleState {
   alphaToCoverageEnabled?: boolean
 }
 export interface FragmentState {
+  module: ExternalObject<GpuShaderModule>
   entryPoint: string
   targets: Array<ColorTargetState>
 }
@@ -370,17 +377,17 @@ export declare class GpuDevice {
   /** Create a bind group layout */
   createBindGroupLayout(descriptor: BindGroupLayoutDescriptor): GpuBindGroupLayout
   /** Create a bind group with buffer bindings following WebGPU spec */
-  createBindGroup(descriptor: BindGroupDescriptor, layout: GpuBindGroupLayout, bufferEntries: Array<BindGroupEntryBuffer>): GpuBindGroup
+  createBindGroup(descriptor: BindGroupDescriptor, bufferEntries: Array<BindGroupEntryBuffer>): GpuBindGroup
   /** Create a bind group with texture bindings */
-  createBindGroupTextures(descriptor: BindGroupDescriptor, layout: GpuBindGroupLayout, textureEntries: Array<BindGroupEntryTexture>): GpuBindGroup
+  createBindGroupTextures(descriptor: BindGroupDescriptor, textureEntries: Array<BindGroupEntryTexture>): GpuBindGroup
   /** Create a bind group with sampler bindings */
-  createBindGroupSamplers(descriptor: BindGroupDescriptor, layout: GpuBindGroupLayout, samplerEntries: Array<BindGroupEntrySampler>): GpuBindGroup
+  createBindGroupSamplers(descriptor: BindGroupDescriptor, samplerEntries: Array<BindGroupEntrySampler>): GpuBindGroup
   /** Create a pipeline layout */
-  createPipelineLayout(descriptor: PipelineLayoutDescriptor, bindGroupLayouts: Array<GpuBindGroupLayout>): GpuPipelineLayout
+  createPipelineLayout(descriptor: PipelineLayoutDescriptor): GpuPipelineLayout
   /** Create a compute pipeline following WebGPU spec */
-  createComputePipeline(descriptor: ComputePipelineDescriptor, layout: GpuPipelineLayout | undefined | null, shaderModule: GpuShaderModule): GpuComputePipeline
+  createComputePipeline(descriptor: ComputePipelineDescriptor): GpuComputePipeline
   /** Create a render pipeline following WebGPU spec */
-  createRenderPipeline(descriptor: RenderPipelineDescriptor, layout: GpuPipelineLayout | undefined | null, vertexShader: GpuShaderModule, fragmentShader?: GpuShaderModule | undefined | null): GpuRenderPipeline
+  createRenderPipeline(descriptor: RenderPipelineDescriptor): GpuRenderPipeline
   /**
    * Create a render bundle - reusable recorded render commands
    * This creates a bundle that can be executed multiple times in render passes
