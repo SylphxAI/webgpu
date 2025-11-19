@@ -80,14 +80,19 @@ impl GpuDevice {
     /// Create a GPU buffer
     #[napi(js_name = "createBuffer")]
     pub fn create_buffer(&self, descriptor: crate::BufferDescriptor) -> crate::GpuBuffer {
+        let mapped_at_creation = descriptor.mapped_at_creation.unwrap_or(false);
         let buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
             label: descriptor.label.as_deref(),
             size: descriptor.size as u64,
             usage: wgpu::BufferUsages::from_bits_truncate(descriptor.usage),
-            mapped_at_creation: descriptor.mapped_at_creation.unwrap_or(false),
+            mapped_at_creation,
         });
 
-        crate::GpuBuffer::new(buffer, self.device.clone(), self.queue_internal.clone())
+        if mapped_at_creation {
+            crate::GpuBuffer::new_mapped(buffer, self.device.clone(), self.queue_internal.clone())
+        } else {
+            crate::GpuBuffer::new(buffer, self.device.clone(), self.queue_internal.clone())
+        }
     }
 
     /// Create a shader module

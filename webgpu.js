@@ -39,11 +39,14 @@ class GpuBuffer {
      *   const arrayBuffer = buffer.getMappedRange()
      *   const view = new Float32Array(arrayBuffer)
      *   view[0] = 1.0  // Modifications are tracked
+     *
+     * @param {number} [offset] - Byte offset into the buffer (must be multiple of 8)
+     * @param {number} [size] - Number of bytes to return (must be multiple of 4)
      */
-    getMappedRange() {
+    getMappedRange(offset, size) {
         // Native returns a Node.js Buffer (Uint8Array subclass)
         // Store it for unmap()
-        this._mappedRange = this._native.getMappedRange()
+        this._mappedRange = this._native.getMappedRange(offset, size)
 
         // Return the underlying ArrayBuffer (WebGPU standard)
         // The Buffer always uses the full ArrayBuffer (byteOffset=0, byteLength=buffer.byteLength)

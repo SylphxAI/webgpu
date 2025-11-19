@@ -466,6 +466,12 @@ export declare class GpuBuffer {
   /** Get the usage flags of the buffer */
   usage(): number
   /**
+   * Get the current map state of the buffer
+   *
+   * Returns one of: "unmapped", "pending", "mapped"
+   */
+  mapState(): string
+  /**
    * Map the buffer asynchronously for reading or writing
    *
    * Asynchronously maps the buffer for CPU access.
@@ -483,8 +489,12 @@ export declare class GpuBuffer {
    * will be automatically flushed back to GPU when unmap() is called.
    *
    * This implements the standard WebGPU getMappedRange() behavior.
+   *
+   * # Parameters
+   * * `offset` - Byte offset into the buffer (optional, default 0). Must be multiple of 8.
+   * * `size` - Number of bytes to return (optional, default remaining bytes). Must be multiple of 4.
    */
-  getMappedRange(): Buffer
+  getMappedRange(offset?: number | undefined | null, size?: number | undefined | null): Buffer
   /**
    * Unmap the buffer
    *

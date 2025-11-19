@@ -39,7 +39,7 @@ async function testMappedAtCreation() {
     // Read back from GPU
     await buffer.mapAsync('READ')
     const readRange = buffer.getMappedRange()
-    const readArr = new Float32Array(readRange.buffer, readRange.byteOffset, 4)
+    const readArr = new Float32Array(readRange, 0, 4)
 
     console.log('   📖 GPU result:  ', Array.from(readArr))
 

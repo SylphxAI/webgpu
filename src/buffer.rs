@@ -17,6 +17,9 @@ pub struct GpuBuffer {
     /// Stores the mapped range data returned from getMappedRange()
     /// When user modifies this data in JavaScript, we need to flush it back to GPU on unmap()
     pub(crate) mapped_data: Arc<Mutex<Option<Vec<u8>>>>,
+    /// Tracks the current map state of the buffer
+    /// Values: "unmapped", "pending", "mapped"
+    pub(crate) map_state: Arc<Mutex<String>>,
 }
 
 impl GpuBuffer {
@@ -27,6 +30,18 @@ impl GpuBuffer {
             queue,
             pending_writes: Arc::new(Mutex::new(Vec::new())),
             mapped_data: Arc::new(Mutex::new(None)),
+            map_state: Arc::new(Mutex::new("unmapped".to_string())),
+        }
+    }
+
+    pub(crate) fn new_mapped(buffer: wgpu::Buffer, device: Arc<wgpu::Device>, queue: Arc<wgpu::Queue>) -> Self {
+        Self {
+            buffer,
+            device,
+            queue,
+            pending_writes: Arc::new(Mutex::new(Vec::new())),
+            mapped_data: Arc::new(Mutex::new(None)),
+            map_state: Arc::new(Mutex::new("mapped".to_string())),
         }
     }
 }
@@ -45,6 +60,16 @@ impl GpuBuffer {
         self.buffer.usage().bits()
     }
 
+    /// Get the current map state of the buffer
+    ///
+    /// Returns one of: "unmapped", "pending", "mapped"
+    #[napi(js_name = "mapState")]
+    pub fn map_state(&self) -> Result<String> {
+        let state = self.map_state.lock()
+            .map_err(|_| Error::from_reason("Failed to lock map state"))?;
+        Ok(state.clone())
+    }
+
     /// Map the buffer asynchronously for reading or writing
     ///
     /// Asynchronously maps the buffer for CPU access.
@@ -52,6 +77,13 @@ impl GpuBuffer {
     /// Buffer must have MAP_READ or MAP_WRITE usage flag.
     #[napi(js_name = "mapAsync")]
     pub async fn map_async(&self, mode: String) -> Result<()> {
+        // Set state to pending
+        {
+            let mut state = self.map_state.lock()
+                .map_err(|_| Error::from_reason("Failed to lock map state"))?;
+            *state = "pending".to_string();
+        }
+
         let slice = self.buffer.slice(..);
 
         let map_mode = match mode.as_str() {
@@ -67,11 +99,22 @@ impl GpuBuffer {
 
         self.device.poll(wgpu::Maintain::Wait);
 
-        receiver.await
+        let result = receiver.await
             .map_err(|_| Error::from_reason("Failed to receive map result"))?
-            .map_err(|e| Error::from_reason(format!("Failed to map buffer: {:?}", e)))?;
+            .map_err(|e| Error::from_reason(format!("Failed to map buffer: {:?}", e)));
 
-        Ok(())
+        // Update state based on result
+        if result.is_ok() {
+            let mut state = self.map_state.lock()
+                .map_err(|_| Error::from_reason("Failed to lock map state"))?;
+            *state = "mapped".to_string();
+        } else {
+            let mut state = self.map_state.lock()
+                .map_err(|_| Error::from_reason("Failed to lock map state"))?;
+            *state = "unmapped".to_string();
+        }
+
+        result
     }
 
     /// Get the mapped range as a buffer
@@ -83,9 +126,39 @@ impl GpuBuffer {
     /// will be automatically flushed back to GPU when unmap() is called.
     ///
     /// This implements the standard WebGPU getMappedRange() behavior.
+    ///
+    /// # Parameters
+    /// * `offset` - Byte offset into the buffer (optional, default 0). Must be multiple of 8.
+    /// * `size` - Number of bytes to return (optional, default remaining bytes). Must be multiple of 4.
     #[napi(js_name = "getMappedRange")]
-    pub fn get_mapped_range(&self) -> Result<Buffer> {
-        let slice = self.buffer.slice(..);
+    pub fn get_mapped_range(&self, offset: Option<u32>, size: Option<u32>) -> Result<Buffer> {
+        let buffer_size = self.buffer.size();
+        let offset = offset.unwrap_or(0) as u64;
+        let size = size.map(|s| s as u64).unwrap_or(buffer_size - offset);
+
+        // Validate alignment (WebGPU spec requirements)
+        if offset % 8 != 0 {
+            return Err(Error::from_reason(format!(
+                "Offset ({}) must be a multiple of 8",
+                offset
+            )));
+        }
+        if size % 4 != 0 {
+            return Err(Error::from_reason(format!(
+                "Size ({}) must be a multiple of 4",
+                size
+            )));
+        }
+
+        // Validate bounds
+        if offset + size > buffer_size {
+            return Err(Error::from_reason(format!(
+                "Range (offset {} + size {}) exceeds buffer size ({})",
+                offset, size, buffer_size
+            )));
+        }
+
+        let slice = self.buffer.slice(offset..offset + size);
         let data = slice.get_mapped_range();
         let vec = data.to_vec();
 
@@ -187,6 +260,11 @@ impl GpuBuffer {
 
         // Clear pending writes
         pending.clear();
+
+        // Update map state to unmapped
+        let mut state = self.map_state.lock()
+            .map_err(|_| Error::from_reason("Failed to lock map state"))?;
+        *state = "unmapped".to_string();
 
         Ok(())
     }
