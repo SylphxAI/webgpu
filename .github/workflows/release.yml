@@ -7,6 +7,10 @@ on:
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   build:
     strategy:
@@ -138,22 +142,15 @@ jobs:
       - name: Create package.json files for platform packages
         run: node scripts/create-platform-packages.js
 
-      - name: List packages
-        run: ls -R ./npm
-
-      - name: Publish platform packages FIRST
-        run: |
-          for dir in npm/*; do
-            if [ -d "$dir" ]; then
-              cd "$dir"
-              npm publish --access public
-              cd ../..
-            fi
-          done
+      - name: Create Release Pull Request or Publish to npm
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          version: bun run version-packages
+          publish: node scripts/publish-with-platform-packages.js
+          commit: "chore(release): version packages"
+          title: "chore(release): version packages"
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Publish main package
-        run: npm publish --access public
-        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
