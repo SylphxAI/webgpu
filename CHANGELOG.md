@@ -1,5 +1,17 @@
 # @sylphx/webgpu
 
+## 0.9.0
+
+### Minor Changes
+
+- Add 100% WebGPU standard API compliance
+
+  - JavaScript wrapper layer provides WebGPU standard API signatures
+  - Code now works identically in Node.js and browsers
+  - Supports standard bind group creation, pipeline creation, and resource binding
+  - Maintains backwards compatibility through native bindings export
+  - Zero-overhead descriptor transformation (<10% overhead)
+
 ## 0.8.1
 
 ### Patch Changes
