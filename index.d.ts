@@ -67,13 +67,25 @@ export interface TextureUsage {
 }
 /** Get texture usage constants */
 export declare function textureUsage(): TextureUsage
-/** Bind group entry for mixed resources */
-export interface BindGroupEntry {
+/**
+ * Bind group entry for buffer resources following WebGPU spec
+ * Use this for buffer bindings
+ */
+export interface BindGroupEntryBuffer {
   binding: number
-  resourceType: string
-  bufferIndex?: number
-  textureIndex?: number
-  samplerIndex?: number
+  buffer: ExternalObject<GpuBuffer>
+  offset?: number
+  size?: number
+}
+/** Bind group entry for texture view resources */
+export interface BindGroupEntryTexture {
+  binding: number
+  view: ExternalObject<GpuTextureView>
+}
+/** Bind group entry for sampler resources */
+export interface BindGroupEntrySampler {
+  binding: number
+  sampler: ExternalObject<GpuSampler>
 }
 /** Compute pass descriptor (simplified) */
 export interface ComputePassDescriptor {
@@ -148,6 +160,12 @@ export interface ComputeStage {
 /** Command encoder descriptor following WebGPU spec */
 export interface CommandEncoderDescriptor {
   label?: string
+}
+/** Query set descriptor following WebGPU spec */
+export interface QuerySetDescriptor {
+  label?: string
+  type: string
+  count: number
 }
 /** Bind group descriptor following WebGPU spec */
 export interface BindGroupDescriptor {
@@ -327,7 +345,7 @@ export declare class GpuDevice {
   /** Create a shader module */
   createShaderModule(descriptor: ShaderModuleDescriptor): GpuShaderModule
   /** Create a command encoder */
-  createCommandEncoder(): GpuCommandEncoder
+  createCommandEncoder(descriptor?: CommandEncoderDescriptor | undefined | null): GpuCommandEncoder
   /**
    * Submit commands to the queue
    * Note: This consumes the command buffer
@@ -347,36 +365,22 @@ export declare class GpuDevice {
   createTexture(descriptor: TextureDescriptor): GpuTexture
   /** Create a sampler */
   createSampler(descriptor: SamplerDescriptor): GpuSampler
-  /**
-   * Create a query set for timestamp or occlusion queries
-   * query_type: "timestamp" or "occlusion"
-   * count: number of queries in the set
-   */
-  createQuerySet(queryType: string, count: number): GpuQuerySet
+  /** Create a query set for timestamp or occlusion queries */
+  createQuerySet(descriptor: QuerySetDescriptor): GpuQuerySet
   /** Create a bind group layout */
   createBindGroupLayout(descriptor: BindGroupLayoutDescriptor): GpuBindGroupLayout
-  /**
-   * Create a bind group with buffer bindings
-   * Bindings are specified as: binding index, buffer, offset, size
-   * All buffers are bound sequentially starting from binding 0
-   */
-  createBindGroupBuffers(label: string | undefined | null, layout: GpuBindGroupLayout, buffers: Array<GpuBuffer>): GpuBindGroup
-  /** Create a bind group with mixed resources (buffers, textures, samplers) */
-  createBindGroup(label: string | undefined | null, layout: GpuBindGroupLayout, entries: Array<BindGroupEntry>, buffers: Array<GpuBuffer>, textures: Array<GpuTextureView>, samplers: Array<GpuSampler>): GpuBindGroup
+  /** Create a bind group with buffer bindings following WebGPU spec */
+  createBindGroup(descriptor: BindGroupDescriptor, layout: GpuBindGroupLayout, bufferEntries: Array<BindGroupEntryBuffer>): GpuBindGroup
+  /** Create a bind group with texture bindings */
+  createBindGroupTextures(descriptor: BindGroupDescriptor, layout: GpuBindGroupLayout, textureEntries: Array<BindGroupEntryTexture>): GpuBindGroup
+  /** Create a bind group with sampler bindings */
+  createBindGroupSamplers(descriptor: BindGroupDescriptor, layout: GpuBindGroupLayout, samplerEntries: Array<BindGroupEntrySampler>): GpuBindGroup
   /** Create a pipeline layout */
   createPipelineLayout(descriptor: PipelineLayoutDescriptor, bindGroupLayouts: Array<GpuBindGroupLayout>): GpuPipelineLayout
-  /** Create a compute pipeline */
-  createComputePipeline(label: string | undefined | null, layout: GpuPipelineLayout | undefined | null, shaderModule: GpuShaderModule, entryPoint: string): GpuComputePipeline
-  /**
-   * Create a render pipeline (simplified)
-   * vertex_formats: array of format strings for vertex attributes
-   * fragment_targets: array of format strings for color targets
-   * depth_stencil_format: optional depth/stencil format (e.g., "depth24plus")
-   * blend_mode: optional blend mode ("replace", "alpha", "additive", "premultiplied")
-   * write_mask: optional color write mask (0-15, default 15 = all channels)
-   * sample_count: optional MSAA sample count (1, 2, 4, 8, default 1)
-   */
-  createRenderPipeline(label: string | undefined | null, layout: GpuPipelineLayout | undefined | null, vertexShader: GpuShaderModule, vertexEntryPoint: string, vertexFormats: Array<string>, fragmentShader: GpuShaderModule | undefined | null, fragmentEntryPoint: string | undefined | null, fragmentFormats: Array<string>, depthStencilFormat?: string | undefined | null, blendMode?: string | undefined | null, writeMask?: number | undefined | null, sampleCount?: number | undefined | null): GpuRenderPipeline
+  /** Create a compute pipeline following WebGPU spec */
+  createComputePipeline(descriptor: ComputePipelineDescriptor, layout: GpuPipelineLayout | undefined | null, shaderModule: GpuShaderModule): GpuComputePipeline
+  /** Create a render pipeline following WebGPU spec */
+  createRenderPipeline(descriptor: RenderPipelineDescriptor, layout: GpuPipelineLayout | undefined | null, vertexShader: GpuShaderModule, fragmentShader?: GpuShaderModule | undefined | null): GpuRenderPipeline
   /**
    * Create a render bundle - reusable recorded render commands
    * This creates a bundle that can be executed multiple times in render passes

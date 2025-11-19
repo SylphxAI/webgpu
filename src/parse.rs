@@ -84,3 +84,35 @@ pub(crate) fn parse_compare_function(func: Option<&String>) -> Option<wgpu::Comp
         _ => None,
     }
 }
+
+/// Parse blend factor for blend states
+pub(crate) fn parse_blend_factor(factor: &str) -> wgpu::BlendFactor {
+    match factor {
+        "zero" => wgpu::BlendFactor::Zero,
+        "one" => wgpu::BlendFactor::One,
+        "src" => wgpu::BlendFactor::Src,
+        "one-minus-src" => wgpu::BlendFactor::OneMinusSrc,
+        "src-alpha" => wgpu::BlendFactor::SrcAlpha,
+        "one-minus-src-alpha" => wgpu::BlendFactor::OneMinusSrcAlpha,
+        "dst" => wgpu::BlendFactor::Dst,
+        "one-minus-dst" => wgpu::BlendFactor::OneMinusDst,
+        "dst-alpha" => wgpu::BlendFactor::DstAlpha,
+        "one-minus-dst-alpha" => wgpu::BlendFactor::OneMinusDstAlpha,
+        "src-alpha-saturated" => wgpu::BlendFactor::SrcAlphaSaturated,
+        "constant" => wgpu::BlendFactor::Constant,
+        "one-minus-constant" => wgpu::BlendFactor::OneMinusConstant,
+        _ => wgpu::BlendFactor::One,
+    }
+}
+
+/// Parse blend operation for blend states
+pub(crate) fn parse_blend_operation(operation: &str) -> wgpu::BlendOperation {
+    match operation {
+        "add" => wgpu::BlendOperation::Add,
+        "subtract" => wgpu::BlendOperation::Subtract,
+        "reverse-subtract" => wgpu::BlendOperation::ReverseSubtract,
+        "min" => wgpu::BlendOperation::Min,
+        "max" => wgpu::BlendOperation::Max,
+        _ => wgpu::BlendOperation::Add,
+    }
+}

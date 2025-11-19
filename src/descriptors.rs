@@ -45,6 +45,15 @@ pub struct CommandEncoderDescriptor {
     pub label: Option<String>,
 }
 
+/// Query set descriptor following WebGPU spec
+#[napi(object)]
+pub struct QuerySetDescriptor {
+    pub label: Option<String>,
+    #[napi(js_name = "type")]
+    pub query_type: String, // "timestamp" or "occlusion"
+    pub count: u32,
+}
+
 /// Bind group descriptor following WebGPU spec
 #[napi(object)]
 pub struct BindGroupDescriptor {

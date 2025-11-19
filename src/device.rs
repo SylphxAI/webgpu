@@ -44,10 +44,10 @@ impl GpuDevice {
     }
 
     /// Create a command encoder
-    #[napi]
-    pub fn create_command_encoder(&self) -> GpuCommandEncoder {
+    #[napi(js_name = "createCommandEncoder")]
+    pub fn create_command_encoder(&self, descriptor: Option<crate::CommandEncoderDescriptor>) -> GpuCommandEncoder {
         let encoder = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
-            label: None,
+            label: descriptor.as_ref().and_then(|d| d.label.as_deref()),
         });
 
         GpuCommandEncoder {
@@ -206,7 +206,7 @@ impl GpuDevice {
     }
 
     /// Create a texture
-    #[napi]
+    #[napi(js_name = "createTexture")]
     pub fn create_texture(&self, descriptor: crate::TextureDescriptor) -> crate::GpuTexture {
         let format = crate::parse::parse_texture_format(&descriptor.format);
         let dimension = match descriptor.dimension.as_deref() {
@@ -234,34 +234,32 @@ impl GpuDevice {
     }
 
     /// Create a sampler
-    #[napi]
+    #[napi(js_name = "createSampler")]
     pub fn create_sampler(&self, descriptor: crate::SamplerDescriptor) -> crate::GpuSampler {
         let sampler = crate::sampler::create_sampler(&self.device, &descriptor);
         crate::GpuSampler::new(sampler)
     }
 
     /// Create a query set for timestamp or occlusion queries
-    /// query_type: "timestamp" or "occlusion"
-    /// count: number of queries in the set
-    #[napi]
-    pub fn create_query_set(&self, query_type: String, count: u32) -> Result<crate::GpuQuerySet> {
-        let ty = match query_type.as_str() {
+    #[napi(js_name = "createQuerySet")]
+    pub fn create_query_set(&self, descriptor: crate::QuerySetDescriptor) -> Result<crate::GpuQuerySet> {
+        let ty = match descriptor.query_type.as_str() {
             "timestamp" => wgpu::QueryType::Timestamp,
             "occlusion" => wgpu::QueryType::Occlusion,
-            _ => return Err(Error::from_reason(format!("Invalid query type: {}", query_type))),
+            _ => return Err(Error::from_reason(format!("Invalid query type: {}", descriptor.query_type))),
         };
 
         let query_set = self.device.create_query_set(&wgpu::QuerySetDescriptor {
-            label: None,
+            label: descriptor.label.as_deref(),
             ty,
-            count,
+            count: descriptor.count,
         });
 
         Ok(crate::GpuQuerySet::new(query_set))
     }
 
     /// Create a bind group layout
-    #[napi]
+    #[napi(js_name = "createBindGroupLayout")]
     pub fn create_bind_group_layout(&self, descriptor: crate::BindGroupLayoutDescriptor) -> Result<crate::GpuBindGroupLayout> {
         let entries: Vec<_> = descriptor.entries
             .iter()
@@ -276,33 +274,30 @@ impl GpuDevice {
         Ok(crate::GpuBindGroupLayout::new(layout))
     }
 
-    /// Create a bind group with buffer bindings
-    /// Bindings are specified as: binding index, buffer, offset, size
-    /// All buffers are bound sequentially starting from binding 0
-    #[napi]
+    /// Create a bind group with buffer bindings following WebGPU spec
+    #[napi(js_name = "createBindGroup")]
     pub fn create_bind_group_buffers(
         &self,
-        label: Option<String>,
+        descriptor: crate::BindGroupDescriptor,
         layout: &crate::GpuBindGroupLayout,
-        buffers: Vec<&crate::GpuBuffer>,
+        buffer_entries: Vec<crate::BindGroupEntryBuffer>,
     ) -> Result<crate::GpuBindGroup> {
-        let entries: Vec<_> = buffers
+        let entries: Vec<_> = buffer_entries
             .iter()
-            .enumerate()
-            .map(|(index, buffer)| {
+            .map(|entry| {
                 wgpu::BindGroupEntry {
-                    binding: index as u32,
+                    binding: entry.binding,
                     resource: wgpu::BindingResource::Buffer(wgpu::BufferBinding {
-                        buffer: &buffer.buffer,
-                        offset: 0,
-                        size: None,
+                        buffer: &entry.buffer.buffer,
+                        offset: entry.offset.unwrap_or(0) as u64,
+                        size: entry.size.map(|s| std::num::NonZeroU64::new(s as u64)).flatten(),
                     }),
                 }
             })
             .collect();
 
         let bind_group = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: label.as_deref(),
+            label: descriptor.label.as_deref(),
             layout: &layout.layout,
             entries: &entries,
         });
@@ -310,62 +305,55 @@ impl GpuDevice {
         Ok(crate::GpuBindGroup::new(bind_group))
     }
 
-    /// Create a bind group with mixed resources (buffers, textures, samplers)
-    #[napi]
-    pub fn create_bind_group(
+    /// Create a bind group with texture bindings
+    #[napi(js_name = "createBindGroupTextures")]
+    pub fn create_bind_group_textures(
         &self,
-        label: Option<String>,
+        descriptor: crate::BindGroupDescriptor,
         layout: &crate::GpuBindGroupLayout,
-        entries: Vec<crate::BindGroupEntry>,
-        buffers: Vec<&crate::GpuBuffer>,
-        textures: Vec<&crate::GpuTextureView>,
-        samplers: Vec<&crate::GpuSampler>,
+        texture_entries: Vec<crate::BindGroupEntryTexture>,
     ) -> Result<crate::GpuBindGroup> {
-        let bind_entries: Vec<_> = entries
+        let entries: Vec<_> = texture_entries
             .iter()
             .map(|entry| {
-                let resource = match entry.resource_type.as_str() {
-                    "buffer" => {
-                        let idx = entry.buffer_index.unwrap_or(0) as usize;
-                        if idx >= buffers.len() {
-                            return Err(Error::from_reason(format!("Buffer index {} out of range", idx)));
-                        }
-                        wgpu::BindingResource::Buffer(wgpu::BufferBinding {
-                            buffer: &buffers[idx].buffer,
-                            offset: 0,
-                            size: None,
-                        })
-                    }
-                    "texture" => {
-                        let idx = entry.texture_index.unwrap_or(0) as usize;
-                        if idx >= textures.len() {
-                            return Err(Error::from_reason(format!("Texture index {} out of range", idx)));
-                        }
-                        wgpu::BindingResource::TextureView(&textures[idx].view)
-                    }
-                    "sampler" => {
-                        let idx = entry.sampler_index.unwrap_or(0) as usize;
-                        if idx >= samplers.len() {
-                            return Err(Error::from_reason(format!("Sampler index {} out of range", idx)));
-                        }
-                        wgpu::BindingResource::Sampler(&samplers[idx].sampler)
-                    }
-                    _ => {
-                        return Err(Error::from_reason(format!("Unknown resource type: {}", entry.resource_type)));
-                    }
-                };
-
-                Ok(wgpu::BindGroupEntry {
+                wgpu::BindGroupEntry {
                     binding: entry.binding,
-                    resource,
-                })
+                    resource: wgpu::BindingResource::TextureView(&entry.view.view),
+                }
             })
-            .collect::<Result<Vec<_>>>()?;
+            .collect();
 
         let bind_group = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: label.as_deref(),
+            label: descriptor.label.as_deref(),
             layout: &layout.layout,
-            entries: &bind_entries,
+            entries: &entries,
+        });
+
+        Ok(crate::GpuBindGroup::new(bind_group))
+    }
+
+    /// Create a bind group with sampler bindings
+    #[napi(js_name = "createBindGroupSamplers")]
+    pub fn create_bind_group_samplers(
+        &self,
+        descriptor: crate::BindGroupDescriptor,
+        layout: &crate::GpuBindGroupLayout,
+        sampler_entries: Vec<crate::BindGroupEntrySampler>,
+    ) -> Result<crate::GpuBindGroup> {
+        let entries: Vec<_> = sampler_entries
+            .iter()
+            .map(|entry| {
+                wgpu::BindGroupEntry {
+                    binding: entry.binding,
+                    resource: wgpu::BindingResource::Sampler(&entry.sampler.sampler),
+                }
+            })
+            .collect();
+
+        let bind_group = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: descriptor.label.as_deref(),
+            layout: &layout.layout,
+            entries: &entries,
         });
 
         Ok(crate::GpuBindGroup::new(bind_group))
@@ -394,22 +382,21 @@ impl GpuDevice {
         }
     }
 
-    /// Create a compute pipeline
-    #[napi]
+    /// Create a compute pipeline following WebGPU spec
+    #[napi(js_name = "createComputePipeline")]
     pub fn create_compute_pipeline(
         &self,
-        label: Option<String>,
+        descriptor: crate::ComputePipelineDescriptor,
         layout: Option<&crate::GpuPipelineLayout>,
         shader_module: &GpuShaderModule,
-        entry_point: String,
     ) -> crate::GpuComputePipeline {
         let layout_ref = layout.map(|l| l.layout.as_ref());
 
         let pipeline = self.device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
-            label: label.as_deref(),
+            label: descriptor.label.as_deref(),
             layout: layout_ref,
             module: &shader_module.shader,
-            entry_point: &entry_point,
+            entry_point: &descriptor.compute.entry_point,
         });
 
         crate::GpuComputePipeline {
@@ -417,128 +404,169 @@ impl GpuDevice {
         }
     }
 
-    /// Create a render pipeline (simplified)
-    /// vertex_formats: array of format strings for vertex attributes
-    /// fragment_targets: array of format strings for color targets
-    /// depth_stencil_format: optional depth/stencil format (e.g., "depth24plus")
-    /// blend_mode: optional blend mode ("replace", "alpha", "additive", "premultiplied")
-    /// write_mask: optional color write mask (0-15, default 15 = all channels)
-    /// sample_count: optional MSAA sample count (1, 2, 4, 8, default 1)
-    #[napi]
+    /// Create a render pipeline following WebGPU spec
+    #[napi(js_name = "createRenderPipeline")]
     pub fn create_render_pipeline(
         &self,
-        label: Option<String>,
+        descriptor: crate::RenderPipelineDescriptor,
         layout: Option<&crate::GpuPipelineLayout>,
         vertex_shader: &GpuShaderModule,
-        vertex_entry_point: String,
-        vertex_formats: Vec<String>,
         fragment_shader: Option<&GpuShaderModule>,
-        fragment_entry_point: Option<String>,
-        fragment_formats: Vec<String>,
-        depth_stencil_format: Option<String>,
-        blend_mode: Option<String>,
-        write_mask: Option<u32>,
-        sample_count: Option<u32>,
     ) -> Result<crate::GpuRenderPipeline> {
-        // Build vertex attributes from formats with proper offsets
-        let mut current_offset: u64 = 0;
-        let attributes: Vec<wgpu::VertexAttribute> = vertex_formats
-            .iter()
-            .enumerate()
-            .map(|(i, format)| {
-                let vertex_format = crate::parse::parse_vertex_format(format);
-                let size = match vertex_format {
-                    wgpu::VertexFormat::Float32 => 4,
-                    wgpu::VertexFormat::Float32x2 => 8,
-                    wgpu::VertexFormat::Float32x3 => 12,
-                    wgpu::VertexFormat::Float32x4 => 16,
-                    _ => 4,
-                };
-
-                let attr = wgpu::VertexAttribute {
-                    format: vertex_format,
-                    offset: current_offset,
-                    shader_location: i as u32,
-                };
-
-                current_offset += size;
-                attr
-            })
-            .collect();
-
-        // Stride is the total size of all attributes
-        let stride: u64 = current_offset;
-
-        let vertex_buffer_layout = wgpu::VertexBufferLayout {
-            array_stride: stride,
-            step_mode: wgpu::VertexStepMode::Vertex,
-            attributes: &attributes,
-        };
-
-        // Parse blend mode and write mask
-        let blend_state = blend_mode
-            .as_ref()
-            .map(|mode| crate::parse::parse_blend_mode(mode))
-            .unwrap_or(wgpu::BlendState::REPLACE);
-
-        let color_write_mask = write_mask
-            .map(|mask| wgpu::ColorWrites::from_bits(mask).unwrap_or(wgpu::ColorWrites::ALL))
-            .unwrap_or(wgpu::ColorWrites::ALL);
-
-        // Build fragment targets
-        let targets: Vec<Option<wgpu::ColorTargetState>> = fragment_formats
-            .iter()
-            .map(|format| {
-                Some(wgpu::ColorTargetState {
-                    format: crate::parse::parse_texture_format(format),
-                    blend: Some(blend_state),
-                    write_mask: color_write_mask,
-                })
-            })
-            .collect();
-
-        // ASSUMPTION: Default entry point to "main" if not provided (WebGPU standard)
-        let fragment_entry = fragment_entry_point.unwrap_or_else(|| "main".to_string());
-        let fragment = if let Some(shader) = fragment_shader {
-            Some(wgpu::FragmentState {
-                module: &shader.shader,
-                entry_point: &fragment_entry,
-                targets: &targets,
-            })
+        // Build vertex attributes - need to own them
+        let vertex_attributes: Vec<Vec<wgpu::VertexAttribute>> = if let Some(ref buffers) = descriptor.vertex.buffers {
+            buffers.iter().map(|buf| {
+                buf.attributes.iter().map(|attr| {
+                    wgpu::VertexAttribute {
+                        format: crate::parse::parse_vertex_format(&attr.format),
+                        offset: attr.offset as u64,
+                        shader_location: attr.shader_location,
+                    }
+                }).collect()
+            }).collect()
         } else {
-            None
+            vec![]
         };
 
-        // Build depth/stencil state if format is provided
-        let depth_stencil = depth_stencil_format.as_ref().map(|format_str| {
+        // Build vertex buffer layouts
+        let vertex_buffers: Vec<wgpu::VertexBufferLayout> = if let Some(ref buffers) = descriptor.vertex.buffers {
+            buffers.iter().enumerate().map(|(i, buf)| {
+                let step_mode = match buf.step_mode.as_deref() {
+                    Some("instance") => wgpu::VertexStepMode::Instance,
+                    _ => wgpu::VertexStepMode::Vertex,
+                };
+
+                wgpu::VertexBufferLayout {
+                    array_stride: buf.array_stride as u64,
+                    step_mode,
+                    attributes: &vertex_attributes[i],
+                }
+            }).collect()
+        } else {
+            vec![]
+        };
+
+        // Build primitive state
+        let primitive = if let Some(ref prim) = descriptor.primitive {
+            let topology = match prim.topology.as_deref() {
+                Some("point-list") => wgpu::PrimitiveTopology::PointList,
+                Some("line-list") => wgpu::PrimitiveTopology::LineList,
+                Some("line-strip") => wgpu::PrimitiveTopology::LineStrip,
+                Some("triangle-strip") => wgpu::PrimitiveTopology::TriangleStrip,
+                _ => wgpu::PrimitiveTopology::TriangleList,
+            };
+
+            let front_face = match prim.front_face.as_deref() {
+                Some("cw") => wgpu::FrontFace::Cw,
+                _ => wgpu::FrontFace::Ccw,
+            };
+
+            let cull_mode = match prim.cull_mode.as_deref() {
+                Some("front") => Some(wgpu::Face::Front),
+                Some("back") => Some(wgpu::Face::Back),
+                _ => None,
+            };
+
+            wgpu::PrimitiveState {
+                topology,
+                strip_index_format: None,
+                front_face,
+                cull_mode,
+                ..Default::default()
+            }
+        } else {
+            wgpu::PrimitiveState::default()
+        };
+
+        // Build depth/stencil state
+        let depth_stencil = descriptor.depth_stencil.as_ref().map(|ds| {
+            let compare = match ds.depth_compare.as_deref() {
+                Some("never") => wgpu::CompareFunction::Never,
+                Some("less") => wgpu::CompareFunction::Less,
+                Some("equal") => wgpu::CompareFunction::Equal,
+                Some("less-equal") => wgpu::CompareFunction::LessEqual,
+                Some("greater") => wgpu::CompareFunction::Greater,
+                Some("not-equal") => wgpu::CompareFunction::NotEqual,
+                Some("greater-equal") => wgpu::CompareFunction::GreaterEqual,
+                Some("always") => wgpu::CompareFunction::Always,
+                _ => wgpu::CompareFunction::Less,
+            };
+
             wgpu::DepthStencilState {
-                format: crate::parse::parse_texture_format(format_str),
-                depth_write_enabled: true,
-                depth_compare: wgpu::CompareFunction::Less,
+                format: crate::parse::parse_texture_format(&ds.format),
+                depth_write_enabled: ds.depth_write_enabled.unwrap_or(true),
+                depth_compare: compare,
                 stencil: wgpu::StencilState::default(),
                 bias: wgpu::DepthBiasState::default(),
             }
         });
 
-        // Configure MSAA sample count
-        let multisample_state = wgpu::MultisampleState {
-            count: sample_count.unwrap_or(1),
-            mask: !0,
-            alpha_to_coverage_enabled: false,
+        // Build multisample state
+        let multisample = if let Some(ref ms) = descriptor.multisample {
+            wgpu::MultisampleState {
+                count: ms.count.unwrap_or(1),
+                mask: ms.mask.map(|m| m as u64).unwrap_or(!0),
+                alpha_to_coverage_enabled: ms.alpha_to_coverage_enabled.unwrap_or(false),
+            }
+        } else {
+            wgpu::MultisampleState::default()
+        };
+
+        // Build fragment targets - need to own them
+        let frag_targets: Vec<Option<wgpu::ColorTargetState>> = if let Some(ref frag_desc) = descriptor.fragment {
+            frag_desc.targets.iter().map(|target| {
+                let blend = target.blend.as_ref().map(|b| {
+                    wgpu::BlendState {
+                        color: wgpu::BlendComponent {
+                            src_factor: crate::parse::parse_blend_factor(&b.color.src_factor),
+                            dst_factor: crate::parse::parse_blend_factor(&b.color.dst_factor),
+                            operation: crate::parse::parse_blend_operation(&b.color.operation),
+                        },
+                        alpha: wgpu::BlendComponent {
+                            src_factor: crate::parse::parse_blend_factor(&b.alpha.src_factor),
+                            dst_factor: crate::parse::parse_blend_factor(&b.alpha.dst_factor),
+                            operation: crate::parse::parse_blend_operation(&b.alpha.operation),
+                        },
+                    }
+                });
+
+                Some(wgpu::ColorTargetState {
+                    format: crate::parse::parse_texture_format(&target.format),
+                    blend,
+                    write_mask: target.write_mask.map(|m| wgpu::ColorWrites::from_bits(m).unwrap_or(wgpu::ColorWrites::ALL)).unwrap_or(wgpu::ColorWrites::ALL),
+                })
+            }).collect()
+        } else {
+            vec![]
+        };
+
+        // Build fragment state
+        let fragment = if let Some(ref frag_desc) = descriptor.fragment {
+            if let Some(shader) = fragment_shader {
+                Some(wgpu::FragmentState {
+                    module: &shader.shader,
+                    entry_point: &frag_desc.entry_point,
+                    targets: &frag_targets,
+                })
+            } else {
+                None
+            }
+        } else {
+            None
         };
 
         let pipeline = self.device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-            label: label.as_deref(),
+            label: descriptor.label.as_deref(),
             layout: layout.map(|l| l.layout.as_ref()),
             vertex: wgpu::VertexState {
                 module: &vertex_shader.shader,
-                entry_point: &vertex_entry_point,
-                buffers: &[vertex_buffer_layout],
+                entry_point: &descriptor.vertex.entry_point,
+                buffers: &vertex_buffers,
             },
             fragment,
-            primitive: wgpu::PrimitiveState::default(),
+            primitive,
             depth_stencil,
-            multisample: multisample_state,
+            multisample,
             multiview: None,
         });
 

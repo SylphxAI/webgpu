@@ -1,3 +1,4 @@
+use napi::bindgen_prelude::External;
 use napi_derive::napi;
 use std::sync::Arc;
 
@@ -23,14 +24,28 @@ impl GpuBindGroupLayout {
 // Note: Bind group creation simplified to avoid napi-rs External/reference issues
 // Use create_bind_group_buffers on GpuDevice instead
 
-/// Bind group entry for mixed resources
+/// Bind group entry for buffer resources following WebGPU spec
+/// Use this for buffer bindings
 #[napi(object)]
-pub struct BindGroupEntry {
+pub struct BindGroupEntryBuffer {
     pub binding: u32,
-    pub resource_type: String, // "buffer", "texture", "sampler"
-    pub buffer_index: Option<u32>,
-    pub texture_index: Option<u32>,
-    pub sampler_index: Option<u32>,
+    pub buffer: External<crate::GpuBuffer>,
+    pub offset: Option<i64>,
+    pub size: Option<i64>,
+}
+
+/// Bind group entry for texture view resources
+#[napi(object)]
+pub struct BindGroupEntryTexture {
+    pub binding: u32,
+    pub view: External<crate::GpuTextureView>,
+}
+
+/// Bind group entry for sampler resources
+#[napi(object)]
+pub struct BindGroupEntrySampler {
+    pub binding: u32,
+    pub sampler: External<crate::GpuSampler>,
 }
 
 /// Bind group - collection of resources bound to shaders
