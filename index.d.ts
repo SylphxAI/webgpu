@@ -522,8 +522,6 @@ export declare class GpuBuffer {
    * ```
    */
   unmap(modifiedBuffer?: Buffer | undefined | null): void
-  /** Write data to buffer using mapped memory */
-  writeBuffer(data: Buffer): Promise<void>
   /**
    * Destroy the buffer
    *
