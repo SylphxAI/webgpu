@@ -3,7 +3,7 @@
   "version": "0.8.1",
   "description": "WebGPU for Node.js via wgpu-rs (modern, lightweight alternative to Dawn)",
   "main": "webgpu.js",
-  "types": "index.d.ts",
+  "types": "webgpu.d.ts",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/SylphxAI/webgpu.git"
