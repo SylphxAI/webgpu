@@ -122,29 +122,44 @@ jobs:
         with:
           path: artifacts
 
-      - name: Move binaries to root
+      - name: Organize artifacts into npm structure
         run: |
+          mkdir -p npm
           for dir in artifacts/bindings-*; do
             if [ -d "$dir" ]; then
-              mv "$dir"/*.node . 2>/dev/null || true
+              platform=$(basename "$dir" | sed 's/bindings-//')
+              case "$platform" in
+                "x86_64-apple-darwin")
+                  mkdir -p npm/darwin-x64
+                  mv "$dir"/*.node npm/darwin-x64/
+                  ;;
+                "aarch64-apple-darwin")
+                  mkdir -p npm/darwin-arm64
+                  mv "$dir"/*.node npm/darwin-arm64/
+                  ;;
+                "x86_64-unknown-linux-gnu")
+                  mkdir -p npm/linux-x64-gnu
+                  mv "$dir"/*.node npm/linux-x64-gnu/
+                  ;;
+                "aarch64-unknown-linux-gnu")
+                  mkdir -p npm/linux-arm64-gnu
+                  mv "$dir"/*.node npm/linux-arm64-gnu/
+                  ;;
+                "x86_64-pc-windows-msvc")
+                  mkdir -p npm/win32-x64-msvc
+                  mv "$dir"/*.node npm/win32-x64-msvc/
+                  ;;
+                "aarch64-pc-windows-msvc")
+                  mkdir -p npm/win32-arm64-msvc
+                  mv "$dir"/*.node npm/win32-arm64-msvc/
+                  ;;
+              esac
             fi
           done
-          ls -la *.node
-
-      - name: Create platform packages
-        run: |
-          bun run prepublishOnly --skip-gh-release
           ls -R npm/
 
-      - name: Move binaries to npm packages
-        run: |
-          mv webgpu.darwin-x64.node npm/darwin-x64/ 2>/dev/null || true
-          mv webgpu.darwin-arm64.node npm/darwin-arm64/ 2>/dev/null || true
-          mv webgpu.linux-x64-gnu.node npm/linux-x64-gnu/ 2>/dev/null || true
-          mv webgpu.linux-arm64-gnu.node npm/linux-arm64-gnu/ 2>/dev/null || true
-          mv webgpu.win32-x64-msvc.node npm/win32-x64-msvc/ 2>/dev/null || true
-          mv webgpu.win32-arm64-msvc.node npm/win32-arm64-msvc/ 2>/dev/null || true
-          ls -R npm/
+      - name: Create platform package.json files
+        run: bun run prepublishOnly --skip-gh-release
 
       - name: Publish main package
         run: npm publish --access public
