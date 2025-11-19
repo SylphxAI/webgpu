@@ -87,7 +87,7 @@ impl GpuDevice {
             mapped_at_creation: descriptor.mapped_at_creation.unwrap_or(false),
         });
 
-        crate::GpuBuffer::new(buffer, self.device.clone())
+        crate::GpuBuffer::new(buffer, self.device.clone(), self.queue_internal.clone())
     }
 
     /// Create a shader module

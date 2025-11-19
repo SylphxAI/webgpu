@@ -478,9 +478,9 @@ export declare class GpuBuffer {
    *
    * Returns the mapped data as a Node.js Buffer.
    * Must be called after mapAsync() succeeds or if buffer created with mappedAtCreation: true.
-   * The buffer must remain mapped until unmap() is called.
    *
-   * NOTE: For write operations, use writeMappedRange() to write data back to GPU.
+   * NOTE: This returns a READ-ONLY copy of the GPU buffer data.
+   * For WRITE operations, use writeMappedRange() instead.
    */
   getMappedRange(): Buffer
   /**
@@ -490,6 +490,8 @@ export declare class GpuBuffer {
    * Must be called while the buffer is mapped (after mapAsync or if created with mappedAtCreation: true).
    * After writing, call unmap() to make the data available to GPU operations.
    *
+   * IMPLEMENTATION: Data is accumulated and written via queue.write_buffer() when unmap() is called.
+   *
    * # Arguments
    * * `data` - The data to write
    * * `offset` - Byte offset into the buffer (optional, default 0)
@@ -498,10 +500,35 @@ export declare class GpuBuffer {
   /**
    * Unmap the buffer
    *
-   * Releases the mapped memory. Must be called after mapping operations before using buffer in GPU operations.
-   * Any data written with writeMappedRange() will be flushed to the GPU.
+   * Releases the mapped memory and flushes changes to GPU.
+   * Must be called after mapping operations before using buffer in GPU operations.
+   *
+   * # Parameters
+   * * `modified_buffer` - Optional. If provided, writes this data to GPU before unmapping.
+   *                       Use this when you've modified the buffer from getMappedRange().
+   *
+   * # Usage patterns
+   * 1. Write with getMappedRange():
+   *    ```js
+   *    const range = buffer.getMappedRange()
+   *    const view = new Float32Array(range.buffer)
+   *    view[0] = 1.0
+   *    buffer.unmap(range)  // Pass modified buffer back
+   *    ```
+   *
+   * 2. Write with writeMappedRange():
+   *    ```js
+   *    buffer.writeMappedRange(data)
+   *    buffer.unmap()  // No argument needed
+   *    ```
+   *
+   * 3. Read with getMappedRange():
+   *    ```js
+   *    const data = buffer.getMappedRange()
+   *    buffer.unmap()  // No argument needed for reads
+   *    ```
    */
-  unmap(): void
+  unmap(modifiedBuffer?: Buffer | undefined | null): void
   /** Write data to buffer using mapped memory */
   writeBuffer(data: Buffer): Promise<void>
   /**

@@ -1,6 +1,6 @@
 use napi::bindgen_prelude::*;
 use napi_derive::napi;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 /// GPU buffer - contiguous memory allocation on the GPU
 ///
@@ -10,11 +10,20 @@ use std::sync::Arc;
 pub struct GpuBuffer {
     pub(crate) buffer: wgpu::Buffer,
     pub(crate) device: Arc<wgpu::Device>,
+    pub(crate) queue: Arc<wgpu::Queue>,
+    /// Tracks pending writes to the mapped buffer
+    /// Writes are accumulated and applied via queue.write_buffer() in unmap()
+    pub(crate) pending_writes: Arc<Mutex<Vec<(u64, Vec<u8>)>>>,
 }
 
 impl GpuBuffer {
-    pub(crate) fn new(buffer: wgpu::Buffer, device: Arc<wgpu::Device>) -> Self {
-        Self { buffer, device }
+    pub(crate) fn new(buffer: wgpu::Buffer, device: Arc<wgpu::Device>, queue: Arc<wgpu::Queue>) -> Self {
+        Self {
+            buffer,
+            device,
+            queue,
+            pending_writes: Arc::new(Mutex::new(Vec::new())),
+        }
     }
 }
 
@@ -65,9 +74,9 @@ impl GpuBuffer {
     ///
     /// Returns the mapped data as a Node.js Buffer.
     /// Must be called after mapAsync() succeeds or if buffer created with mappedAtCreation: true.
-    /// The buffer must remain mapped until unmap() is called.
     ///
-    /// NOTE: For write operations, use writeMappedRange() to write data back to GPU.
+    /// NOTE: This returns a READ-ONLY copy of the GPU buffer data.
+    /// For WRITE operations, use writeMappedRange() instead.
     #[napi(js_name = "getMappedRange")]
     pub fn get_mapped_range(&self) -> Result<Buffer> {
         let slice = self.buffer.slice(..);
@@ -81,38 +90,123 @@ impl GpuBuffer {
     /// Must be called while the buffer is mapped (after mapAsync or if created with mappedAtCreation: true).
     /// After writing, call unmap() to make the data available to GPU operations.
     ///
+    /// IMPLEMENTATION: Data is accumulated and written via queue.write_buffer() when unmap() is called.
+    ///
     /// # Arguments
     /// * `data` - The data to write
     /// * `offset` - Byte offset into the buffer (optional, default 0)
     #[napi(js_name = "writeMappedRange")]
     pub fn write_mapped_range(&self, data: Buffer, offset: Option<u32>) -> Result<()> {
-        let offset = offset.unwrap_or(0) as usize;
-        let data_slice = data.as_ref();
+        let offset = offset.unwrap_or(0) as u64;
+        let data_vec = data.as_ref().to_vec();
 
-        let slice = self.buffer.slice(..);
-        let mut mapped = slice.get_mapped_range_mut();
-
-        // Check bounds
-        if offset + data_slice.len() > mapped.len() {
+        // Check bounds (buffer size check)
+        let buffer_size = self.buffer.size();
+        if offset + data_vec.len() as u64 > buffer_size {
             return Err(Error::from_reason(format!(
                 "Data size ({} bytes) + offset ({} bytes) exceeds buffer size ({} bytes)",
-                data_slice.len(), offset, mapped.len()
+                data_vec.len(), offset, buffer_size
             )));
         }
 
-        // Copy data to mapped range
-        mapped[offset..offset + data_slice.len()].copy_from_slice(data_slice);
+        // Store the write to be applied later in unmap() via queue.write_buffer()
+        let mut pending = self.pending_writes.lock()
+            .map_err(|_| Error::from_reason("Failed to lock pending writes"))?;
+        pending.push((offset, data_vec));
 
         Ok(())
     }
 
     /// Unmap the buffer
     ///
-    /// Releases the mapped memory. Must be called after mapping operations before using buffer in GPU operations.
-    /// Any data written with writeMappedRange() will be flushed to the GPU.
+    /// Releases the mapped memory and flushes changes to GPU.
+    /// Must be called after mapping operations before using buffer in GPU operations.
+    ///
+    /// # Parameters
+    /// * `modified_buffer` - Optional. If provided, writes this data to GPU before unmapping.
+    ///                       Use this when you've modified the buffer from getMappedRange().
+    ///
+    /// # Usage patterns
+    /// 1. Write with getMappedRange():
+    ///    ```js
+    ///    const range = buffer.getMappedRange()
+    ///    const view = new Float32Array(range.buffer)
+    ///    view[0] = 1.0
+    ///    buffer.unmap(range)  // Pass modified buffer back
+    ///    ```
+    ///
+    /// 2. Write with writeMappedRange():
+    ///    ```js
+    ///    buffer.writeMappedRange(data)
+    ///    buffer.unmap()  // No argument needed
+    ///    ```
+    ///
+    /// 3. Read with getMappedRange():
+    ///    ```js
+    ///    const data = buffer.getMappedRange()
+    ///    buffer.unmap()  // No argument needed for reads
+    ///    ```
     #[napi]
-    pub fn unmap(&self) {
-        self.buffer.unmap();
+    pub fn unmap(&self, modified_buffer: Option<Buffer>) -> Result<()> {
+        // Get pending writes before unmapping
+        let mut pending = self.pending_writes.lock()
+            .map_err(|_| Error::from_reason("Failed to lock pending writes"))?;
+
+        // Check if buffer has COPY_DST usage (required for queue.write_buffer())
+        let has_copy_dst = self.buffer.usage().contains(wgpu::BufferUsages::COPY_DST);
+
+        if !pending.is_empty() || modified_buffer.is_some() {
+            if has_copy_dst {
+                // Buffer has COPY_DST: unmap first, then use queue.write_buffer()
+                self.buffer.unmap();
+
+                // Write all pending writes using queue.write_buffer()
+                for (offset, data) in pending.iter() {
+                    self.queue.write_buffer(&self.buffer, *offset, data);
+                }
+
+                // If a modified buffer was provided, write it too
+                if let Some(data) = modified_buffer {
+                    self.queue.write_buffer(&self.buffer, 0, data.as_ref());
+                }
+
+                // Submit and poll to ensure writes complete
+                self.queue.submit(std::iter::empty());
+                self.device.poll(wgpu::Maintain::Wait);
+            } else {
+                // Buffer doesn't have COPY_DST: use mapped memory writes
+                let slice = self.buffer.slice(..);
+                let mut mapped = slice.get_mapped_range_mut();
+
+                // Write all pending writes directly to mapped memory
+                for (offset, data) in pending.iter() {
+                    let offset_usize = *offset as usize;
+                    if offset_usize + data.len() <= mapped.len() {
+                        mapped[offset_usize..offset_usize + data.len()].copy_from_slice(data);
+                    }
+                }
+
+                // If a modified buffer was provided, write it too
+                if let Some(data) = modified_buffer {
+                    let data_slice = data.as_ref();
+                    if data_slice.len() <= mapped.len() {
+                        mapped[..data_slice.len()].copy_from_slice(data_slice);
+                    }
+                }
+
+                // Drop mapped view before unmapping
+                drop(mapped);
+                self.buffer.unmap();
+            }
+        } else {
+            // No pending writes, just unmap
+            self.buffer.unmap();
+        }
+
+        // Clear pending writes
+        pending.clear();
+
+        Ok(())
     }
 
     /// Write data to buffer using mapped memory
