@@ -67,6 +67,37 @@
   device.destroy(); // Now available (standard method)
   ```
 
+  ## Critical Bugfix
+
+  **Fixed: buffer.unmap() not flushing getMappedRange() data to GPU**
+
+  This critical bug affected all previous versions (0.9.0, 0.9.1, 1.0.0). The standard WebGPU pattern of modifying buffers returned from `getMappedRange()` was not writing data to GPU:
+
+  ```javascript
+  // This pattern was broken in previous versions:
+  const range = buffer.getMappedRange()
+  const arr = new Float32Array(range.buffer, range.byteOffset, 4)
+  arr.set([1, 2, 3, 4])  // ✅ JS shows [1, 2, 3, 4]
+  buffer.unmap()
+  // ❌ GPU had [0, 0, 0, 0] - DATA LOST!
+
+  // Now fixed in v0.10.0:
+  const range = buffer.getMappedRange()
+  const arr = new Float32Array(range.buffer, range.byteOffset, 4)
+  arr.set([1, 2, 3, 4])
+  buffer.unmap()
+  // ✅ GPU correctly has [1, 2, 3, 4] - WORKS!
+  ```
+
+  **Root cause:** Native `getMappedRange()` returned a copy of GPU memory, not a reference. Modifications to the copy were lost on `unmap()`.
+
+  **Solution:** Added JavaScript wrapper that stores the mapped range and passes modifications back to native implementation on `unmap()`.
+
+  **Impact:** All buffer write patterns now work correctly:
+  - ✅ `getMappedRange()` + modify + `unmap()` (standard pattern)
+  - ✅ `writeMappedRange()` + `unmap()` (explicit write)
+  - ✅ `mappedAtCreation` buffers (create with data)
+
   ## Test Coverage
 
   Added 58 comprehensive tests verifying 100% WebGPU standard compliance:

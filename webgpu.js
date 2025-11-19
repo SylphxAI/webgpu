@@ -16,6 +16,235 @@
 const native = require('./index.js')
 
 /**
+ * WebGPU-standard GpuBuffer wrapper
+ *
+ * Fixes getMappedRange() + unmap() to properly flush data to GPU.
+ *
+ * Issue: Native getMappedRange() returns a copy (not a reference).
+ * Solution: Store the returned buffer and pass it back to native unmap().
+ */
+class GpuBuffer {
+    constructor(nativeBuffer) {
+        this._native = nativeBuffer
+        this._mappedRange = null
+    }
+
+    /**
+     * Get mapped range as a Buffer
+     *
+     * Returns a Node.js Buffer representing the mapped GPU memory.
+     * Modifications to this buffer will be flushed to GPU when unmap() is called.
+     */
+    getMappedRange() {
+        this._mappedRange = this._native.getMappedRange()
+        return this._mappedRange
+    }
+
+    /**
+     * Unmap the buffer and flush changes to GPU
+     *
+     * Standard WebGPU API - takes no arguments.
+     * Internally passes the stored mapped range back to native implementation.
+     */
+    unmap() {
+        if (this._mappedRange) {
+            // Pass modified buffer back to native unmap
+            this._native.unmap(this._mappedRange)
+            this._mappedRange = null
+        } else {
+            // No mapped range stored, just unmap
+            this._native.unmap()
+        }
+    }
+
+    // Pass-through methods
+    mapAsync(mode) {
+        return this._native.mapAsync(mode)
+    }
+
+    writeMappedRange(data, offset) {
+        return this._native.writeMappedRange(data, offset)
+    }
+
+    destroy() {
+        return this._native.destroy()
+    }
+
+    size() {
+        return this._native.size()
+    }
+
+    usage() {
+        return this._native.usage()
+    }
+
+    mapState() {
+        return this._native.mapState()
+    }
+}
+
+/**
+ * WebGPU-standard GpuQueue wrapper
+ *
+ * Unwraps GpuBuffer objects before passing to native methods.
+ */
+class GpuQueue {
+    constructor(nativeQueue) {
+        this._native = nativeQueue
+    }
+
+    submit(commandBuffers) {
+        return this._native.submit(commandBuffers)
+    }
+
+    writeBuffer(buffer, offset, data) {
+        // Unwrap GpuBuffer if needed
+        const nativeBuffer = buffer._native || buffer
+        return this._native.writeBuffer(nativeBuffer, offset, data)
+    }
+
+    writeTexture(destination, data, dataLayout, size) {
+        return this._native.writeTexture(destination, data, dataLayout, size)
+    }
+
+    onSubmittedWorkDone() {
+        return this._native.onSubmittedWorkDone()
+    }
+}
+
+/**
+ * WebGPU-standard GpuComputePass wrapper
+ *
+ * Unwraps GpuBuffer objects before passing to native methods.
+ */
+class GpuComputePass {
+    constructor(nativePass) {
+        this._native = nativePass
+    }
+
+    setPipeline(pipeline) {
+        return this._native.setPipeline(pipeline)
+    }
+
+    dispatchWorkgroups(x, y, z) {
+        return this._native.dispatchWorkgroups(x, y, z)
+    }
+
+    dispatchWorkgroupsIndirect(indirectBuffer, indirectOffset) {
+        // Unwrap GpuBuffer if needed
+        const nativeBuffer = indirectBuffer._native || indirectBuffer
+        return this._native.dispatchWorkgroupsIndirect(nativeBuffer, indirectOffset)
+    }
+
+    setBindGroup(index, bindGroup, dynamicOffsets) {
+        return this._native.setBindGroup(index, bindGroup, dynamicOffsets)
+    }
+
+    pushDebugGroup(groupLabel) {
+        return this._native.pushDebugGroup(groupLabel)
+    }
+
+    popDebugGroup() {
+        return this._native.popDebugGroup()
+    }
+
+    insertDebugMarker(markerLabel) {
+        return this._native.insertDebugMarker(markerLabel)
+    }
+
+    end() {
+        return this._native.end()
+    }
+}
+
+/**
+ * WebGPU-standard GpuRenderPass wrapper
+ *
+ * Unwraps GpuBuffer objects before passing to native methods.
+ */
+class GpuRenderPass {
+    constructor(nativePass) {
+        this._native = nativePass
+    }
+
+    setPipeline(pipeline) {
+        return this._native.setPipeline(pipeline)
+    }
+
+    setVertexBuffer(slot, buffer, offset, size) {
+        // Unwrap GpuBuffer if needed
+        const nativeBuffer = buffer._native || buffer
+        return this._native.setVertexBuffer(slot, nativeBuffer, offset, size)
+    }
+
+    setIndexBuffer(buffer, indexFormat, offset, size) {
+        // Unwrap GpuBuffer if needed
+        const nativeBuffer = buffer._native || buffer
+        return this._native.setIndexBuffer(nativeBuffer, indexFormat, offset, size)
+    }
+
+    setBindGroup(index, bindGroup, dynamicOffsets) {
+        return this._native.setBindGroup(index, bindGroup, dynamicOffsets)
+    }
+
+    draw(vertexCount, instanceCount, firstVertex, firstInstance) {
+        return this._native.draw(vertexCount, instanceCount, firstVertex, firstInstance)
+    }
+
+    drawIndexed(indexCount, instanceCount, firstIndex, baseVertex, firstInstance) {
+        return this._native.drawIndexed(indexCount, instanceCount, firstIndex, baseVertex, firstInstance)
+    }
+
+    drawIndirect(indirectBuffer, indirectOffset) {
+        // Unwrap GpuBuffer if needed
+        const nativeBuffer = indirectBuffer._native || indirectBuffer
+        return this._native.drawIndirect(nativeBuffer, indirectOffset)
+    }
+
+    drawIndexedIndirect(indirectBuffer, indirectOffset) {
+        // Unwrap GpuBuffer if needed
+        const nativeBuffer = indirectBuffer._native || indirectBuffer
+        return this._native.drawIndexedIndirect(nativeBuffer, indirectOffset)
+    }
+
+    setViewport(x, y, width, height, minDepth, maxDepth) {
+        return this._native.setViewport(x, y, width, height, minDepth, maxDepth)
+    }
+
+    setScissorRect(x, y, width, height) {
+        return this._native.setScissorRect(x, y, width, height)
+    }
+
+    setBlendConstant(color) {
+        return this._native.setBlendConstant(color)
+    }
+
+    setStencilReference(reference) {
+        return this._native.setStencilReference(reference)
+    }
+
+    pushDebugGroup(groupLabel) {
+        return this._native.pushDebugGroup(groupLabel)
+    }
+
+    popDebugGroup() {
+        return this._native.popDebugGroup()
+    }
+
+    insertDebugMarker(markerLabel) {
+        return this._native.insertDebugMarker(markerLabel)
+    }
+
+    end() {
+        return this._native.end()
+    }
+
+    executeBundles(bundles) {
+        return this._native.executeBundles(bundles)
+    }
+}
+
+/**
  * WebGPU-standard GpuCommandEncoder wrapper
  */
 class GpuCommandEncoder {
@@ -29,23 +258,33 @@ class GpuCommandEncoder {
     }
 
     resolveQuerySet(querySet, firstQuery, queryCount, destination, destinationOffset) {
-        return this._native.resolveQuerySet(querySet, firstQuery, queryCount, destination, destinationOffset)
+        // Unwrap GpuBuffer if needed
+        const dstBuffer = destination._native || destination
+        return this._native.resolveQuerySet(querySet, firstQuery, queryCount, dstBuffer, destinationOffset)
     }
 
     copyBufferToBuffer(source, sourceOffset, destination, destinationOffset, size) {
-        return this._native.copyBufferToBuffer(source, sourceOffset, destination, destinationOffset, size)
+        // Unwrap GpuBuffer if needed
+        const srcBuffer = source._native || source
+        const dstBuffer = destination._native || destination
+        return this._native.copyBufferToBuffer(srcBuffer, sourceOffset, dstBuffer, destinationOffset, size)
     }
 
     copyBufferToTexture(source, sourceOffset, bytesPerRow, rowsPerImage, destination, mipLevel, originX, originY, originZ, width, height, depth) {
-        return this._native.copyBufferToTexture(source, sourceOffset, bytesPerRow, rowsPerImage, destination, mipLevel, originX, originY, originZ, width, height, depth)
+        // Unwrap GpuBuffer if needed
+        const srcBuffer = source._native || source
+        return this._native.copyBufferToTexture(srcBuffer, sourceOffset, bytesPerRow, rowsPerImage, destination, mipLevel, originX, originY, originZ, width, height, depth)
     }
 
     copyTextureToBuffer(source, mipLevel, originX, originY, originZ, destination, destinationOffset, bytesPerRow, rowsPerImage, width, height, depth) {
-        return this._native.copyTextureToBuffer(source, mipLevel, originX, originY, originZ, destination, destinationOffset, bytesPerRow, rowsPerImage, width, height, depth)
+        // Unwrap GpuBuffer if needed
+        const dstBuffer = destination._native || destination
+        return this._native.copyTextureToBuffer(source, mipLevel, originX, originY, originZ, dstBuffer, destinationOffset, bytesPerRow, rowsPerImage, width, height, depth)
     }
 
     beginComputePass(descriptor) {
-        return this._native.beginComputePass(descriptor)
+        const nativePass = this._native.beginComputePass(descriptor)
+        return new GpuComputePass(nativePass)
     }
 
     /**
@@ -91,7 +330,7 @@ class GpuCommandEncoder {
         } : undefined
 
         // Call flattened native API
-        return this._native.beginRenderPass(
+        const nativePass = this._native.beginRenderPass(
             {
                 label: descriptor.label,
                 colorAttachments: colorAttachments,
@@ -101,6 +340,7 @@ class GpuCommandEncoder {
             colorResolveViews.some(v => v) ? colorResolveViews : null,
             depthStencilView
         )
+        return new GpuRenderPass(nativePass)
     }
 
     finish() {
@@ -116,9 +356,12 @@ class GpuDevice {
         this._native = nativeDevice
     }
 
-    // Getters - pass through to native
+    // Getters - wrap queue to handle GpuBuffer unwrapping
     get queue() {
-        return this._native.queue
+        if (!this._queue) {
+            this._queue = new GpuQueue(this._native.queue)
+        }
+        return this._queue
     }
 
     get features() {
@@ -149,7 +392,8 @@ class GpuDevice {
 
     // Simple pass-through methods
     createBuffer(descriptor) {
-        return this._native.createBuffer(descriptor)
+        const nativeBuffer = this._native.createBuffer(descriptor)
+        return new GpuBuffer(nativeBuffer)
     }
 
     createShaderModule(descriptor) {
@@ -211,7 +455,9 @@ class GpuDevice {
                 if (resource.offset !== undefined) entry_obj.offset = resource.offset
                 if (resource.size !== undefined) entry_obj.size = resource.size
                 entries.push(entry_obj)
-                buffers.push(resource.buffer)
+                // Unwrap GpuBuffer if needed
+                const nativeBuffer = resource.buffer._native || resource.buffer
+                buffers.push(nativeBuffer)
             }
             // Texture view binding (resource is the view directly, or has .texture property)
             else if (resource.constructor?.name === 'GpuTextureView' || resource.texture) {
