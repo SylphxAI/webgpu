@@ -23,24 +23,15 @@
     "node": ">=18.0.0"
   },
   "napi": {
-    "name": "webgpu",
-    "triples": {
-      "additional": [
-        "aarch64-apple-darwin",
-        "aarch64-unknown-linux-gnu",
-        "aarch64-unknown-linux-musl",
-        "aarch64-pc-windows-msvc",
-        "armv7-unknown-linux-gnueabihf",
-        "x86_64-unknown-linux-musl",
-        "x86_64-unknown-freebsd",
-        "i686-pc-windows-msvc",
-        "armv7-linux-androideabi",
-        "aarch64-linux-android",
-        "x86_64-unknown-linux-gnu",
-        "x86_64-pc-windows-msvc",
-        "x86_64-apple-darwin"
-      ]
-    }
+    "binaryName": "webgpu",
+    "targets": [
+      "x86_64-pc-windows-msvc",
+      "x86_64-apple-darwin",
+      "aarch64-apple-darwin",
+      "x86_64-unknown-linux-gnu",
+      "aarch64-unknown-linux-gnu",
+      "aarch64-pc-windows-msvc"
+    ]
   },
   "scripts": {
     "artifacts": "napi artifacts",
@@ -63,7 +54,9 @@
     "vercel": "^48.10.3",
     "vitepress": "^1.6.4"
   },
-  "workspaces": ["npm/*"],
+  "workspaces": [
+    "npm/*"
+  ],
   "files": [
     "index.js",
     "index.d.ts"
@@ -71,16 +64,6 @@
   "optionalDependencies": {
     "@sylphx/webgpu-win32-x64-msvc": "0.1.0",
     "@sylphx/webgpu-darwin-x64": "0.1.0",
-    "@sylphx/webgpu-linux-x64-gnu": "0.1.0",
-    "@sylphx/webgpu-darwin-arm64": "0.1.0",
-    "@sylphx/webgpu-linux-arm64-gnu": "0.1.0",
-    "@sylphx/webgpu-linux-arm64-musl": "0.1.0",
-    "@sylphx/webgpu-win32-arm64-msvc": "0.1.0",
-    "@sylphx/webgpu-linux-arm-gnueabihf": "0.1.0",
-    "@sylphx/webgpu-linux-x64-musl": "0.1.0",
-    "@sylphx/webgpu-freebsd-x64": "0.1.0",
-    "@sylphx/webgpu-win32-ia32-msvc": "0.1.0",
-    "@sylphx/webgpu-android-arm-eabi": "0.1.0",
-    "@sylphx/webgpu-android-arm64": "0.1.0"
+    "@sylphx/webgpu-linux-x64-gnu": "0.1.0"
   }
 }
