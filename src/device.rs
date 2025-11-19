@@ -20,24 +20,24 @@ impl GpuDevice {
 #[napi]
 impl GpuDevice {
     /// Create a GPU buffer
-    #[napi]
-    pub fn create_buffer(&self, size: u32, usage: u32, mapped_at_creation: Option<bool>) -> crate::GpuBuffer {
+    #[napi(js_name = "createBuffer")]
+    pub fn create_buffer(&self, descriptor: crate::BufferDescriptor) -> crate::GpuBuffer {
         let buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
-            label: None,
-            size: size as u64,
-            usage: wgpu::BufferUsages::from_bits_truncate(usage),
-            mapped_at_creation: mapped_at_creation.unwrap_or(false),
+            label: descriptor.label.as_deref(),
+            size: descriptor.size as u64,
+            usage: wgpu::BufferUsages::from_bits_truncate(descriptor.usage),
+            mapped_at_creation: descriptor.mapped_at_creation.unwrap_or(false),
         });
 
         crate::GpuBuffer::new(buffer, self.device.clone())
     }
 
     /// Create a shader module
-    #[napi]
-    pub fn create_shader_module(&self, code: String) -> Result<GpuShaderModule> {
+    #[napi(js_name = "createShaderModule")]
+    pub fn create_shader_module(&self, descriptor: crate::ShaderModuleDescriptor) -> Result<GpuShaderModule> {
         let shader = self.device.create_shader_module(wgpu::ShaderModuleDescriptor {
-            label: None,
-            source: wgpu::ShaderSource::Wgsl(code.into()),
+            label: descriptor.label.as_deref(),
+            source: wgpu::ShaderSource::Wgsl(descriptor.code.into()),
         });
 
         Ok(GpuShaderModule { shader })
@@ -372,10 +372,10 @@ impl GpuDevice {
     }
 
     /// Create a pipeline layout
-    #[napi]
+    #[napi(js_name = "createPipelineLayout")]
     pub fn create_pipeline_layout(
         &self,
-        label: Option<String>,
+        descriptor: crate::PipelineLayoutDescriptor,
         bind_group_layouts: Vec<&crate::GpuBindGroupLayout>,
     ) -> crate::GpuPipelineLayout {
         let bind_group_layouts_refs: Vec<_> = bind_group_layouts
@@ -384,7 +384,7 @@ impl GpuDevice {
             .collect();
 
         let layout = self.device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-            label: label.as_deref(),
+            label: descriptor.label.as_deref(),
             bind_group_layouts: &bind_group_layouts_refs,
             push_constant_ranges: &[],
         });

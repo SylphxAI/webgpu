@@ -32,17 +32,23 @@ impl GpuBuffer {
         self.buffer.usage().bits()
     }
 
-    /// Map the buffer for reading
+    /// Map the buffer asynchronously for reading or writing
     ///
-    /// Asynchronously maps the buffer for CPU read access.
-    /// Buffer must have MAP_READ usage flag.
-    /// Returns a Node.js Buffer containing the data.
-    #[napi]
-    pub async fn map_read(&self) -> Result<Buffer> {
+    /// Asynchronously maps the buffer for CPU access.
+    /// mode: "READ" or "WRITE"
+    /// Buffer must have MAP_READ or MAP_WRITE usage flag.
+    #[napi(js_name = "mapAsync")]
+    pub async fn map_async(&self, mode: String) -> Result<()> {
         let slice = self.buffer.slice(..);
 
+        let map_mode = match mode.as_str() {
+            "READ" => wgpu::MapMode::Read,
+            "WRITE" => wgpu::MapMode::Write,
+            _ => return Err(Error::from_reason(format!("Invalid map mode: {}. Use 'READ' or 'WRITE'", mode))),
+        };
+
         let (sender, receiver) = futures::channel::oneshot::channel();
-        slice.map_async(wgpu::MapMode::Read, move |result| {
+        slice.map_async(map_mode, move |result| {
             let _ = sender.send(result);
         });
 
@@ -52,6 +58,17 @@ impl GpuBuffer {
             .map_err(|_| Error::from_reason("Failed to receive map result"))?
             .map_err(|e| Error::from_reason(format!("Failed to map buffer: {:?}", e)))?;
 
+        Ok(())
+    }
+
+    /// Get the mapped range as a buffer
+    ///
+    /// Returns the mapped data as a Node.js Buffer.
+    /// Must be called after mapAsync() succeeds.
+    /// The buffer must remain mapped until unmap() is called.
+    #[napi(js_name = "getMappedRange")]
+    pub fn get_mapped_range(&self) -> Result<Buffer> {
+        let slice = self.buffer.slice(..);
         let data = slice.get_mapped_range();
         Ok(Buffer::from(data.to_vec()))
     }

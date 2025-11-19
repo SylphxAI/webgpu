@@ -67,22 +67,6 @@ export interface TextureUsage {
 }
 /** Get texture usage constants */
 export declare function textureUsage(): TextureUsage
-/** Bind group layout entry */
-export interface BindGroupLayoutEntry {
-  binding: number
-  visibility: number
-  bufferType?: string
-  samplerType?: string
-  textureSampleType?: string
-  textureViewDimension?: string
-  storageTextureAccess?: string
-  storageTextureFormat?: string
-}
-/** Bind group layout descriptor */
-export interface BindGroupLayoutDescriptor {
-  label?: string
-  entries: Array<BindGroupLayoutEntry>
-}
 /** Bind group entry for mixed resources */
 export interface BindGroupEntry {
   binding: number
@@ -91,71 +75,9 @@ export interface BindGroupEntry {
   textureIndex?: number
   samplerIndex?: number
 }
-/** Pipeline layout descriptor */
-export interface PipelineLayoutDescriptor {
-  label?: string
-}
-/** Compute pipeline descriptor */
-export interface ComputePipelineDescriptor {
-  label?: string
-  layout?: ExternalObject<GpuPipelineLayout>
-  compute: ComputeStage
-}
-export interface ComputeStage {
-  module: ExternalObject<GpuShaderModule>
-  entryPoint: string
-}
 /** Compute pass descriptor (simplified) */
 export interface ComputePassDescriptor {
   label?: string
-}
-/** Render pipeline descriptor (basic) */
-export interface RenderPipelineDescriptor {
-  label?: string
-  layout?: ExternalObject<GpuPipelineLayout>
-  vertex: VertexState
-  fragment?: FragmentState
-  primitive?: PrimitiveState
-}
-export interface VertexState {
-  module: ExternalObject<GpuShaderModule>
-  entryPoint: string
-  buffers?: Array<VertexBufferLayout>
-}
-export interface VertexBufferLayout {
-  arrayStride: number
-  stepMode?: string
-  attributes: Array<VertexAttribute>
-}
-export interface VertexAttribute {
-  format: string
-  offset: number
-  shaderLocation: number
-}
-export interface FragmentState {
-  module: ExternalObject<GpuShaderModule>
-  entryPoint: string
-  targets: Array<ColorTargetState>
-}
-export interface ColorTargetState {
-  format: string
-  blend?: BlendState
-  writeMask?: number
-}
-export interface BlendState {
-  color: BlendComponent
-  alpha: BlendComponent
-}
-export interface BlendComponent {
-  srcFactor: string
-  dstFactor: string
-  operation: string
-}
-export interface PrimitiveState {
-  topology?: string
-  stripIndexFormat?: string
-  frontFace?: string
-  cullMode?: string
 }
 /** Render pass descriptor */
 export interface RenderPassDescriptor {
@@ -198,6 +120,139 @@ export interface SamplerDescriptor {
   lodMaxClamp?: number
   compare?: string
   maxAnisotropy?: number
+}
+/** Buffer descriptor following WebGPU spec */
+export interface BufferDescriptor {
+  label?: string
+  size: number
+  usage: number
+  mappedAtCreation?: boolean
+}
+/** Shader module descriptor following WebGPU spec */
+export interface ShaderModuleDescriptor {
+  label?: string
+  code: string
+}
+/** Pipeline layout descriptor following WebGPU spec */
+export interface PipelineLayoutDescriptor {
+  label?: string
+}
+/** Compute pipeline descriptor following WebGPU spec */
+export interface ComputePipelineDescriptor {
+  label?: string
+  compute: ComputeStage
+}
+export interface ComputeStage {
+  entryPoint: string
+}
+/** Command encoder descriptor following WebGPU spec */
+export interface CommandEncoderDescriptor {
+  label?: string
+}
+/** Bind group descriptor following WebGPU spec */
+export interface BindGroupDescriptor {
+  label?: string
+}
+/** Bind group layout descriptor following WebGPU spec */
+export interface BindGroupLayoutDescriptor {
+  label?: string
+  entries: Array<BindGroupLayoutEntry>
+}
+export interface BindGroupLayoutEntry {
+  binding: number
+  visibility: number
+  buffer?: BufferBindingLayout
+  sampler?: SamplerBindingLayout
+  texture?: TextureBindingLayout
+  storageTexture?: StorageTextureBindingLayout
+}
+export interface BufferBindingLayout {
+  type?: string
+  hasDynamicOffset?: boolean
+  minBindingSize?: number
+}
+export interface SamplerBindingLayout {
+  type?: string
+}
+export interface TextureBindingLayout {
+  sampleType?: string
+  viewDimension?: string
+  multisampled?: boolean
+}
+export interface StorageTextureBindingLayout {
+  access?: string
+  format: string
+  viewDimension?: string
+}
+/** Render pipeline descriptor following WebGPU spec */
+export interface RenderPipelineDescriptor {
+  label?: string
+  vertex: VertexState
+  primitive?: PrimitiveState
+  depthStencil?: DepthStencilState
+  multisample?: MultisampleState
+  fragment?: FragmentState
+}
+export interface VertexState {
+  entryPoint: string
+  buffers?: Array<VertexBufferLayout>
+}
+export interface VertexBufferLayout {
+  arrayStride: number
+  stepMode?: string
+  attributes: Array<VertexAttribute>
+}
+export interface VertexAttribute {
+  format: string
+  offset: number
+  shaderLocation: number
+}
+export interface PrimitiveState {
+  topology?: string
+  stripIndexFormat?: string
+  frontFace?: string
+  cullMode?: string
+}
+export interface DepthStencilState {
+  format: string
+  depthWriteEnabled?: boolean
+  depthCompare?: string
+  stencilFront?: StencilFaceState
+  stencilBack?: StencilFaceState
+  stencilReadMask?: number
+  stencilWriteMask?: number
+  depthBias?: number
+  depthBiasSlopeScale?: number
+  depthBiasClamp?: number
+}
+export interface StencilFaceState {
+  compare?: string
+  failOp?: string
+  depthFailOp?: string
+  passOp?: string
+}
+export interface MultisampleState {
+  count?: number
+  mask?: number
+  alphaToCoverageEnabled?: boolean
+}
+export interface FragmentState {
+  entryPoint: string
+  targets: Array<ColorTargetState>
+}
+export interface ColorTargetState {
+  format: string
+  blend?: BlendState
+  writeMask?: number
+}
+export interface BlendState {
+  color: BlendComponent
+  alpha: BlendComponent
+}
+export interface BlendComponent {
+  srcFactor: string
+  dstFactor: string
+  operation: string
 }
 /**
  * GPU instance - entry point for WebGPU API
@@ -268,9 +323,9 @@ export declare class GpuAdapter {
 }
 export declare class GpuDevice {
   /** Create a GPU buffer */
-  createBuffer(size: number, usage: number, mappedAtCreation?: boolean | undefined | null): GpuBuffer
+  createBuffer(descriptor: BufferDescriptor): GpuBuffer
   /** Create a shader module */
-  createShaderModule(code: string): GpuShaderModule
+  createShaderModule(descriptor: ShaderModuleDescriptor): GpuShaderModule
   /** Create a command encoder */
   createCommandEncoder(): GpuCommandEncoder
   /**
@@ -309,7 +364,7 @@ export declare class GpuDevice {
   /** Create a bind group with mixed resources (buffers, textures, samplers) */
   createBindGroup(label: string | undefined | null, layout: GpuBindGroupLayout, entries: Array<BindGroupEntry>, buffers: Array<GpuBuffer>, textures: Array<GpuTextureView>, samplers: Array<GpuSampler>): GpuBindGroup
   /** Create a pipeline layout */
-  createPipelineLayout(label: string | undefined | null, bindGroupLayouts: Array<GpuBindGroupLayout>): GpuPipelineLayout
+  createPipelineLayout(descriptor: PipelineLayoutDescriptor, bindGroupLayouts: Array<GpuBindGroupLayout>): GpuPipelineLayout
   /** Create a compute pipeline */
   createComputePipeline(label: string | undefined | null, layout: GpuPipelineLayout | undefined | null, shaderModule: GpuShaderModule, entryPoint: string): GpuComputePipeline
   /**
@@ -399,13 +454,21 @@ export declare class GpuBuffer {
   /** Get the usage flags of the buffer */
   usage(): number
   /**
-   * Map the buffer for reading
+   * Map the buffer asynchronously for reading or writing
    *
-   * Asynchronously maps the buffer for CPU read access.
-   * Buffer must have MAP_READ usage flag.
-   * Returns a Node.js Buffer containing the data.
+   * Asynchronously maps the buffer for CPU access.
+   * mode: "READ" or "WRITE"
+   * Buffer must have MAP_READ or MAP_WRITE usage flag.
    */
-  mapRead(): Promise<Buffer>
+  mapAsync(mode: string): Promise<void>
+  /**
+   * Get the mapped range as a buffer
+   *
+   * Returns the mapped data as a Node.js Buffer.
+   * Must be called after mapAsync() succeeds.
+   * The buffer must remain mapped until unmap() is called.
+   */
+  getMappedRange(): Buffer
   /**
    * Unmap the buffer
    *

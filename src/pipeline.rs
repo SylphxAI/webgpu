@@ -2,12 +2,7 @@ use napi::bindgen_prelude::*;
 use napi_derive::napi;
 use std::sync::Arc;
 
-/// Pipeline layout descriptor
-#[napi(object)]
-pub struct PipelineLayoutDescriptor {
-    pub label: Option<String>,
-    // Note: bind_group_layouts will be passed separately to avoid External Vec issues
-}
+// Note: PipelineLayoutDescriptor is now in descriptors.rs
 
 /// Pipeline layout - defines bind group layouts for a pipeline
 ///
@@ -18,19 +13,7 @@ pub struct GpuPipelineLayout {
     pub(crate) layout: Arc<wgpu::PipelineLayout>,
 }
 
-/// Compute pipeline descriptor
-#[napi(object)]
-pub struct ComputePipelineDescriptor {
-    pub label: Option<String>,
-    pub layout: Option<External<GpuPipelineLayout>>,
-    pub compute: ComputeStage,
-}
-
-#[napi(object)]
-pub struct ComputeStage {
-    pub module: External<crate::GpuShaderModule>,
-    pub entry_point: String,
-}
+// Note: ComputePipelineDescriptor and ComputeStage are now in descriptors.rs
 
 /// Compute pipeline - configured compute shader program
 ///
@@ -47,71 +30,7 @@ pub struct ComputePassDescriptor {
     pub label: Option<String>,
 }
 
-/// Render pipeline descriptor (basic)
-#[napi(object)]
-pub struct RenderPipelineDescriptor {
-    pub label: Option<String>,
-    pub layout: Option<External<GpuPipelineLayout>>,
-    pub vertex: VertexState,
-    pub fragment: Option<FragmentState>,
-    pub primitive: Option<PrimitiveState>,
-}
-
-#[napi(object)]
-pub struct VertexState {
-    pub module: External<crate::GpuShaderModule>,
-    pub entry_point: String,
-    pub buffers: Option<Vec<VertexBufferLayout>>,
-}
-
-#[napi(object)]
-pub struct VertexBufferLayout {
-    pub array_stride: i64,
-    pub step_mode: Option<String>,
-    pub attributes: Vec<VertexAttribute>,
-}
-
-#[napi(object)]
-pub struct VertexAttribute {
-    pub format: String,
-    pub offset: i64,
-    pub shader_location: u32,
-}
-
-#[napi(object)]
-pub struct FragmentState {
-    pub module: External<crate::GpuShaderModule>,
-    pub entry_point: String,
-    pub targets: Vec<ColorTargetState>,
-}
-
-#[napi(object)]
-pub struct ColorTargetState {
-    pub format: String,
-    pub blend: Option<BlendState>,
-    pub write_mask: Option<u32>,
-}
-
-#[napi(object)]
-pub struct BlendState {
-    pub color: BlendComponent,
-    pub alpha: BlendComponent,
-}
-
-#[napi(object)]
-pub struct BlendComponent {
-    pub src_factor: String,
-    pub dst_factor: String,
-    pub operation: String,
-}
-
-#[napi(object)]
-pub struct PrimitiveState {
-    pub topology: Option<String>,
-    pub strip_index_format: Option<String>,
-    pub front_face: Option<String>,
-    pub cull_mode: Option<String>,
-}
+// Note: RenderPipelineDescriptor and all related types are now in descriptors.rs
 
 /// Render pipeline - configured graphics pipeline
 ///

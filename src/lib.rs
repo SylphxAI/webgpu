@@ -12,6 +12,7 @@ mod sampler;
 mod query_set;
 mod render_bundle;
 mod parse;
+mod descriptors;
 
 pub use gpu::*;
 pub use adapter::*;
@@ -24,3 +25,4 @@ pub use pipeline::*;
 pub use sampler::*;
 pub use query_set::*;
 pub use render_bundle::*;
+pub use descriptors::*;

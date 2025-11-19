@@ -1,25 +1,7 @@
 use napi_derive::napi;
 use std::sync::Arc;
 
-/// Bind group layout entry
-#[napi(object)]
-pub struct BindGroupLayoutEntry {
-    pub binding: u32,
-    pub visibility: u32,
-    pub buffer_type: Option<String>,
-    pub sampler_type: Option<String>,
-    pub texture_sample_type: Option<String>,
-    pub texture_view_dimension: Option<String>,
-    pub storage_texture_access: Option<String>,
-    pub storage_texture_format: Option<String>,
-}
-
-/// Bind group layout descriptor
-#[napi(object)]
-pub struct BindGroupLayoutDescriptor {
-    pub label: Option<String>,
-    pub entries: Vec<BindGroupLayoutEntry>,
-}
+// Note: BindGroupLayoutEntry and BindGroupLayoutDescriptor are now in descriptors.rs
 
 /// Bind group layout - describes resource bindings for shaders
 ///
@@ -94,24 +76,31 @@ fn parse_buffer_binding_type(ty: &str) -> wgpu::BufferBindingType {
 }
 
 pub(crate) fn convert_bind_group_layout_entry(
-    entry: &BindGroupLayoutEntry,
+    entry: &crate::BindGroupLayoutEntry,
 ) -> wgpu::BindGroupLayoutEntry {
     let visibility = parse_visibility(entry.visibility);
 
-    // Determine binding type
-    let ty = if let Some(ref buffer_type) = entry.buffer_type {
+    // Determine binding type - WebGPU standard uses buffer/sampler/texture/storageTexture fields
+    let ty = if let Some(ref buffer) = entry.buffer {
+        let buffer_ty = buffer.ty.as_deref().unwrap_or("uniform");
         wgpu::BindingType::Buffer {
-            ty: parse_buffer_binding_type(buffer_type),
-            has_dynamic_offset: false,
-            min_binding_size: None,
+            ty: parse_buffer_binding_type(buffer_ty),
+            has_dynamic_offset: buffer.has_dynamic_offset.unwrap_or(false),
+            min_binding_size: buffer.min_binding_size.map(|s| std::num::NonZeroU64::new(s as u64)).flatten(),
         }
-    } else if entry.sampler_type.is_some() {
+    } else if entry.sampler.is_some() {
         wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering)
-    } else if entry.texture_sample_type.is_some() {
+    } else if entry.texture.is_some() {
         wgpu::BindingType::Texture {
             sample_type: wgpu::TextureSampleType::Float { filterable: true },
             view_dimension: wgpu::TextureViewDimension::D2,
             multisampled: false,
+        }
+    } else if entry.storage_texture.is_some() {
+        wgpu::BindingType::StorageTexture {
+            access: wgpu::StorageTextureAccess::WriteOnly,
+            format: wgpu::TextureFormat::Rgba8Unorm,
+            view_dimension: wgpu::TextureViewDimension::D2,
         }
     } else {
         // Default to uniform buffer
