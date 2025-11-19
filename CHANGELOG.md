@@ -1,19 +1,59 @@
 # @sylphx/webgpu
 
-## 0.5.0
+## 0.6.0
 
 ### Minor Changes
 
-- # WebGPU Standard Pass Encoder Support
+- **CRITICAL FIX**: Fixed missing TypeScript definitions for Pass Encoder methods
+  - `beginComputePass()` and `beginRenderPass()` are now properly exported in TypeScript definitions
+  - v0.5.0 had the Rust implementation but TypeScript definitions were not generated correctly
+  - See v0.5.0_POST_MORTEM.md for detailed analysis
 
-  This release introduces complete WebGPU standard command recording with Pass Encoder interfaces, significantly improving specification compliance from ~65% to ~91%.
+### Breaking Changes
 
-  ## 🎉 New Features
+- **REMOVED**: All 14 non-standard immediate-execution methods
+  - GpuCommandEncoder: `computePass()`, `computePassIndirect()`, `renderPass()`, `renderPassIndexed()`, `renderPassIndirect()`, `renderPassIndexedIndirect()`, `renderPassBundles()`
+  - GpuDevice: `queueSubmit()`, `queueWriteBuffer()`, `copyBufferToBuffer()`, `copyBufferToTexture()`, `copyTextureToBuffer()`, `createRenderBundle()`, `createRenderBundleIndexed()`
+  - Use WebGPU standard methods instead (see migration guide below)
+
+### Migration from v0.4.0 → v0.6.0
+
+**Before (v0.4.0 - deprecated API):**
+```javascript
+const encoder = device.createCommandEncoder();
+encoder.computePass(pipeline, [bindGroup], 1); // Immediate execution
+const commandBuffer = encoder.finish();
+queue.submit([commandBuffer]);
+```
+
+**After (v0.6.0 - WebGPU standard):**
+```javascript
+const encoder = device.createCommandEncoder();
+const pass = encoder.beginComputePass(); // Returns GPUComputePassEncoder
+pass.setPipeline(pipeline);
+pass.setBindGroup(0, bindGroup);
+pass.dispatchWorkgroups(1);
+pass.end(); // Must call end()
+const commandBuffer = encoder.finish();
+queue.submit([commandBuffer]);
+```
+
+## 0.5.0 (DEPRECATED - Broken TypeScript definitions)
+
+**⚠️ WARNING**: This version has broken TypeScript definitions. Use v0.6.0 or later.
+
+### Minor Changes
+
+- # WebGPU Standard Pass Encoder Support (IMPLEMENTATION ONLY)
+
+  ⚠️ **Known Issue**: TypeScript definitions were not generated correctly. The Rust implementation exists but `beginComputePass()` and `beginRenderPass()` are missing from index.d.ts.
+
+  ## 🎉 New Features (Rust implementation only)
 
   ### GPUCommandEncoder - Standard Methods
 
-  - `encoder.beginComputePass()` - Returns standard GPUComputePassEncoder
-  - `encoder.beginRenderPass(descriptor)` - Returns standard GPURenderPassEncoder
+  - `encoder.beginComputePass()` - Returns standard GPUComputePassEncoder (❌ Not in TypeScript definitions)
+  - `encoder.beginRenderPass(descriptor)` - Returns standard GPURenderPassEncoder (❌ Not in TypeScript definitions)
 
   ### GPUComputePassEncoder - Complete Implementation (8/8 methods)
 
@@ -35,9 +75,9 @@
 
   ## ⚠️ Breaking Changes
 
-  ### REMOVED Methods
+  ### DEPRECATED Methods (Still functional in v0.5.0)
 
-  All non-standard immediate-execution methods have been removed. Use WebGPU standard deferred execution instead:
+  All non-standard immediate-execution methods were marked as deprecated but NOT removed. Use WebGPU standard deferred execution instead:
 
   **GpuCommandEncoder:**
 
