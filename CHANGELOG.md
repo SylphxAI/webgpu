@@ -1,5 +1,11 @@
 # @sylphx/webgpu
 
+## 0.7.3
+
+### Patch Changes
+
+- Fix automatic optionalDependencies version syncing. Previous releases (v0.7.0, v0.7.1, v0.7.2) had optionalDependencies pointing to 0.6.0 binaries. The new sync-platform-versions.js script ensures optionalDependencies always match the main package version when running changeset version.
+
 ## 0.7.2
 
 ### Patch Changes
