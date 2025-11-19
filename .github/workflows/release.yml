@@ -141,12 +141,7 @@ jobs:
       - name: List packages
         run: ls -R ./npm
 
-      - name: Publish main package
-        run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Publish platform packages
+      - name: Publish platform packages FIRST
         run: |
           for dir in npm/*; do
             if [ -d "$dir" ]; then
@@ -155,5 +150,21 @@ jobs:
               cd ../..
             fi
           done
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Update optionalDependencies with napi version
+        run: |
+          bun x napi version
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if [ -n "$(git status --porcelain package.json)" ]; then
+            git add package.json
+            git commit -m "chore: update optionalDependencies to latest platform packages"
+            git push
+          fi
+
+      - name: Publish main package (with updated optionalDependencies)
+        run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
