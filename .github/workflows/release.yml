@@ -159,7 +159,7 @@ jobs:
           ls -R npm/
 
       - name: Create platform package.json files
-        run: bun run prepublishOnly --skip-gh-release
+        run: npx napi prepublish -t npm --skip-gh-release
 
       - name: Publish main package
         run: npm publish --access public
