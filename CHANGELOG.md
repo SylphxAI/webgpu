@@ -1,5 +1,11 @@
 # @sylphx/webgpu
 
+## 0.7.1
+
+### Patch Changes
+
+- Rebuild and publish native binaries for v0.7.0 fix (optionalDependencies were pointing to old 0.6.0 binaries)
+
 ## 0.7.0
 
 ### Minor Changes

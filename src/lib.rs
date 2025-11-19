@@ -1,4 +1,5 @@
 #![deny(clippy::all)]
+// v0.7.1 - Ensure native binaries are rebuilt and published
 
 mod gpu;
 mod adapter;
