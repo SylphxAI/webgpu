@@ -74,7 +74,7 @@ jobs:
             -v ${{ github.workspace }}:/build \
             -w /build \
             ${{ matrix.settings.docker }} \
-            sh -c "rustup override set 1.79 && npm install && npm run build -- --target ${{ matrix.settings.target }}"
+            sh -c "rustup override set 1.81 && npm install && npm run build -- --target ${{ matrix.settings.target }}"
 
       - name: Build (macOS ARM64)
         if: ${{ !matrix.settings.docker && matrix.settings.target == 'aarch64-apple-darwin' }}
