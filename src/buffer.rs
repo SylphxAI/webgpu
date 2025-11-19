@@ -132,6 +132,17 @@ impl GpuBuffer {
     /// * `size` - Number of bytes to return (optional, default remaining bytes). Must be multiple of 4.
     #[napi(js_name = "getMappedRange")]
     pub fn get_mapped_range(&self, offset: Option<u32>, size: Option<u32>) -> Result<Buffer> {
+        // Validate map state (WebGPU spec requirement)
+        let state = self.map_state.lock()
+            .map_err(|_| Error::from_reason("Failed to lock map state"))?;
+        if state.as_str() != "mapped" {
+            return Err(Error::from_reason(format!(
+                "Buffer must be mapped before calling getMappedRange(). Current state: {}",
+                state
+            )));
+        }
+        drop(state);
+
         let buffer_size = self.buffer.size();
         let offset = offset.unwrap_or(0) as u64;
         let size = size.map(|s| s as u64).unwrap_or(buffer_size - offset);

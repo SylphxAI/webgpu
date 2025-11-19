@@ -116,8 +116,26 @@ async function testGetMappedRangeEdgeCases() {
 
     // Test 3: State validation - getMappedRange() when unmapped should fail
     console.log('📝 Test 3: getMappedRange() on unmapped buffer should fail')
-    console.log('   ⚠️  Currently causes panic instead of throwing JS error')
-    console.log('   Skipping this test until error handling is fixed\n')
+    const buffer3 = device.createBuffer({
+        size: 16,
+        usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST
+    })
+
+    try {
+        buffer3.getMappedRange()
+        console.log('   ❌ Should have thrown error for unmapped buffer\n')
+        process.exit(1)
+    } catch (err) {
+        if (err.message.includes('must be mapped')) {
+            console.log('   ✅ Correctly rejects getMappedRange() on unmapped buffer')
+        } else {
+            console.log('   ❌ Wrong error:', err.message)
+            process.exit(1)
+        }
+    }
+
+    buffer3.destroy()
+    console.log()
 
     // Test 4: mapState property and transitions
     console.log('📝 Test 4: mapState property and transitions')
@@ -238,6 +256,7 @@ async function testGetMappedRangeEdgeCases() {
     console.log('  ✅ getMappedRange(offset, size) parameters')
     console.log('  ✅ Alignment validation (offset: 8, size: 4)')
     console.log('  ✅ Bounds checking')
+    console.log('  ✅ State validation (throws error when unmapped)')
     console.log('  ✅ mapState transitions (unmapped → pending → mapped → unmapped)')
     console.log('  ✅ Non-overlapping range access')
     console.log('  ✅ Standard write/read patterns')
