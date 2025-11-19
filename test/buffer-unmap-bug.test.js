@@ -23,8 +23,8 @@ async function verifyBufferUnmapFix() {
     })
 
     // Get mapped range and write data
-    const range1 = buffer1.getMappedRange()
-    const arr1 = new Float32Array(range1.buffer, range1.byteOffset, 4)
+    const range1 = buffer1.getMappedRange()  // Returns ArrayBuffer (WebGPU standard)
+    const arr1 = new Float32Array(range1, 0, 4)
     arr1.set([1, 2, 3, 4])
     console.log('   ✅ JS array after set:', Array.from(arr1))
 
@@ -34,8 +34,8 @@ async function verifyBufferUnmapFix() {
 
     // Read back from GPU
     await buffer1.mapAsync('READ')
-    const readRange1 = buffer1.getMappedRange()
-    const readArr1 = new Float32Array(readRange1.buffer, readRange1.byteOffset, 4)
+    const readRange1 = buffer1.getMappedRange()  // Returns ArrayBuffer (WebGPU standard)
+    const readArr1 = new Float32Array(readRange1, 0, 4)
     console.log('   📖 GPU data:', Array.from(readArr1))
 
     if (readArr1[0] === 0 && readArr1[1] === 0 && readArr1[2] === 0 && readArr1[3] === 0) {
@@ -63,8 +63,8 @@ async function verifyBufferUnmapFix() {
     console.log('   ✅ Buffer unmapped')
 
     await buffer2.mapAsync('READ')
-    const readRange2 = buffer2.getMappedRange()
-    const readArr2 = new Float32Array(readRange2.buffer, readRange2.byteOffset, 4)
+    const readRange2 = buffer2.getMappedRange()  // Returns ArrayBuffer (WebGPU standard)
+    const readArr2 = new Float32Array(readRange2, 0, 4)
     console.log('   📖 GPU data:', Array.from(readArr2))
 
     if (readArr2[0] === 5 && readArr2[1] === 6 && readArr2[2] === 7 && readArr2[3] === 8) {
@@ -84,8 +84,8 @@ async function verifyBufferUnmapFix() {
         mappedAtCreation: true
     })
 
-    const range3 = buffer3.getMappedRange()
-    const arr3 = new Float32Array(range3.buffer, range3.byteOffset, 4)
+    const range3 = buffer3.getMappedRange()  // Returns ArrayBuffer (WebGPU standard)
+    const arr3 = new Float32Array(range3, 0, 4)
     arr3.set([9, 10, 11, 12])
     console.log('   ✅ JS array after set:', Array.from(arr3))
 
@@ -103,8 +103,8 @@ async function verifyBufferUnmapFix() {
     })
 
     await buffer4.mapAsync('WRITE')
-    const range4 = buffer4.getMappedRange()
-    const arr4 = new Float32Array(range4.buffer, range4.byteOffset, 4)
+    const range4 = buffer4.getMappedRange()  // Returns ArrayBuffer (WebGPU standard)
+    const arr4 = new Float32Array(range4, 0, 4)
     arr4.set([13, 14, 15, 16])
     console.log('   ✅ JS array after set:', Array.from(arr4))
 

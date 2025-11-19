@@ -27,8 +27,8 @@ async function verifyWriteMappedRange() {
     await buffer.mapAsync('READ')
     console.log('   ✅ Buffer mapped for reading')
 
-    const readRange = buffer.getMappedRange()
-    const readView = new Float32Array(readRange.buffer)
+    const readRange = buffer.getMappedRange()  // Returns ArrayBuffer (WebGPU standard)
+    const readView = new Float32Array(readRange)
     console.log('   📖 Read back data:', Array.from(readView))
 
     if (readView[0] === 1.0 && readView[1] === 2.0 && readView[2] === 3.0 && readView[3] === 4.0) {
