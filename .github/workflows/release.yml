@@ -122,44 +122,17 @@ jobs:
         with:
           path: artifacts
 
-      - name: Organize artifacts into npm structure
-        run: |
-          mkdir -p npm
-          for dir in artifacts/bindings-*; do
-            if [ -d "$dir" ]; then
-              platform=$(basename "$dir" | sed 's/bindings-//')
-              case "$platform" in
-                "x86_64-apple-darwin")
-                  mkdir -p npm/darwin-x64
-                  mv "$dir"/*.node npm/darwin-x64/
-                  ;;
-                "aarch64-apple-darwin")
-                  mkdir -p npm/darwin-arm64
-                  mv "$dir"/*.node npm/darwin-arm64/
-                  ;;
-                "x86_64-unknown-linux-gnu")
-                  mkdir -p npm/linux-x64-gnu
-                  mv "$dir"/*.node npm/linux-x64-gnu/
-                  ;;
-                "aarch64-unknown-linux-gnu")
-                  mkdir -p npm/linux-arm64-gnu
-                  mv "$dir"/*.node npm/linux-arm64-gnu/
-                  ;;
-                "x86_64-pc-windows-msvc")
-                  mkdir -p npm/win32-x64-msvc
-                  mv "$dir"/*.node npm/win32-x64-msvc/
-                  ;;
-                "aarch64-pc-windows-msvc")
-                  mkdir -p npm/win32-arm64-msvc
-                  mv "$dir"/*.node npm/win32-arm64-msvc/
-                  ;;
-              esac
-            fi
-          done
-          ls -R npm/
+      - name: Move artifacts to root
+        run: mv artifacts/bindings-*/*.node .
 
-      - name: Create platform package.json files
-        run: npx napi prepublish -t npm --skip-gh-release
+      - name: Create npm directories
+        run: bun napi create-npm-dir
+
+      - name: Move artifacts into npm packages
+        run: bun artifacts
+
+      - name: List packages
+        run: ls -R ./npm
 
       - name: Publish main package
         run: npm publish --access public
