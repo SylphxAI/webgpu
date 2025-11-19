@@ -1483,6 +1483,103 @@ impl GpuCommandEncoder {
         }
     }
 
+    /// Begin a render pass following WebGPU standard
+    /// Returns a render pass encoder for recording render commands
+    #[napi(js_name = "beginRenderPass")]
+    pub fn begin_render_pass(&mut self, descriptor: crate::pipeline::RenderPassDescriptor) -> Result<crate::GpuRenderPassEncoder> {
+        if let Some(ref mut enc) = self.encoder {
+            // Convert color attachments
+            let color_attachments: Vec<Option<wgpu::RenderPassColorAttachment>> = descriptor.color_attachments
+                .iter()
+                .map(|attachment| {
+                    let load_op = match attachment.load_op.as_str() {
+                        "clear" => {
+                            let clear_value = attachment.clear_value.as_ref().map(|c| wgpu::Color {
+                                r: c.r,
+                                g: c.g,
+                                b: c.b,
+                                a: c.a,
+                            }).unwrap_or(wgpu::Color::BLACK);
+                            wgpu::LoadOp::Clear(clear_value)
+                        },
+                        _ => wgpu::LoadOp::Load,
+                    };
+                    let store_op = match attachment.store_op.as_str() {
+                        "discard" => wgpu::StoreOp::Discard,
+                        _ => wgpu::StoreOp::Store,
+                    };
+                    Some(wgpu::RenderPassColorAttachment {
+                        view: &attachment.view.view,
+                        resolve_target: attachment.resolve_target.as_ref().map(|t| t.view.as_ref()),
+                        ops: wgpu::Operations {
+                            load: load_op,
+                            store: store_op,
+                        },
+                    })
+                })
+                .collect();
+
+            // Convert depth/stencil attachment
+            let depth_stencil_attachment = descriptor.depth_stencil_attachment.as_ref().map(|attachment| {
+                let depth_ops = if attachment.depth_load_op.is_some() || attachment.depth_store_op.is_some() {
+                    let load = match attachment.depth_load_op.as_deref() {
+                        Some("clear") => wgpu::LoadOp::Clear(attachment.depth_clear_value.unwrap_or(1.0) as f32),
+                        _ => wgpu::LoadOp::Load,
+                    };
+                    let store = match attachment.depth_store_op.as_deref() {
+                        Some("discard") => wgpu::StoreOp::Discard,
+                        _ => wgpu::StoreOp::Store,
+                    };
+                    Some(wgpu::Operations { load, store })
+                } else {
+                    None
+                };
+
+                let stencil_ops = if attachment.stencil_load_op.is_some() || attachment.stencil_store_op.is_some() {
+                    let load = match attachment.stencil_load_op.as_deref() {
+                        Some("clear") => wgpu::LoadOp::Clear(attachment.stencil_clear_value.unwrap_or(0)),
+                        _ => wgpu::LoadOp::Load,
+                    };
+                    let store = match attachment.stencil_store_op.as_deref() {
+                        Some("discard") => wgpu::StoreOp::Discard,
+                        _ => wgpu::StoreOp::Store,
+                    };
+                    Some(wgpu::Operations { load, store })
+                } else {
+                    None
+                };
+
+                wgpu::RenderPassDepthStencilAttachment {
+                    view: &attachment.view.view,
+                    depth_ops,
+                    stencil_ops,
+                }
+            });
+
+            let pass = enc.begin_render_pass(&wgpu::RenderPassDescriptor {
+                label: descriptor.label.as_deref(),
+                color_attachments: &color_attachments,
+                depth_stencil_attachment,
+                timestamp_writes: None,
+                occlusion_query_set: None,
+            });
+
+            // SAFETY: This is unsafe because we're extending the lifetime of the RenderPass
+            // from being tied to the encoder to 'static. This works because:
+            // 1. The pass must be ended (dropped) before encoder.finish() is called
+            // 2. We use transmute to force the lifetime to 'static
+            // 3. We erase the type to *mut () to avoid lifetime issues in the struct
+            // 4. The JavaScript API enforces correct usage order
+            let pass_static: wgpu::RenderPass<'static> = unsafe { std::mem::transmute(pass) };
+            let pass_ptr = Box::into_raw(Box::new(pass_static)) as *mut ();
+            Ok(crate::GpuRenderPassEncoder {
+                pass: Some(pass_ptr),
+            })
+        } else {
+            Err(Error::from_reason("Command encoder already finished"))
+        }
+    }
+
     /// Finish encoding and return a command buffer
     #[napi]
     pub fn finish(&mut self) -> GpuCommandBuffer {

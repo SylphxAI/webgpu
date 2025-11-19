@@ -17,6 +17,7 @@ mod queue;
 mod features;
 mod limits;
 mod compute_pass;
+mod render_pass;
 
 pub use gpu::*;
 pub use adapter::*;
@@ -34,3 +35,4 @@ pub use queue::*;
 pub use features::*;
 pub use limits::*;
 pub use compute_pass::*;
+pub use render_pass::*;
