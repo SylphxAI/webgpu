@@ -20,9 +20,10 @@ function run(command, cwd = process.cwd()) {
   console.log(`Running: ${command}`);
   try {
     execSync(command, { cwd, stdio: 'inherit' });
+    return true;
   } catch (error) {
     console.error(`Failed to run: ${command}`);
-    throw error;
+    return false;
   }
 }
 
@@ -51,14 +52,30 @@ console.log(`Found ${platforms.length} platform packages: ${platforms.join(', ')
 
 for (const platform of platforms) {
   const platformDir = path.join(npmDir, platform);
-  console.log(`Publishing @sylphx/webgpu-${platform}...`);
-  run('npm publish --access public', platformDir);
-  console.log(`✅ Published @sylphx/webgpu-${platform}\n`);
+  const packageJson = JSON.parse(fs.readFileSync(path.join(platformDir, 'package.json'), 'utf8'));
+  const packageName = packageJson.name;
+  const version = packageJson.version;
+
+  console.log(`Publishing ${packageName}@${version}...`);
+  const success = run('npm publish --access public', platformDir);
+
+  if (success) {
+    console.log(`✅ Published ${packageName}@${version}\n`);
+  } else {
+    console.log(`⚠️  ${packageName}@${version} already published or failed\n`);
+  }
 }
 
 // Step 2: Publish main package
 console.log('Step 2: Publishing main package...');
-run('npm publish --access public');
-console.log('✅ Published @sylphx/webgpu\n');
+const mainPackageJson = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8'));
+console.log(`Publishing ${mainPackageJson.name}@${mainPackageJson.version}...`);
 
-console.log('🎉 All packages published successfully!');
+const mainSuccess = run('npm publish --access public');
+if (mainSuccess) {
+  console.log(`✅ Published ${mainPackageJson.name}@${mainPackageJson.version}\n`);
+  console.log('🎉 All packages published successfully!');
+} else {
+  console.log(`⚠️  ${mainPackageJson.name}@${mainPackageJson.version} already published or failed\n`);
+  console.log('⚠️  Some packages may have been skipped (already published)');
+}
