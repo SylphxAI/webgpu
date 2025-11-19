@@ -1,4 +1,3 @@
-use napi::bindgen_prelude::External;
 use napi_derive::napi;
 
 /// Buffer descriptor following WebGPU spec
@@ -19,24 +18,17 @@ pub struct ShaderModuleDescriptor {
 }
 
 /// Pipeline layout descriptor following WebGPU spec
+/// Note: bindGroupLayouts are passed as separate parameter due to napi-rs limitations
 #[napi(object)]
 pub struct PipelineLayoutDescriptor {
     pub label: Option<String>,
-    #[napi(js_name = "bindGroupLayouts")]
-    pub bind_group_layouts: Vec<External<crate::GpuBindGroupLayout>>,
 }
 
 /// Compute pipeline descriptor following WebGPU spec
+/// Note: layout and module are passed as separate parameters due to napi-rs limitations
 #[napi(object)]
 pub struct ComputePipelineDescriptor {
     pub label: Option<String>,
-    pub layout: Option<External<crate::GpuPipelineLayout>>,
-    pub compute: ComputeStage,
-}
-
-#[napi(object)]
-pub struct ComputeStage {
-    pub module: External<crate::GpuShaderModule>,
     #[napi(js_name = "entryPoint")]
     pub entry_point: String,
 }
@@ -57,10 +49,11 @@ pub struct QuerySetDescriptor {
 }
 
 /// Bind group descriptor following WebGPU spec
+/// Note: layout is passed as separate parameter due to napi-rs limitations
 #[napi(object)]
 pub struct BindGroupDescriptor {
     pub label: Option<String>,
-    pub layout: External<crate::GpuBindGroupLayout>,
+    // layout removed - passed as separate parameter
     // entries will be passed separately due to union type complexity
 }
 
@@ -116,10 +109,11 @@ pub struct StorageTextureBindingLayout {
 }
 
 /// Render pipeline descriptor following WebGPU spec
+/// Note: layout, vertex module, and fragment module are passed as separate parameters due to napi-rs limitations
 #[napi(object)]
 pub struct RenderPipelineDescriptor {
     pub label: Option<String>,
-    pub layout: Option<External<crate::GpuPipelineLayout>>,
+    // layout removed - passed as separate parameter
     pub vertex: VertexState,
     pub primitive: Option<PrimitiveState>,
     #[napi(js_name = "depthStencil")]
@@ -130,7 +124,7 @@ pub struct RenderPipelineDescriptor {
 
 #[napi(object)]
 pub struct VertexState {
-    pub module: External<crate::GpuShaderModule>,
+    // module removed - passed as separate parameter
     #[napi(js_name = "entryPoint")]
     pub entry_point: String,
     pub buffers: Option<Vec<VertexBufferLayout>>,
@@ -208,7 +202,7 @@ pub struct MultisampleState {
 
 #[napi(object)]
 pub struct FragmentState {
-    pub module: External<crate::GpuShaderModule>,
+    // module removed - passed as separate parameter
     #[napi(js_name = "entryPoint")]
     pub entry_point: String,
     pub targets: Vec<ColorTargetState>,

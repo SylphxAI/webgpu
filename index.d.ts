@@ -145,19 +145,19 @@ export interface ShaderModuleDescriptor {
   label?: string
   code: string
 }
-/** Pipeline layout descriptor following WebGPU spec */
+/**
+ * Pipeline layout descriptor following WebGPU spec
+ * Note: bindGroupLayouts are passed as separate parameter due to napi-rs limitations
+ */
 export interface PipelineLayoutDescriptor {
   label?: string
-  bindGroupLayouts: Array<ExternalObject<GpuBindGroupLayout>>
 }
-/** Compute pipeline descriptor following WebGPU spec */
+/**
+ * Compute pipeline descriptor following WebGPU spec
+ * Note: layout and module are passed as separate parameters due to napi-rs limitations
+ */
 export interface ComputePipelineDescriptor {
   label?: string
-  layout?: ExternalObject<GpuPipelineLayout>
-  compute: ComputeStage
-}
-export interface ComputeStage {
-  module: ExternalObject<GpuShaderModule>
   entryPoint: string
 }
 /** Command encoder descriptor following WebGPU spec */
@@ -170,10 +170,12 @@ export interface QuerySetDescriptor {
   type: string
   count: number
 }
-/** Bind group descriptor following WebGPU spec */
+/**
+ * Bind group descriptor following WebGPU spec
+ * Note: layout is passed as separate parameter due to napi-rs limitations
+ */
 export interface BindGroupDescriptor {
   label?: string
-  layout: ExternalObject<GpuBindGroupLayout>
 }
 /** Bind group layout descriptor following WebGPU spec */
 export interface BindGroupLayoutDescriptor {
@@ -206,10 +208,12 @@ export interface StorageTextureBindingLayout {
   format: string
   viewDimension?: string
 }
-/** Render pipeline descriptor following WebGPU spec */
+/**
+ * Render pipeline descriptor following WebGPU spec
+ * Note: layout, vertex module, and fragment module are passed as separate parameters due to napi-rs limitations
+ */
 export interface RenderPipelineDescriptor {
   label?: string
-  layout?: ExternalObject<GpuPipelineLayout>
   vertex: VertexState
   primitive?: PrimitiveState
   depthStencil?: DepthStencilState
@@ -217,7 +221,6 @@ export interface RenderPipelineDescriptor {
   fragment?: FragmentState
 }
 export interface VertexState {
-  module: ExternalObject<GpuShaderModule>
   entryPoint: string
   buffers?: Array<VertexBufferLayout>
 }
@@ -261,7 +264,6 @@ export interface MultisampleState {
   alphaToCoverageEnabled?: boolean
 }
 export interface FragmentState {
-  module: ExternalObject<GpuShaderModule>
   entryPoint: string
   targets: Array<ColorTargetState>
 }
@@ -411,17 +413,17 @@ export declare class GpuDevice {
   /** Create a bind group layout */
   createBindGroupLayout(descriptor: BindGroupLayoutDescriptor): GpuBindGroupLayout
   /** Create a bind group with buffer bindings following WebGPU spec */
-  createBindGroup(descriptor: BindGroupDescriptor, bufferEntries: Array<BindGroupEntryBuffer>): GpuBindGroup
+  createBindGroup(descriptor: BindGroupDescriptor, layout: GpuBindGroupLayout, bufferEntries: Array<BindGroupEntryBuffer>): GpuBindGroup
   /** Create a bind group with texture bindings */
-  createBindGroupTextures(descriptor: BindGroupDescriptor, textureEntries: Array<BindGroupEntryTexture>): GpuBindGroup
+  createBindGroupTextures(descriptor: BindGroupDescriptor, layout: GpuBindGroupLayout, textureEntries: Array<BindGroupEntryTexture>): GpuBindGroup
   /** Create a bind group with sampler bindings */
-  createBindGroupSamplers(descriptor: BindGroupDescriptor, samplerEntries: Array<BindGroupEntrySampler>): GpuBindGroup
+  createBindGroupSamplers(descriptor: BindGroupDescriptor, layout: GpuBindGroupLayout, samplerEntries: Array<BindGroupEntrySampler>): GpuBindGroup
   /** Create a pipeline layout */
-  createPipelineLayout(descriptor: PipelineLayoutDescriptor): GpuPipelineLayout
+  createPipelineLayout(descriptor: PipelineLayoutDescriptor, bindGroupLayouts: Array<GpuBindGroupLayout>): GpuPipelineLayout
   /** Create a compute pipeline following WebGPU spec */
-  createComputePipeline(descriptor: ComputePipelineDescriptor): GpuComputePipeline
+  createComputePipeline(descriptor: ComputePipelineDescriptor, layout: GpuPipelineLayout | undefined | null, module: GpuShaderModule): GpuComputePipeline
   /** Create a render pipeline following WebGPU spec */
-  createRenderPipeline(descriptor: RenderPipelineDescriptor): GpuRenderPipeline
+  createRenderPipeline(descriptor: RenderPipelineDescriptor, layout: GpuPipelineLayout | undefined | null, vertexModule: GpuShaderModule, fragmentModule?: GpuShaderModule | undefined | null): GpuRenderPipeline
   /** Destroy the device */
   destroy(): void
 }

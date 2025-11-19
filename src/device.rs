@@ -197,6 +197,7 @@ impl GpuDevice {
     pub fn create_bind_group_buffers(
         &self,
         descriptor: crate::BindGroupDescriptor,
+        layout: &crate::GpuBindGroupLayout,
         buffer_entries: Vec<crate::BindGroupEntryBuffer>,
     ) -> Result<crate::GpuBindGroup> {
         let entries: Vec<_> = buffer_entries
@@ -215,7 +216,7 @@ impl GpuDevice {
 
         let bind_group = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: descriptor.label.as_deref(),
-            layout: &descriptor.layout.layout,
+            layout: &layout.layout,
             entries: &entries,
         });
 
@@ -227,6 +228,7 @@ impl GpuDevice {
     pub fn create_bind_group_textures(
         &self,
         descriptor: crate::BindGroupDescriptor,
+        layout: &crate::GpuBindGroupLayout,
         texture_entries: Vec<crate::BindGroupEntryTexture>,
     ) -> Result<crate::GpuBindGroup> {
         let entries: Vec<_> = texture_entries
@@ -241,7 +243,7 @@ impl GpuDevice {
 
         let bind_group = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: descriptor.label.as_deref(),
-            layout: &descriptor.layout.layout,
+            layout: &layout.layout,
             entries: &entries,
         });
 
@@ -253,6 +255,7 @@ impl GpuDevice {
     pub fn create_bind_group_samplers(
         &self,
         descriptor: crate::BindGroupDescriptor,
+        layout: &crate::GpuBindGroupLayout,
         sampler_entries: Vec<crate::BindGroupEntrySampler>,
     ) -> Result<crate::GpuBindGroup> {
         let entries: Vec<_> = sampler_entries
@@ -267,7 +270,7 @@ impl GpuDevice {
 
         let bind_group = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: descriptor.label.as_deref(),
-            layout: &descriptor.layout.layout,
+            layout: &layout.layout,
             entries: &entries,
         });
 
@@ -279,8 +282,9 @@ impl GpuDevice {
     pub fn create_pipeline_layout(
         &self,
         descriptor: crate::PipelineLayoutDescriptor,
+        bind_group_layouts: Vec<&crate::GpuBindGroupLayout>,
     ) -> crate::GpuPipelineLayout {
-        let bind_group_layouts_refs: Vec<_> = descriptor.bind_group_layouts
+        let bind_group_layouts_refs: Vec<_> = bind_group_layouts
             .iter()
             .map(|l| l.layout.as_ref())
             .collect();
@@ -301,14 +305,16 @@ impl GpuDevice {
     pub fn create_compute_pipeline(
         &self,
         descriptor: crate::ComputePipelineDescriptor,
+        layout: Option<&crate::GpuPipelineLayout>,
+        module: &crate::GpuShaderModule,
     ) -> crate::GpuComputePipeline {
-        let layout_ref = descriptor.layout.as_ref().map(|l| l.layout.as_ref());
+        let layout_ref = layout.map(|l| l.layout.as_ref());
 
         let pipeline = self.device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
             label: descriptor.label.as_deref(),
             layout: layout_ref,
-            module: &descriptor.compute.module.shader,
-            entry_point: &descriptor.compute.entry_point,
+            module: &module.shader,
+            entry_point: &descriptor.entry_point,
         });
 
         crate::GpuComputePipeline {
@@ -321,8 +327,11 @@ impl GpuDevice {
     pub fn create_render_pipeline(
         &self,
         descriptor: crate::RenderPipelineDescriptor,
+        layout: Option<&crate::GpuPipelineLayout>,
+        vertex_module: &crate::GpuShaderModule,
+        fragment_module: Option<&crate::GpuShaderModule>,
     ) -> Result<crate::GpuRenderPipeline> {
-        let layout_ref = descriptor.layout.as_ref().map(|l| l.layout.as_ref());
+        let layout_ref = layout.map(|l| l.layout.as_ref());
         // Build vertex attributes - need to own them
         let vertex_attributes: Vec<Vec<wgpu::VertexAttribute>> = if let Some(ref buffers) = descriptor.vertex.buffers {
             buffers.iter().map(|buf| {
@@ -451,19 +460,23 @@ impl GpuDevice {
         };
 
         // Build fragment state
-        let fragment = descriptor.fragment.as_ref().map(|frag_desc| {
-            wgpu::FragmentState {
-                module: &frag_desc.module.shader,
+        let fragment = if descriptor.fragment.is_some() && fragment_module.is_some() {
+            let frag_desc = descriptor.fragment.as_ref().unwrap();
+            let frag_mod = fragment_module.unwrap();
+            Some(wgpu::FragmentState {
+                module: &frag_mod.shader,
                 entry_point: &frag_desc.entry_point,
                 targets: &frag_targets,
-            }
-        });
+            })
+        } else {
+            None
+        };
 
         let pipeline = self.device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: descriptor.label.as_deref(),
             layout: layout_ref,
             vertex: wgpu::VertexState {
-                module: &descriptor.vertex.module.shader,
+                module: &vertex_module.shader,
                 entry_point: &descriptor.vertex.entry_point,
                 buffers: &vertex_buffers,
             },
