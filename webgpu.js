@@ -16,6 +16,99 @@
 const native = require('./index.js')
 
 /**
+ * WebGPU-standard GpuCommandEncoder wrapper
+ */
+class GpuCommandEncoder {
+    constructor(nativeEncoder) {
+        this._native = nativeEncoder
+    }
+
+    // Simple pass-through methods
+    writeTimestamp(querySet, queryIndex) {
+        return this._native.writeTimestamp(querySet, queryIndex)
+    }
+
+    resolveQuerySet(querySet, firstQuery, queryCount, destination, destinationOffset) {
+        return this._native.resolveQuerySet(querySet, firstQuery, queryCount, destination, destinationOffset)
+    }
+
+    copyBufferToBuffer(source, sourceOffset, destination, destinationOffset, size) {
+        return this._native.copyBufferToBuffer(source, sourceOffset, destination, destinationOffset, size)
+    }
+
+    copyBufferToTexture(source, sourceOffset, bytesPerRow, rowsPerImage, destination, mipLevel, originX, originY, originZ, width, height, depth) {
+        return this._native.copyBufferToTexture(source, sourceOffset, bytesPerRow, rowsPerImage, destination, mipLevel, originX, originY, originZ, width, height, depth)
+    }
+
+    copyTextureToBuffer(source, mipLevel, originX, originY, originZ, destination, destinationOffset, bytesPerRow, rowsPerImage, width, height, depth) {
+        return this._native.copyTextureToBuffer(source, mipLevel, originX, originY, originZ, destination, destinationOffset, bytesPerRow, rowsPerImage, width, height, depth)
+    }
+
+    beginComputePass(descriptor) {
+        return this._native.beginComputePass(descriptor)
+    }
+
+    /**
+     * Begin a render pass (WebGPU standard API)
+     *
+     * Standard signature:
+     * beginRenderPass({
+     *   colorAttachments: [
+     *     { view: textureView, loadOp: 'clear', storeOp: 'store', clearValue: {...} }
+     *   ],
+     *   depthStencilAttachment: { view: depthView, ... }
+     * })
+     *
+     * Transforms to flattened format internally
+     */
+    beginRenderPass(descriptor) {
+        // Extract views from color attachments
+        const colorViews = []
+        const colorResolveViews = []
+        const colorAttachments = []
+
+        for (const attachment of descriptor.colorAttachments) {
+            colorViews.push(attachment.view)
+            colorResolveViews.push(attachment.resolveTarget || null)
+
+            // Create attachment descriptor without view
+            colorAttachments.push({
+                clearValue: attachment.clearValue,
+                loadOp: attachment.loadOp,
+                storeOp: attachment.storeOp
+            })
+        }
+
+        // Extract depth-stencil view if present
+        const depthStencilView = descriptor.depthStencilAttachment?.view || null
+        const depthStencilAttachment = descriptor.depthStencilAttachment ? {
+            depthClearValue: descriptor.depthStencilAttachment.depthClearValue,
+            depthLoadOp: descriptor.depthStencilAttachment.depthLoadOp,
+            depthStoreOp: descriptor.depthStencilAttachment.depthStoreOp,
+            stencilClearValue: descriptor.depthStencilAttachment.stencilClearValue,
+            stencilLoadOp: descriptor.depthStencilAttachment.stencilLoadOp,
+            stencilStoreOp: descriptor.depthStencilAttachment.stencilStoreOp
+        } : undefined
+
+        // Call flattened native API
+        return this._native.beginRenderPass(
+            {
+                label: descriptor.label,
+                colorAttachments: colorAttachments,
+                depthStencilAttachment: depthStencilAttachment
+            },
+            colorViews,
+            colorResolveViews.some(v => v) ? colorResolveViews : null,
+            depthStencilView
+        )
+    }
+
+    finish() {
+        return this._native.finish()
+    }
+}
+
+/**
  * WebGPU-standard GpuDevice wrapper
  */
 class GpuDevice {
@@ -49,6 +142,11 @@ class GpuDevice {
         return this._native.popErrorScope()
     }
 
+    // Destroy device (WebGPU standard method)
+    destroy() {
+        return this._native.destroy()
+    }
+
     // Simple pass-through methods
     createBuffer(descriptor) {
         return this._native.createBuffer(descriptor)
@@ -71,7 +169,8 @@ class GpuDevice {
     }
 
     createCommandEncoder(descriptor) {
-        return this._native.createCommandEncoder(descriptor)
+        const nativeEncoder = this._native.createCommandEncoder(descriptor)
+        return new GpuCommandEncoder(nativeEncoder)
     }
 
     createBindGroupLayout(descriptor) {
@@ -242,20 +341,25 @@ class GpuAdapter {
         this._native = nativeAdapter
     }
 
+    // WebGPU standard: features is a property, not a method
     get features() {
-        return this._native.features
+        return this._native.getFeatures()
     }
 
+    // WebGPU standard: limits is a property, not a method
     get limits() {
-        return this._native.limits
+        return this._native.getLimits()
     }
 
+    // WebGPU standard: info is a property, not a method
     get info() {
-        return this._native.info
+        return this._native.getInfo()
     }
 
+    // WebGPU standard: isFallbackAdapter is a property
+    // Note: This is always false in wgpu as it doesn't support fallback adapters
     get isFallbackAdapter() {
-        return this._native.isFallbackAdapter
+        return false
     }
 
     async requestDevice(descriptor = {}) {
@@ -323,12 +427,12 @@ const GPUTextureUsage = {
 
 // Export WebGPU standard API
 module.exports = {
-    // Main entry point - factory function
+    // Main entry point - factory function (WebGPU standard: navigator.gpu)
+    // In Node.js environment, use Gpu() factory function
     Gpu: createGpu,
 
     // Export native classes that don't need wrapping
     GpuShaderModule: native.GpuShaderModule,
-    GpuCommandEncoder: native.GpuCommandEncoder,
     GpuCommandBuffer: native.GpuCommandBuffer,
     GpuBuffer: native.GpuBuffer,
     GpuTexture: native.GpuTexture,
@@ -349,13 +453,5 @@ module.exports = {
     // Export WebGPU-standard constants (UPPER_SNAKE_CASE)
     GPUBufferUsage,
     GPUMapMode,
-    GPUTextureUsage,
-
-    // Legacy exports (camelCase) for backwards compatibility
-    bufferUsage: GPUBufferUsage,
-    mapMode: GPUMapMode,
-    textureUsage: GPUTextureUsage,
-
-    // Export native bindings for advanced users who want direct access
-    native
+    GPUTextureUsage
 }
