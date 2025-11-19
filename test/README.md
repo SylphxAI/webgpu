@@ -103,7 +103,7 @@ import { Gpu } from '../index.js'
 
 describe('GPU', () => {
   test('should create GPU instance', () => {
-    const gpu = Gpu.create()
+    const gpu = Gpu()
     expect(gpu).toBeDefined()
   })
 })
@@ -112,7 +112,7 @@ describe('GPU', () => {
 ### Async Test with Device
 ```typescript
 test('should compute on GPU', async () => {
-  const gpu = Gpu.create()
+  const gpu = Gpu()
   const adapter = await gpu.requestAdapter()
   const device = await adapter.requestDevice()
 
@@ -227,7 +227,7 @@ describe('Your Feature', () => {
   let device: any
 
   beforeAll(async () => {
-    const gpu = Gpu.create()
+    const gpu = Gpu()
     const adapter = await gpu.requestAdapter()
     device = await adapter.requestDevice()
   })
