@@ -1,4 +1,3 @@
-use napi::bindgen_prelude::*;
 use napi_derive::napi;
 use std::sync::Arc;
 
@@ -24,6 +23,17 @@ pub struct GpuComputePipeline {
     pub(crate) pipeline: Arc<wgpu::ComputePipeline>,
 }
 
+#[napi]
+impl GpuComputePipeline {
+    /// Get a bind group layout at a specific index (WebGPU standard method)
+    /// Used for automatic layout inference when pipeline is created without explicit layout
+    #[napi(js_name = "getBindGroupLayout")]
+    pub fn get_bind_group_layout(&self, index: u32) -> crate::GpuBindGroupLayout {
+        let layout = self.pipeline.get_bind_group_layout(index);
+        crate::GpuBindGroupLayout::new(layout)
+    }
+}
+
 /// Compute pass descriptor (simplified)
 #[napi(object)]
 pub struct ComputePassDescriptor {
@@ -41,7 +51,18 @@ pub struct GpuRenderPipeline {
     pub(crate) pipeline: Arc<wgpu::RenderPipeline>,
 }
 
-/// Render pass descriptor
+#[napi]
+impl GpuRenderPipeline {
+    /// Get a bind group layout at a specific index (WebGPU standard method)
+    /// Used for automatic layout inference when pipeline is created without explicit layout
+    #[napi(js_name = "getBindGroupLayout")]
+    pub fn get_bind_group_layout(&self, index: u32) -> crate::GpuBindGroupLayout {
+        let layout = self.pipeline.get_bind_group_layout(index);
+        crate::GpuBindGroupLayout::new(layout)
+    }
+}
+
+/// Render pass descriptor (simplified - views passed separately)
 #[napi(object)]
 pub struct RenderPassDescriptor {
     pub label: Option<String>,
@@ -49,10 +70,10 @@ pub struct RenderPassDescriptor {
     pub depth_stencil_attachment: Option<RenderPassDepthStencilAttachment>,
 }
 
+/// Color attachment descriptor (without texture view reference)
+/// Texture views are passed separately to avoid napi-rs External serialization issues
 #[napi(object)]
 pub struct RenderPassColorAttachment {
-    pub view: External<crate::GpuTextureView>,
-    pub resolve_target: Option<External<crate::GpuTextureView>>,
     pub clear_value: Option<Color>,
     pub load_op: String,
     pub store_op: String,
@@ -66,9 +87,10 @@ pub struct Color {
     pub a: f64,
 }
 
+/// Depth/stencil attachment descriptor (without texture view reference)
+/// Texture views are passed separately to avoid napi-rs External serialization issues
 #[napi(object)]
 pub struct RenderPassDepthStencilAttachment {
-    pub view: External<crate::GpuTextureView>,
     pub depth_clear_value: Option<f64>,
     pub depth_load_op: Option<String>,
     pub depth_store_op: Option<String>,

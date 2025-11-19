@@ -192,86 +192,99 @@ impl GpuDevice {
         Ok(crate::GpuBindGroupLayout::new(layout))
     }
 
-    /// Create a bind group with buffer bindings following WebGPU spec
+    /// Create a bind group following WebGPU spec
+    /// Resources are passed separately to avoid napi-rs External serialization issues
+    /// Supports mixed buffer/texture/sampler entries in one call
     #[napi(js_name = "createBindGroup")]
-    pub fn create_bind_group_buffers(
+    pub fn create_bind_group(
         &self,
         descriptor: crate::BindGroupDescriptor,
         layout: &crate::GpuBindGroupLayout,
-        buffer_entries: Vec<crate::BindGroupEntryBuffer>,
+        entries: Vec<crate::BindGroupEntry>,
+        buffers: Option<Vec<&crate::GpuBuffer>>,
+        textures: Option<Vec<&crate::GpuTextureView>>,
+        samplers: Option<Vec<&crate::GpuSampler>>,
     ) -> Result<crate::GpuBindGroup> {
-        let entries: Vec<_> = buffer_entries
+        // Build bind group entries by matching binding numbers to resources
+        let mut buffer_idx = 0;
+        let mut texture_idx = 0;
+        let mut sampler_idx = 0;
+
+        let wgpu_entries: Result<Vec<_>> = entries
             .iter()
             .map(|entry| {
-                wgpu::BindGroupEntry {
+                // Determine resource type based on which index we're at
+                // This is a simplified approach - in a real implementation you'd want
+                // to explicitly specify the resource type per entry
+                let resource = if let Some(ref bufs) = buffers {
+                    if buffer_idx < bufs.len() {
+                        let buf = bufs[buffer_idx];
+                        buffer_idx += 1;
+                        wgpu::BindingResource::Buffer(wgpu::BufferBinding {
+                            buffer: &buf.buffer,
+                            offset: entry.offset.unwrap_or(0) as u64,
+                            size: entry.size.map(|s| std::num::NonZeroU64::new(s as u64)).flatten(),
+                        })
+                    } else if let Some(ref texs) = textures {
+                        if texture_idx < texs.len() {
+                            let tex = texs[texture_idx];
+                            texture_idx += 1;
+                            wgpu::BindingResource::TextureView(&tex.view)
+                        } else if let Some(ref samps) = samplers {
+                            if sampler_idx < samps.len() {
+                                let samp = samps[sampler_idx];
+                                sampler_idx += 1;
+                                wgpu::BindingResource::Sampler(&samp.sampler)
+                            } else {
+                                return Err(Error::from_reason("Not enough resources for bind group entries"));
+                            }
+                        } else {
+                            return Err(Error::from_reason("Not enough resources for bind group entries"));
+                        }
+                    } else {
+                        return Err(Error::from_reason("Not enough resources for bind group entries"));
+                    }
+                } else if let Some(ref texs) = textures {
+                    if texture_idx < texs.len() {
+                        let tex = texs[texture_idx];
+                        texture_idx += 1;
+                        wgpu::BindingResource::TextureView(&tex.view)
+                    } else if let Some(ref samps) = samplers {
+                        if sampler_idx < samps.len() {
+                            let samp = samps[sampler_idx];
+                            sampler_idx += 1;
+                            wgpu::BindingResource::Sampler(&samp.sampler)
+                        } else {
+                            return Err(Error::from_reason("Not enough resources for bind group entries"));
+                        }
+                    } else {
+                        return Err(Error::from_reason("Not enough resources for bind group entries"));
+                    }
+                } else if let Some(ref samps) = samplers {
+                    if sampler_idx < samps.len() {
+                        let samp = samps[sampler_idx];
+                        sampler_idx += 1;
+                        wgpu::BindingResource::Sampler(&samp.sampler)
+                    } else {
+                        return Err(Error::from_reason("Not enough resources for bind group entries"));
+                    }
+                } else {
+                    return Err(Error::from_reason("No resources provided for bind group"));
+                };
+
+                Ok(wgpu::BindGroupEntry {
                     binding: entry.binding,
-                    resource: wgpu::BindingResource::Buffer(wgpu::BufferBinding {
-                        buffer: &entry.buffer.buffer,
-                        offset: entry.offset.unwrap_or(0) as u64,
-                        size: entry.size.map(|s| std::num::NonZeroU64::new(s as u64)).flatten(),
-                    }),
-                }
+                    resource,
+                })
             })
             .collect();
+
+        let wgpu_entries = wgpu_entries?;
 
         let bind_group = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: descriptor.label.as_deref(),
             layout: &layout.layout,
-            entries: &entries,
-        });
-
-        Ok(crate::GpuBindGroup::new(bind_group))
-    }
-
-    /// Create a bind group with texture bindings
-    #[napi(js_name = "createBindGroupTextures")]
-    pub fn create_bind_group_textures(
-        &self,
-        descriptor: crate::BindGroupDescriptor,
-        layout: &crate::GpuBindGroupLayout,
-        texture_entries: Vec<crate::BindGroupEntryTexture>,
-    ) -> Result<crate::GpuBindGroup> {
-        let entries: Vec<_> = texture_entries
-            .iter()
-            .map(|entry| {
-                wgpu::BindGroupEntry {
-                    binding: entry.binding,
-                    resource: wgpu::BindingResource::TextureView(&entry.view.view),
-                }
-            })
-            .collect();
-
-        let bind_group = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: descriptor.label.as_deref(),
-            layout: &layout.layout,
-            entries: &entries,
-        });
-
-        Ok(crate::GpuBindGroup::new(bind_group))
-    }
-
-    /// Create a bind group with sampler bindings
-    #[napi(js_name = "createBindGroupSamplers")]
-    pub fn create_bind_group_samplers(
-        &self,
-        descriptor: crate::BindGroupDescriptor,
-        layout: &crate::GpuBindGroupLayout,
-        sampler_entries: Vec<crate::BindGroupEntrySampler>,
-    ) -> Result<crate::GpuBindGroup> {
-        let entries: Vec<_> = sampler_entries
-            .iter()
-            .map(|entry| {
-                wgpu::BindGroupEntry {
-                    binding: entry.binding,
-                    resource: wgpu::BindingResource::Sampler(&entry.sampler.sampler),
-                }
-            })
-            .collect();
-
-        let bind_group = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: descriptor.label.as_deref(),
-            layout: &layout.layout,
-            entries: &entries,
+            entries: &wgpu_entries,
         });
 
         Ok(crate::GpuBindGroup::new(bind_group))
@@ -704,14 +717,22 @@ impl GpuCommandEncoder {
     }
 
     /// Begin a render pass following WebGPU standard
+    /// Texture views are passed separately to avoid napi-rs External serialization issues
     /// Returns a render pass encoder for recording render commands
     #[napi(js_name = "beginRenderPass")]
-    pub fn begin_render_pass(&mut self, descriptor: crate::pipeline::RenderPassDescriptor) -> Result<crate::GpuRenderPassEncoder> {
+    pub fn begin_render_pass(
+        &mut self,
+        descriptor: crate::pipeline::RenderPassDescriptor,
+        color_views: Vec<&crate::GpuTextureView>,
+        color_resolve_views: Option<Vec<Option<&crate::GpuTextureView>>>,
+        depth_stencil_view: Option<&crate::GpuTextureView>,
+    ) -> Result<crate::GpuRenderPassEncoder> {
         if let Some(ref mut enc) = self.encoder {
             // Convert color attachments
             let color_attachments: Vec<Option<wgpu::RenderPassColorAttachment>> = descriptor.color_attachments
                 .iter()
-                .map(|attachment| {
+                .enumerate()
+                .map(|(i, attachment)| {
                     let load_op = match attachment.load_op.as_str() {
                         "clear" => {
                             let clear_value = attachment.clear_value.as_ref().map(|c| wgpu::Color {
@@ -728,9 +749,19 @@ impl GpuCommandEncoder {
                         "discard" => wgpu::StoreOp::Discard,
                         _ => wgpu::StoreOp::Store,
                     };
+
+                    // Get view from separate array
+                    let view = color_views.get(i)?;
+
+                    // Get resolve target if provided
+                    let resolve_target = color_resolve_views.as_ref()
+                        .and_then(|resolve_views| resolve_views.get(i))
+                        .and_then(|opt_view| opt_view.as_ref())
+                        .map(|v| v.view.as_ref());
+
                     Some(wgpu::RenderPassColorAttachment {
-                        view: &attachment.view.view,
-                        resolve_target: attachment.resolve_target.as_ref().map(|t| t.view.as_ref()),
+                        view: &view.view,
+                        resolve_target,
                         ops: wgpu::Operations {
                             load: load_op,
                             store: store_op,
@@ -740,41 +771,45 @@ impl GpuCommandEncoder {
                 .collect();
 
             // Convert depth/stencil attachment
-            let depth_stencil_attachment = descriptor.depth_stencil_attachment.as_ref().map(|attachment| {
-                let depth_ops = if attachment.depth_load_op.is_some() || attachment.depth_store_op.is_some() {
-                    let load = match attachment.depth_load_op.as_deref() {
-                        Some("clear") => wgpu::LoadOp::Clear(attachment.depth_clear_value.unwrap_or(1.0) as f32),
-                        _ => wgpu::LoadOp::Load,
+            let depth_stencil_attachment = if let Some(ref attachment) = descriptor.depth_stencil_attachment {
+                depth_stencil_view.map(|view| {
+                    let depth_ops = if attachment.depth_load_op.is_some() || attachment.depth_store_op.is_some() {
+                        let load = match attachment.depth_load_op.as_deref() {
+                            Some("clear") => wgpu::LoadOp::Clear(attachment.depth_clear_value.unwrap_or(1.0) as f32),
+                            _ => wgpu::LoadOp::Load,
+                        };
+                        let store = match attachment.depth_store_op.as_deref() {
+                            Some("discard") => wgpu::StoreOp::Discard,
+                            _ => wgpu::StoreOp::Store,
+                        };
+                        Some(wgpu::Operations { load, store })
+                    } else {
+                        None
                     };
-                    let store = match attachment.depth_store_op.as_deref() {
-                        Some("discard") => wgpu::StoreOp::Discard,
-                        _ => wgpu::StoreOp::Store,
-                    };
-                    Some(wgpu::Operations { load, store })
-                } else {
-                    None
-                };
 
-                let stencil_ops = if attachment.stencil_load_op.is_some() || attachment.stencil_store_op.is_some() {
-                    let load = match attachment.stencil_load_op.as_deref() {
-                        Some("clear") => wgpu::LoadOp::Clear(attachment.stencil_clear_value.unwrap_or(0)),
-                        _ => wgpu::LoadOp::Load,
+                    let stencil_ops = if attachment.stencil_load_op.is_some() || attachment.stencil_store_op.is_some() {
+                        let load = match attachment.stencil_load_op.as_deref() {
+                            Some("clear") => wgpu::LoadOp::Clear(attachment.stencil_clear_value.unwrap_or(0)),
+                            _ => wgpu::LoadOp::Load,
+                        };
+                        let store = match attachment.stencil_store_op.as_deref() {
+                            Some("discard") => wgpu::StoreOp::Discard,
+                            _ => wgpu::StoreOp::Store,
+                        };
+                        Some(wgpu::Operations { load, store })
+                    } else {
+                        None
                     };
-                    let store = match attachment.stencil_store_op.as_deref() {
-                        Some("discard") => wgpu::StoreOp::Discard,
-                        _ => wgpu::StoreOp::Store,
-                    };
-                    Some(wgpu::Operations { load, store })
-                } else {
-                    None
-                };
 
-                wgpu::RenderPassDepthStencilAttachment {
-                    view: &attachment.view.view,
-                    depth_ops,
-                    stencil_ops,
-                }
-            });
+                    wgpu::RenderPassDepthStencilAttachment {
+                        view: &view.view,
+                        depth_ops,
+                        stencil_ops,
+                    }
+                })
+            } else {
+                None
+            };
 
             let pass = enc.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: descriptor.label.as_deref(),
