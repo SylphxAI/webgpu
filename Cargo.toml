@@ -2,6 +2,7 @@
 name = "webgpu"
 version = "0.3.0"
 edition = "2021"
+rust-version = "1.79"
 license = "MIT"
 authors = ["SylphxAI"]
 repository = "https://github.com/SylphxAI/webgpu"
