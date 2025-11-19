@@ -504,27 +504,22 @@ export declare class GpuBuffer {
    * # Parameters
    * * `modified_buffer` - Optional. If provided, writes this data to GPU before unmapping.
    *                       Use this when you've modified the buffer from getMappedRange().
+   *                       Note: In JavaScript, this is handled automatically by the wrapper.
    *
-   * # Usage patterns
-   * 1. Write with getMappedRange():
-   *    ```js
-   *    const range = buffer.getMappedRange()
-   *    const view = new Float32Array(range.buffer)
-   *    view[0] = 1.0
-   *    buffer.unmap(range)  // Pass modified buffer back
-   *    ```
+   * # WebGPU Standard Usage (JavaScript)
+   * ```js
+   * // Write pattern
+   * const range = buffer.getMappedRange()
+   * const view = new Float32Array(range)
+   * view[0] = 1.0
+   * buffer.unmap()  // Automatically flushes changes
    *
-   * 2. Write with writeMappedRange():
-   *    ```js
-   *    buffer.writeMappedRange(data)
-   *    buffer.unmap()  // No argument needed
-   *    ```
-   *
-   * 3. Read with getMappedRange():
-   *    ```js
-   *    const data = buffer.getMappedRange()
-   *    buffer.unmap()  // No argument needed for reads
-   *    ```
+   * // Read pattern
+   * const data = buffer.getMappedRange()
+   * const view = new Float32Array(data)
+   * console.log(view[0])
+   * buffer.unmap()
+   * ```
    */
   unmap(modifiedBuffer?: Buffer | undefined | null): void
   /** Write data to buffer using mapped memory */

@@ -20,6 +20,9 @@ pub struct GpuBuffer {
     /// Tracks the current map state of the buffer
     /// Values: "unmapped", "pending", "mapped"
     pub(crate) map_state: Arc<Mutex<String>>,
+    /// Tracks active getMappedRange() calls to prevent overlapping ranges
+    /// Each entry is (offset, size) of an active range
+    pub(crate) active_ranges: Arc<Mutex<Vec<(u64, u64)>>>,
 }
 
 impl GpuBuffer {
@@ -31,6 +34,7 @@ impl GpuBuffer {
             pending_writes: Arc::new(Mutex::new(Vec::new())),
             mapped_data: Arc::new(Mutex::new(None)),
             map_state: Arc::new(Mutex::new("unmapped".to_string())),
+            active_ranges: Arc::new(Mutex::new(Vec::new())),
         }
     }
 
@@ -42,6 +46,7 @@ impl GpuBuffer {
             pending_writes: Arc::new(Mutex::new(Vec::new())),
             mapped_data: Arc::new(Mutex::new(None)),
             map_state: Arc::new(Mutex::new("mapped".to_string())),
+            active_ranges: Arc::new(Mutex::new(Vec::new())),
         }
     }
 }
@@ -169,6 +174,30 @@ impl GpuBuffer {
             )));
         }
 
+        // Check for overlapping ranges (WebGPU spec requirement)
+        let mut ranges = self.active_ranges.lock()
+            .map_err(|_| Error::from_reason("Failed to lock active ranges"))?;
+
+        let range_start = offset;
+        let range_end = offset + size;
+
+        for (active_offset, active_size) in ranges.iter() {
+            let active_start = *active_offset;
+            let active_end = active_offset + active_size;
+
+            // Two ranges overlap if: range1.start < range2.end AND range1.end > range2.start
+            if range_start < active_end && range_end > active_start {
+                return Err(Error::from_reason(format!(
+                    "getMappedRange() range [{}, {}) overlaps with existing range [{}, {})",
+                    range_start, range_end, active_start, active_end
+                )));
+            }
+        }
+
+        // No overlap detected, add this range to active ranges
+        ranges.push((offset, size));
+        drop(ranges);
+
         let slice = self.buffer.slice(offset..offset + size);
         let data = slice.get_mapped_range();
         let vec = data.to_vec();
@@ -191,27 +220,22 @@ impl GpuBuffer {
     /// # Parameters
     /// * `modified_buffer` - Optional. If provided, writes this data to GPU before unmapping.
     ///                       Use this when you've modified the buffer from getMappedRange().
+    ///                       Note: In JavaScript, this is handled automatically by the wrapper.
     ///
-    /// # Usage patterns
-    /// 1. Write with getMappedRange():
-    ///    ```js
-    ///    const range = buffer.getMappedRange()
-    ///    const view = new Float32Array(range.buffer)
-    ///    view[0] = 1.0
-    ///    buffer.unmap(range)  // Pass modified buffer back
-    ///    ```
+    /// # WebGPU Standard Usage (JavaScript)
+    /// ```js
+    /// // Write pattern
+    /// const range = buffer.getMappedRange()
+    /// const view = new Float32Array(range)
+    /// view[0] = 1.0
+    /// buffer.unmap()  // Automatically flushes changes
     ///
-    /// 2. Write with writeMappedRange():
-    ///    ```js
-    ///    buffer.writeMappedRange(data)
-    ///    buffer.unmap()  // No argument needed
-    ///    ```
-    ///
-    /// 3. Read with getMappedRange():
-    ///    ```js
-    ///    const data = buffer.getMappedRange()
-    ///    buffer.unmap()  // No argument needed for reads
-    ///    ```
+    /// // Read pattern
+    /// const data = buffer.getMappedRange()
+    /// const view = new Float32Array(data)
+    /// console.log(view[0])
+    /// buffer.unmap()
+    /// ```
     #[napi]
     pub fn unmap(&self, modified_buffer: Option<Buffer>) -> Result<()> {
         // Get pending writes before unmapping
@@ -271,6 +295,11 @@ impl GpuBuffer {
 
         // Clear pending writes
         pending.clear();
+
+        // Clear active ranges (all getMappedRange calls are invalidated on unmap)
+        let mut ranges = self.active_ranges.lock()
+            .map_err(|_| Error::from_reason("Failed to lock active ranges"))?;
+        ranges.clear();
 
         // Update map state to unmapped
         let mut state = self.map_state.lock()
