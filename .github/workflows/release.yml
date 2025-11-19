@@ -132,10 +132,19 @@ jobs:
           ls -la *.node
 
       - name: Create platform packages
-        run: bun run prepublishOnly --skip-gh-release
+        run: |
+          bun run prepublishOnly --skip-gh-release
+          ls -R npm/
 
-      - name: List packages
-        run: ls -R ./npm
+      - name: Move binaries to npm packages
+        run: |
+          mv webgpu.darwin-x64.node npm/darwin-x64/ 2>/dev/null || true
+          mv webgpu.darwin-arm64.node npm/darwin-arm64/ 2>/dev/null || true
+          mv webgpu.linux-x64-gnu.node npm/linux-x64-gnu/ 2>/dev/null || true
+          mv webgpu.linux-arm64-gnu.node npm/linux-arm64-gnu/ 2>/dev/null || true
+          mv webgpu.win32-x64-msvc.node npm/win32-x64-msvc/ 2>/dev/null || true
+          mv webgpu.win32-arm64-msvc.node npm/win32-arm64-msvc/ 2>/dev/null || true
+          ls -R npm/
 
       - name: Publish main package
         run: npm publish --access public
