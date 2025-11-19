@@ -279,6 +279,38 @@ export interface BlendComponent {
   dstFactor: string
   operation: string
 }
+/** GPU supported limits following WebGPU spec */
+export interface GpuSupportedLimits {
+  maxTextureDimension1D: number
+  maxTextureDimension2D: number
+  maxTextureDimension3D: number
+  maxTextureArrayLayers: number
+  maxBindGroups: number
+  maxBindGroupsPlusVertexBuffers: number
+  maxBindingsPerBindGroup: number
+  maxDynamicUniformBuffersPerPipelineLayout: number
+  maxDynamicStorageBuffersPerPipelineLayout: number
+  maxSampledTexturesPerShaderStage: number
+  maxSamplersPerShaderStage: number
+  maxStorageBuffersPerShaderStage: number
+  maxStorageTexturesPerShaderStage: number
+  maxUniformBuffersPerShaderStage: number
+  maxUniformBufferBindingSize: number
+  maxStorageBufferBindingSize: number
+  minUniformBufferOffsetAlignment: number
+  minStorageBufferOffsetAlignment: number
+  maxVertexBuffers: number
+  maxBufferSize: number
+  maxVertexAttributes: number
+  maxVertexBufferArrayStride: number
+  maxInterStageShaderComponents: number
+  maxComputeWorkgroupStorageSize: number
+  maxComputeInvocationsPerWorkgroup: number
+  maxComputeWorkgroupSizeX: number
+  maxComputeWorkgroupSizeY: number
+  maxComputeWorkgroupSizeZ: number
+  maxComputeWorkgroupsPerDimension: number
+}
 /**
  * GPU instance - entry point for WebGPU API
  *
@@ -347,6 +379,14 @@ export declare class GpuAdapter {
   requestDevice(): Promise<GpuDevice>
 }
 export declare class GpuDevice {
+  /** Get the queue for this device (WebGPU standard property) */
+  get queue(): GpuQueue
+  /** Get the supported features for this device (WebGPU standard property) */
+  get features(): GpuSupportedFeatures
+  /** Get the supported limits for this device (WebGPU standard property) */
+  get limits(): GpuSupportedLimits
+  /** Get the label of this device (WebGPU standard property) */
+  get label(): string | null
   /** Create a GPU buffer */
   createBuffer(descriptor: BufferDescriptor): GpuBuffer
   /** Create a shader module */
@@ -354,19 +394,19 @@ export declare class GpuDevice {
   /** Create a command encoder */
   createCommandEncoder(descriptor?: CommandEncoderDescriptor | undefined | null): GpuCommandEncoder
   /**
-   * Submit commands to the queue
+   * Submit commands to the queue (deprecated - use device.queue.submit() instead)
    * Note: This consumes the command buffer
    */
   queueSubmit(commandBuffer: GpuCommandBuffer): void
   /** Poll the device */
   poll(forceWait?: boolean | undefined | null): void
-  /** Write data to a buffer using the queue */
+  /** Write data to a buffer using the queue (deprecated - use device.queue.writeBuffer() instead) */
   queueWriteBuffer(buffer: GpuBuffer, offset: number, data: Buffer): void
-  /** Copy data from one buffer to another */
+  /** Copy data from one buffer to another (deprecated - use encoder.copyBufferToBuffer() instead) */
   copyBufferToBuffer(encoder: GpuCommandEncoder, source: GpuBuffer, sourceOffset: number, destination: GpuBuffer, destinationOffset: number, size: number): void
-  /** Copy data from buffer to texture */
+  /** Copy data from buffer to texture (deprecated - use encoder.copyBufferToTexture() instead) */
   copyBufferToTexture(encoder: GpuCommandEncoder, source: GpuBuffer, sourceOffset: number, bytesPerRow: number, rowsPerImage: number | undefined | null, destination: GpuTexture, mipLevel: number | undefined | null, originX: number | undefined | null, originY: number | undefined | null, originZ: number | undefined | null, width: number, height: number, depth?: number | undefined | null): void
-  /** Copy data from texture to buffer */
+  /** Copy data from texture to buffer (deprecated - use encoder.copyTextureToBuffer() instead) */
   copyTextureToBuffer(encoder: GpuCommandEncoder, source: GpuTexture, mipLevel: number | undefined | null, originX: number | undefined | null, originY: number | undefined | null, originZ: number | undefined | null, destination: GpuBuffer, destinationOffset: number, bytesPerRow: number, rowsPerImage: number | undefined | null, width: number, height: number, depth?: number | undefined | null): void
   /** Create a texture */
   createTexture(descriptor: TextureDescriptor): GpuTexture
@@ -449,6 +489,12 @@ export declare class GpuCommandEncoder {
    * This is more efficient than recording the same commands multiple times
    */
   renderPassBundles(bundles: Array<GpuRenderBundle>, colorAttachments: Array<GpuTextureView>, clearColors?: Array<Array<number>> | undefined | null): void
+  /** Copy data from one buffer to another (WebGPU standard method) */
+  copyBufferToBuffer(source: GpuBuffer, sourceOffset: number, destination: GpuBuffer, destinationOffset: number, size: number): void
+  /** Copy data from buffer to texture (WebGPU standard method) */
+  copyBufferToTexture(source: GpuBuffer, sourceOffset: number, bytesPerRow: number, rowsPerImage: number | undefined | null, destination: GpuTexture, mipLevel: number | undefined | null, originX: number | undefined | null, originY: number | undefined | null, originZ: number | undefined | null, width: number, height: number, depth?: number | undefined | null): void
+  /** Copy data from texture to buffer (WebGPU standard method) */
+  copyTextureToBuffer(source: GpuTexture, mipLevel: number | undefined | null, originX: number | undefined | null, originY: number | undefined | null, originZ: number | undefined | null, destination: GpuBuffer, destinationOffset: number, bytesPerRow: number, rowsPerImage: number | undefined | null, width: number, height: number, depth?: number | undefined | null): void
   /** Finish encoding and return a command buffer */
   finish(): GpuCommandBuffer
 }
@@ -577,4 +623,20 @@ export declare class GpuQuerySet {
 export declare class GpuRenderBundle {
   /** Destroy the render bundle (automatic when dropped) */
   destroy(): void
+}
+/** GPU queue for submitting commands following WebGPU spec */
+export declare class GpuQueue {
+  /** Submit command buffers to the queue */
+  submit(commandBuffer: GpuCommandBuffer): void
+  /** Write data to a buffer using the queue */
+  writeBuffer(buffer: GpuBuffer, offset: number, data: Buffer): void
+  /** Get the label of this queue */
+  get label(): string | null
+}
+/** GPU supported features following WebGPU spec */
+export declare class GpuSupportedFeatures {
+  /** Check if a feature is supported */
+  has(feature: string): boolean
+  /** Get the number of features supported */
+  get size(): number
 }

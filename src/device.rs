@@ -5,20 +5,55 @@ use std::sync::Arc;
 #[napi]
 pub struct GpuDevice {
     pub(crate) device: Arc<wgpu::Device>,
-    pub(crate) queue: Arc<wgpu::Queue>,
+    pub(crate) queue_internal: Arc<wgpu::Queue>,
+    features: crate::GpuSupportedFeatures,
+    limits: crate::GpuSupportedLimits,
 }
 
 impl GpuDevice {
     pub(crate) fn new(device: wgpu::Device, queue: wgpu::Queue) -> Self {
+        let features = crate::GpuSupportedFeatures {
+            features: device.features(),
+        };
+        let limits = crate::GpuSupportedLimits::from_wgpu(&device.limits());
+
         Self {
             device: Arc::new(device),
-            queue: Arc::new(queue),
+            queue_internal: Arc::new(queue),
+            features,
+            limits,
         }
     }
 }
 
 #[napi]
 impl GpuDevice {
+    /// Get the queue for this device (WebGPU standard property)
+    #[napi(getter)]
+    pub fn queue(&self) -> crate::GpuQueue {
+        crate::GpuQueue::new(self.queue_internal.clone())
+    }
+
+    /// Get the supported features for this device (WebGPU standard property)
+    #[napi(getter)]
+    pub fn features(&self) -> crate::GpuSupportedFeatures {
+        crate::GpuSupportedFeatures {
+            features: self.features.features,
+        }
+    }
+
+    /// Get the supported limits for this device (WebGPU standard property)
+    #[napi(getter)]
+    pub fn limits(&self) -> crate::GpuSupportedLimits {
+        self.limits.clone()
+    }
+
+    /// Get the label of this device (WebGPU standard property)
+    #[napi(getter)]
+    pub fn label(&self) -> Option<String> {
+        None // wgpu doesn't expose device labels after creation
+    }
+
     /// Create a GPU buffer
     #[napi(js_name = "createBuffer")]
     pub fn create_buffer(&self, descriptor: crate::BufferDescriptor) -> crate::GpuBuffer {
@@ -55,12 +90,12 @@ impl GpuDevice {
         }
     }
 
-    /// Submit commands to the queue
+    /// Submit commands to the queue (deprecated - use device.queue.submit() instead)
     /// Note: This consumes the command buffer
     #[napi]
     pub fn queue_submit(&self, command_buffer: &mut GpuCommandBuffer) {
         if let Some(buffer) = command_buffer.buffer.take() {
-            self.queue.submit(std::iter::once(buffer));
+            self.queue_internal.submit(std::iter::once(buffer));
         }
     }
 
@@ -74,13 +109,13 @@ impl GpuDevice {
         });
     }
 
-    /// Write data to a buffer using the queue
+    /// Write data to a buffer using the queue (deprecated - use device.queue.writeBuffer() instead)
     #[napi]
     pub fn queue_write_buffer(&self, buffer: &crate::GpuBuffer, offset: i64, data: Buffer) {
-        self.queue.write_buffer(&buffer.buffer, offset as u64, &data);
+        self.queue_internal.write_buffer(&buffer.buffer, offset as u64, &data);
     }
 
-    /// Copy data from one buffer to another
+    /// Copy data from one buffer to another (deprecated - use encoder.copyBufferToBuffer() instead)
     #[napi]
     pub fn copy_buffer_to_buffer(
         &self,
@@ -105,7 +140,7 @@ impl GpuDevice {
         }
     }
 
-    /// Copy data from buffer to texture
+    /// Copy data from buffer to texture (deprecated - use encoder.copyBufferToTexture() instead)
     #[napi]
     pub fn copy_buffer_to_texture(
         &self,
@@ -155,7 +190,7 @@ impl GpuDevice {
         }
     }
 
-    /// Copy data from texture to buffer
+    /// Copy data from texture to buffer (deprecated - use encoder.copyTextureToBuffer() instead)
     #[napi]
     pub fn copy_texture_to_buffer(
         &self,
@@ -1278,6 +1313,128 @@ impl GpuCommandEncoder {
         }
     }
 
+    /// Copy data from one buffer to another (WebGPU standard method)
+    #[napi(js_name = "copyBufferToBuffer")]
+    pub fn copy_buffer_to_buffer_standard(
+        &mut self,
+        source: &crate::GpuBuffer,
+        source_offset: i64,
+        destination: &crate::GpuBuffer,
+        destination_offset: i64,
+        size: i64,
+    ) -> Result<()> {
+        if let Some(ref mut enc) = self.encoder {
+            enc.copy_buffer_to_buffer(
+                &source.buffer,
+                source_offset as u64,
+                &destination.buffer,
+                destination_offset as u64,
+                size as u64,
+            );
+            Ok(())
+        } else {
+            Err(Error::from_reason("Command encoder already finished"))
+        }
+    }
+
+    /// Copy data from buffer to texture (WebGPU standard method)
+    #[napi(js_name = "copyBufferToTexture")]
+    pub fn copy_buffer_to_texture_standard(
+        &mut self,
+        source: &crate::GpuBuffer,
+        source_offset: i64,
+        bytes_per_row: u32,
+        rows_per_image: Option<u32>,
+        destination: &crate::GpuTexture,
+        mip_level: Option<u32>,
+        origin_x: Option<u32>,
+        origin_y: Option<u32>,
+        origin_z: Option<u32>,
+        width: u32,
+        height: u32,
+        depth: Option<u32>,
+    ) -> Result<()> {
+        if let Some(ref mut enc) = self.encoder {
+            enc.copy_buffer_to_texture(
+                wgpu::ImageCopyBuffer {
+                    buffer: &source.buffer,
+                    layout: wgpu::ImageDataLayout {
+                        offset: source_offset as u64,
+                        bytes_per_row: Some(bytes_per_row),
+                        rows_per_image,
+                    },
+                },
+                wgpu::ImageCopyTexture {
+                    texture: &destination.texture,
+                    mip_level: mip_level.unwrap_or(0),
+                    origin: wgpu::Origin3d {
+                        x: origin_x.unwrap_or(0),
+                        y: origin_y.unwrap_or(0),
+                        z: origin_z.unwrap_or(0),
+                    },
+                    aspect: wgpu::TextureAspect::All,
+                },
+                wgpu::Extent3d {
+                    width,
+                    height,
+                    depth_or_array_layers: depth.unwrap_or(1),
+                },
+            );
+            Ok(())
+        } else {
+            Err(Error::from_reason("Command encoder already finished"))
+        }
+    }
+
+    /// Copy data from texture to buffer (WebGPU standard method)
+    #[napi(js_name = "copyTextureToBuffer")]
+    pub fn copy_texture_to_buffer_standard(
+        &mut self,
+        source: &crate::GpuTexture,
+        mip_level: Option<u32>,
+        origin_x: Option<u32>,
+        origin_y: Option<u32>,
+        origin_z: Option<u32>,
+        destination: &crate::GpuBuffer,
+        destination_offset: i64,
+        bytes_per_row: u32,
+        rows_per_image: Option<u32>,
+        width: u32,
+        height: u32,
+        depth: Option<u32>,
+    ) -> Result<()> {
+        if let Some(ref mut enc) = self.encoder {
+            enc.copy_texture_to_buffer(
+                wgpu::ImageCopyTexture {
+                    texture: &source.texture,
+                    mip_level: mip_level.unwrap_or(0),
+                    origin: wgpu::Origin3d {
+                        x: origin_x.unwrap_or(0),
+                        y: origin_y.unwrap_or(0),
+                        z: origin_z.unwrap_or(0),
+                    },
+                    aspect: wgpu::TextureAspect::All,
+                },
+                wgpu::ImageCopyBuffer {
+                    buffer: &destination.buffer,
+                    layout: wgpu::ImageDataLayout {
+                        offset: destination_offset as u64,
+                        bytes_per_row: Some(bytes_per_row),
+                        rows_per_image,
+                    },
+                },
+                wgpu::Extent3d {
+                    width,
+                    height,
+                    depth_or_array_layers: depth.unwrap_or(1),
+                },
+            );
+            Ok(())
+        } else {
+            Err(Error::from_reason("Command encoder already finished"))
+        }
+    }
+
     /// Finish encoding and return a command buffer
     #[napi]
     pub fn finish(&mut self) -> GpuCommandBuffer {
@@ -1288,5 +1445,5 @@ impl GpuCommandEncoder {
 
 #[napi]
 pub struct GpuCommandBuffer {
-    buffer: Option<wgpu::CommandBuffer>,
+    pub(crate) buffer: Option<wgpu::CommandBuffer>,
 }
