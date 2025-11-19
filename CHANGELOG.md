@@ -19,6 +19,7 @@
 ### Migration from v0.4.0 → v0.6.0
 
 **Before (v0.4.0 - deprecated API):**
+
 ```javascript
 const encoder = device.createCommandEncoder();
 encoder.computePass(pipeline, [bindGroup], 1); // Immediate execution
@@ -27,6 +28,7 @@ queue.submit([commandBuffer]);
 ```
 
 **After (v0.6.0 - WebGPU standard):**
+
 ```javascript
 const encoder = device.createCommandEncoder();
 const pass = encoder.beginComputePass(); // Returns GPUComputePassEncoder
