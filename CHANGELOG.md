@@ -1,5 +1,17 @@
 # @sylphx/webgpu
 
+## 0.8.0
+
+### Minor Changes
+
+- 1b49267: WebGPU API improvements
+
+  - Unified createBindGroup() API - single method accepting resources as parameters
+  - Updated beginRenderPass() - texture views passed as separate parameters
+  - Added GpuComputePipeline.getBindGroupLayout()
+  - Added GpuRenderPipeline.getBindGroupLayout()
+  - Improved WebGPU standard compliance
+
 ## 0.7.3
 
 ### Patch Changes
