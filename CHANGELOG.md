@@ -1,5 +1,20 @@
 # @sylphx/webgpu
 
+## 0.11.1
+
+### Patch Changes
+
+- Fix: Include webgpu.js wrapper in published package
+
+  Previous versions (0.10.0, 0.11.0) were missing webgpu.js in the published package, causing all users to use the old native API without the buffer unmap fix.
+
+  Now correctly publishes:
+
+  - webgpu.js (wrapper with buffer unmap fix)
+  - webgpu.d.ts (TypeScript definitions)
+  - index.js (native bindings)
+  - index.d.ts (native TypeScript definitions)
+
 ## 0.11.0
 
 ### Minor Changes
