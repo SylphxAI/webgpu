@@ -125,10 +125,7 @@ jobs:
       - name: Move artifacts to root
         run: mv artifacts/bindings-*/*.node .
 
-      - name: Create npm directories
-        run: bun napi create-npm-dir
-
-      - name: Move artifacts into npm packages
+      - name: Create npm packages and move artifacts
         run: bun artifacts
 
       - name: List packages
