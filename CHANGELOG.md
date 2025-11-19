@@ -1,5 +1,11 @@
 # @sylphx/webgpu
 
+## 0.11.2
+
+### Patch Changes
+
+- Fix buffer.unmap() not flushing getMappedRange() data to GPU. Added native support for storing mapped buffer data and passing it back through unmap().
+
 ## 0.11.1
 
 ### Patch Changes
