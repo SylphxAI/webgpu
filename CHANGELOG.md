@@ -1,8 +1,8 @@
 # @sylphx/webgpu
 
-## 1.0.0
+## 0.7.0
 
-### Major Changes
+### Minor Changes
 
 - 710dcbb: **BREAKING CHANGE**: Fix ExternalObject serialization by accepting GPU objects as separate parameters
 
