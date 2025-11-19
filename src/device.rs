@@ -115,6 +115,7 @@ impl GpuDevice {
 
     /// Submit commands to the queue (deprecated - use device.queue.submit() instead)
     /// Note: This consumes the command buffer
+    #[deprecated(note = "Use device.queue.submit() for WebGPU standard")]
     #[napi]
     pub fn queue_submit(&self, command_buffer: &mut GpuCommandBuffer) {
         if let Some(buffer) = command_buffer.buffer.take() {
@@ -133,12 +134,14 @@ impl GpuDevice {
     }
 
     /// Write data to a buffer using the queue (deprecated - use device.queue.writeBuffer() instead)
+    #[deprecated(note = "Use device.queue.writeBuffer() for WebGPU standard")]
     #[napi]
     pub fn queue_write_buffer(&self, buffer: &crate::GpuBuffer, offset: i64, data: Buffer) {
         self.queue_internal.write_buffer(&buffer.buffer, offset as u64, &data);
     }
 
     /// Copy data from one buffer to another (deprecated - use encoder.copyBufferToBuffer() instead)
+    #[deprecated(note = "Use encoder.copyBufferToBuffer() for WebGPU standard")]
     #[napi]
     pub fn copy_buffer_to_buffer(
         &self,
@@ -164,6 +167,7 @@ impl GpuDevice {
     }
 
     /// Copy data from buffer to texture (deprecated - use encoder.copyBufferToTexture() instead)
+    #[deprecated(note = "Use encoder.copyBufferToTexture() for WebGPU standard")]
     #[napi]
     pub fn copy_buffer_to_texture(
         &self,
@@ -214,6 +218,7 @@ impl GpuDevice {
     }
 
     /// Copy data from texture to buffer (deprecated - use encoder.copyTextureToBuffer() instead)
+    #[deprecated(note = "Use encoder.copyTextureToBuffer() for WebGPU standard")]
     #[napi]
     pub fn copy_texture_to_buffer(
         &self,
@@ -621,6 +626,8 @@ impl GpuDevice {
 
     /// Create a render bundle - reusable recorded render commands
     /// This creates a bundle that can be executed multiple times in render passes
+    /// DEPRECATED: Non-standard simplified API
+    #[deprecated(note = "Non-standard simplified API")]
     #[napi]
     pub fn create_render_bundle(
         &self,
@@ -673,6 +680,8 @@ impl GpuDevice {
     }
 
     /// Create an indexed render bundle
+    /// DEPRECATED: Non-standard simplified API
+    #[deprecated(note = "Non-standard simplified API")]
     #[napi]
     pub fn create_render_bundle_indexed(
         &self,
@@ -754,6 +763,8 @@ pub struct GpuCommandEncoder {
 #[napi]
 impl GpuCommandEncoder {
     /// Begin a compute pass and execute it with the given pipeline and bind groups
+    /// DEPRECATED: Use beginComputePass() for WebGPU standard deferred execution
+    #[deprecated(note = "Use beginComputePass() for WebGPU standard deferred execution")]
     #[napi]
     pub fn compute_pass(
         &mut self,
@@ -790,6 +801,8 @@ impl GpuCommandEncoder {
 
     /// Execute a compute pass with indirect dispatch
     /// The indirect buffer contains dispatch parameters (workgroups_x, workgroups_y, workgroups_z)
+    /// DEPRECATED: Use beginComputePass() + dispatchWorkgroupsIndirect() for WebGPU standard
+    #[deprecated(note = "Use beginComputePass() + dispatchWorkgroupsIndirect() for WebGPU standard")]
     #[napi]
     pub fn compute_pass_indirect(
         &mut self,
@@ -826,6 +839,8 @@ impl GpuCommandEncoder {
     /// depth_stencil_attachment: optional depth/stencil texture view
     /// clear_depth: optional depth clear value (0.0 to 1.0)
     /// resolve_targets: optional array of texture views to resolve MSAA to (must match color_attachments length)
+    /// DEPRECATED: Use beginRenderPass() for WebGPU standard deferred execution
+    #[deprecated(note = "Use beginRenderPass() for WebGPU standard deferred execution")]
     #[napi]
     pub fn render_pass(
         &mut self,
@@ -924,6 +939,8 @@ impl GpuCommandEncoder {
     }
 
     /// Execute a render pass with indexed drawing
+    /// DEPRECATED: Use beginRenderPass() + drawIndexed() for WebGPU standard
+    #[deprecated(note = "Use beginRenderPass() + drawIndexed() for WebGPU standard")]
     #[napi]
     pub fn render_pass_indexed(
         &mut self,
@@ -1033,6 +1050,8 @@ impl GpuCommandEncoder {
 
     /// Execute a render pass with indirect drawing
     /// The indirect buffer contains draw parameters (vertex_count, instance_count, first_vertex, first_instance)
+    /// DEPRECATED: Use beginRenderPass() + drawIndirect() for WebGPU standard
+    #[deprecated(note = "Use beginRenderPass() + drawIndirect() for WebGPU standard")]
     #[napi]
     pub fn render_pass_indirect(
         &mut self,
@@ -1129,6 +1148,8 @@ impl GpuCommandEncoder {
 
     /// Execute a render pass with indexed indirect drawing
     /// The indirect buffer contains draw parameters (index_count, instance_count, first_index, base_vertex, first_instance)
+    /// DEPRECATED: Use beginRenderPass() + drawIndexedIndirect() for WebGPU standard
+    #[deprecated(note = "Use beginRenderPass() + drawIndexedIndirect() for WebGPU standard")]
     #[napi]
     pub fn render_pass_indexed_indirect(
         &mut self,
@@ -1278,6 +1299,8 @@ impl GpuCommandEncoder {
 
     /// Execute render bundles in a render pass
     /// This is more efficient than recording the same commands multiple times
+    /// DEPRECATED: Use beginRenderPass() + executeBundles() for WebGPU standard
+    #[deprecated(note = "Use beginRenderPass() + executeBundles() for WebGPU standard")]
     #[napi]
     pub fn render_pass_bundles(
         &mut self,
