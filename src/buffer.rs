@@ -64,8 +64,10 @@ impl GpuBuffer {
     /// Get the mapped range as a buffer
     ///
     /// Returns the mapped data as a Node.js Buffer.
-    /// Must be called after mapAsync() succeeds.
+    /// Must be called after mapAsync() succeeds or if buffer created with mappedAtCreation: true.
     /// The buffer must remain mapped until unmap() is called.
+    ///
+    /// NOTE: For write operations, use writeMappedRange() to write data back to GPU.
     #[napi(js_name = "getMappedRange")]
     pub fn get_mapped_range(&self) -> Result<Buffer> {
         let slice = self.buffer.slice(..);
@@ -73,9 +75,41 @@ impl GpuBuffer {
         Ok(Buffer::from(data.to_vec()))
     }
 
+    /// Write data to the mapped range
+    ///
+    /// Writes data from a Node.js Buffer to the GPU buffer's mapped memory.
+    /// Must be called while the buffer is mapped (after mapAsync or if created with mappedAtCreation: true).
+    /// After writing, call unmap() to make the data available to GPU operations.
+    ///
+    /// # Arguments
+    /// * `data` - The data to write
+    /// * `offset` - Byte offset into the buffer (optional, default 0)
+    #[napi(js_name = "writeMappedRange")]
+    pub fn write_mapped_range(&self, data: Buffer, offset: Option<u32>) -> Result<()> {
+        let offset = offset.unwrap_or(0) as usize;
+        let data_slice = data.as_ref();
+
+        let slice = self.buffer.slice(..);
+        let mut mapped = slice.get_mapped_range_mut();
+
+        // Check bounds
+        if offset + data_slice.len() > mapped.len() {
+            return Err(Error::from_reason(format!(
+                "Data size ({} bytes) + offset ({} bytes) exceeds buffer size ({} bytes)",
+                data_slice.len(), offset, mapped.len()
+            )));
+        }
+
+        // Copy data to mapped range
+        mapped[offset..offset + data_slice.len()].copy_from_slice(data_slice);
+
+        Ok(())
+    }
+
     /// Unmap the buffer
     ///
-    /// Releases the mapped memory. Must be called after mapRead before using buffer in GPU operations.
+    /// Releases the mapped memory. Must be called after mapping operations before using buffer in GPU operations.
+    /// Any data written with writeMappedRange() will be flushed to the GPU.
     #[napi]
     pub fn unmap(&self) {
         self.buffer.unmap();

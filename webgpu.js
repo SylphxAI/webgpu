@@ -289,23 +289,23 @@ function createGpu() {
 }
 
 // WebGPU standard constants (UPPER_SNAKE_CASE)
-// Wrapper around native constants (lower_snake_case)
+// Wrapper around native constants (camelCase)
 // NOTE: Native exports are functions that return constant objects
 const nativeBufferUsage = native.bufferUsage()
 const nativeMapMode = native.mapMode()
 const nativeTextureUsage = native.textureUsage()
 
 const GPUBufferUsage = {
-    MAP_READ: nativeBufferUsage.map_read,
-    MAP_WRITE: nativeBufferUsage.map_write,
-    COPY_SRC: nativeBufferUsage.copy_src,
-    COPY_DST: nativeBufferUsage.copy_dst,
+    MAP_READ: nativeBufferUsage.mapRead,
+    MAP_WRITE: nativeBufferUsage.mapWrite,
+    COPY_SRC: nativeBufferUsage.copySrc,
+    COPY_DST: nativeBufferUsage.copyDst,
     INDEX: nativeBufferUsage.index,
     VERTEX: nativeBufferUsage.vertex,
     UNIFORM: nativeBufferUsage.uniform,
     STORAGE: nativeBufferUsage.storage,
     INDIRECT: nativeBufferUsage.indirect,
-    QUERY_RESOLVE: nativeBufferUsage.query_resolve
+    QUERY_RESOLVE: nativeBufferUsage.queryResolve
 }
 
 const GPUMapMode = {
@@ -314,11 +314,11 @@ const GPUMapMode = {
 }
 
 const GPUTextureUsage = {
-    COPY_SRC: nativeTextureUsage.copy_src,
-    COPY_DST: nativeTextureUsage.copy_dst,
-    TEXTURE_BINDING: nativeTextureUsage.texture_binding,
-    STORAGE_BINDING: nativeTextureUsage.storage_binding,
-    RENDER_ATTACHMENT: nativeTextureUsage.render_attachment
+    COPY_SRC: nativeTextureUsage.copySrc,
+    COPY_DST: nativeTextureUsage.copyDst,
+    TEXTURE_BINDING: nativeTextureUsage.textureBinding,
+    STORAGE_BINDING: nativeTextureUsage.storageBinding,
+    RENDER_ATTACHMENT: nativeTextureUsage.renderAttachment
 }
 
 // Export WebGPU standard API

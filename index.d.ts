@@ -477,14 +477,29 @@ export declare class GpuBuffer {
    * Get the mapped range as a buffer
    *
    * Returns the mapped data as a Node.js Buffer.
-   * Must be called after mapAsync() succeeds.
+   * Must be called after mapAsync() succeeds or if buffer created with mappedAtCreation: true.
    * The buffer must remain mapped until unmap() is called.
+   *
+   * NOTE: For write operations, use writeMappedRange() to write data back to GPU.
    */
   getMappedRange(): Buffer
   /**
+   * Write data to the mapped range
+   *
+   * Writes data from a Node.js Buffer to the GPU buffer's mapped memory.
+   * Must be called while the buffer is mapped (after mapAsync or if created with mappedAtCreation: true).
+   * After writing, call unmap() to make the data available to GPU operations.
+   *
+   * # Arguments
+   * * `data` - The data to write
+   * * `offset` - Byte offset into the buffer (optional, default 0)
+   */
+  writeMappedRange(data: Buffer, offset?: number | undefined | null): void
+  /**
    * Unmap the buffer
    *
-   * Releases the mapped memory. Must be called after mapRead before using buffer in GPU operations.
+   * Releases the mapped memory. Must be called after mapping operations before using buffer in GPU operations.
+   * Any data written with writeMappedRange() will be flushed to the GPU.
    */
   unmap(): void
   /** Write data to buffer using mapped memory */
