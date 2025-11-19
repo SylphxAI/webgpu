@@ -479,8 +479,10 @@ export declare class GpuBuffer {
    * Returns the mapped data as a Node.js Buffer.
    * Must be called after mapAsync() succeeds or if buffer created with mappedAtCreation: true.
    *
-   * NOTE: This returns a READ-ONLY copy of the GPU buffer data.
-   * For WRITE operations, use writeMappedRange() instead.
+   * The returned buffer is a COPY of GPU memory. Modifications to this buffer in JavaScript
+   * will be automatically flushed back to GPU when unmap() is called.
+   *
+   * This implements the standard WebGPU getMappedRange() behavior.
    */
   getMappedRange(): Buffer
   /**

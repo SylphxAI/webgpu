@@ -14,6 +14,9 @@ pub struct GpuBuffer {
     /// Tracks pending writes to the mapped buffer
     /// Writes are accumulated and applied via queue.write_buffer() in unmap()
     pub(crate) pending_writes: Arc<Mutex<Vec<(u64, Vec<u8>)>>>,
+    /// Stores the mapped range data returned from getMappedRange()
+    /// When user modifies this data in JavaScript, we need to flush it back to GPU on unmap()
+    pub(crate) mapped_data: Arc<Mutex<Option<Vec<u8>>>>,
 }
 
 impl GpuBuffer {
@@ -23,6 +26,7 @@ impl GpuBuffer {
             device,
             queue,
             pending_writes: Arc::new(Mutex::new(Vec::new())),
+            mapped_data: Arc::new(Mutex::new(None)),
         }
     }
 }
@@ -75,13 +79,23 @@ impl GpuBuffer {
     /// Returns the mapped data as a Node.js Buffer.
     /// Must be called after mapAsync() succeeds or if buffer created with mappedAtCreation: true.
     ///
-    /// NOTE: This returns a READ-ONLY copy of the GPU buffer data.
-    /// For WRITE operations, use writeMappedRange() instead.
+    /// The returned buffer is a COPY of GPU memory. Modifications to this buffer in JavaScript
+    /// will be automatically flushed back to GPU when unmap() is called.
+    ///
+    /// This implements the standard WebGPU getMappedRange() behavior.
     #[napi(js_name = "getMappedRange")]
     pub fn get_mapped_range(&self) -> Result<Buffer> {
         let slice = self.buffer.slice(..);
         let data = slice.get_mapped_range();
-        Ok(Buffer::from(data.to_vec()))
+        let vec = data.to_vec();
+
+        // Store a copy so we can detect modifications in JavaScript
+        // When JavaScript modifies the returned Buffer, we'll receive the modified data in unmap()
+        let mut mapped = self.mapped_data.lock()
+            .map_err(|_| Error::from_reason("Failed to lock mapped data"))?;
+        *mapped = Some(vec.clone());
+
+        Ok(Buffer::from(vec))
     }
 
     /// Write data to the mapped range
