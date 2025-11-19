@@ -1,6 +1,6 @@
 {
   "name": "@sylphx/webgpu",
-  "version": "0.11.3",
+  "version": "0.11.4",
   "description": "WebGPU for Node.js via wgpu-rs (modern, lightweight alternative to Dawn)",
   "main": "webgpu.js",
   "types": "webgpu.d.ts",
@@ -60,11 +60,11 @@
     "index.d.ts"
   ],
   "optionalDependencies": {
-    "@sylphx/webgpu-win32-x64-msvc": "0.11.3",
-    "@sylphx/webgpu-darwin-x64": "0.11.3",
-    "@sylphx/webgpu-darwin-arm64": "0.11.3",
-    "@sylphx/webgpu-linux-x64-gnu": "0.11.3",
-    "@sylphx/webgpu-linux-arm64-gnu": "0.11.3",
-    "@sylphx/webgpu-win32-arm64-msvc": "0.11.3"
+    "@sylphx/webgpu-win32-x64-msvc": "0.11.4",
+    "@sylphx/webgpu-darwin-x64": "0.11.4",
+    "@sylphx/webgpu-darwin-arm64": "0.11.4",
+    "@sylphx/webgpu-linux-x64-gnu": "0.11.4",
+    "@sylphx/webgpu-linux-arm64-gnu": "0.11.4",
+    "@sylphx/webgpu-win32-arm64-msvc": "0.11.4"
   }
 }
