@@ -422,3 +422,4 @@ MIT © [SylphxAI](https://github.com/SylphxAI)
 ```bash
 npm install @sylphx/webgpu
 ```
+# Force rebuild due to cache
