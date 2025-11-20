@@ -38,14 +38,14 @@ const pixels = await readTexture(texture)
 ```javascript
 // Parallel data processing
 const results = await gpuCompute(largeDataset)
-// 100x faster than CPU for parallel workloads
+// GPUs excel at parallel workloads
 ```
 
 ### Machine Learning
 ```javascript
 // Run ML inference on GPU
 const prediction = await runModel(input)
-// Much faster than CPU-only inference
+// GPU acceleration for ML inference
 ```
 
 ### Image Processing

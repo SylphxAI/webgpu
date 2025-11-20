@@ -300,7 +300,7 @@ Check the [`examples/`](examples/) directory for more:
 Run any example:
 ```bash
 node examples/compute.js
-# or with Bun (2x faster startup!)
+# or with Bun (faster startup)
 bun examples/compute.js
 ```
 

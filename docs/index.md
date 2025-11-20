@@ -89,7 +89,7 @@ Run with:
 # Node.js
 node example.js
 
-# Bun (2x faster startup!)
+# Bun (faster startup)
 bun example.js
 ```
 
@@ -130,7 +130,6 @@ bun example.js
 ```
 Binary Size:     1.9-4.6MB  (20-50x smaller than Dawn)
 Build Time:      ~30s       (120x faster than Dawn)
-Startup (Bun):   Fast       (2x faster than Node.js)
 Tests:           58 pass    (100% success rate)
 ```
 
