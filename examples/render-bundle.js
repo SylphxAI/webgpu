@@ -1,15 +1,13 @@
-const { Gpu, bufferUsage: getBufferUsage } = require('../index.js')
+const { Gpu, GPUBufferUsage } = require('../webgpu.js')
 
 async function main() {
   console.log('📦 WebGPU Render Bundle Example\n')
 
-  const gpu = Gpu.create()
+  const gpu = Gpu()
   const adapter = await gpu.requestAdapter()
   const device = await adapter.requestDevice()
 
   console.log('✓ Device ready\n')
-
-  const bufferUsage = getBufferUsage()
 
   // Shader for rendering triangles
   const shaderCode = `
@@ -32,7 +30,7 @@ fn fs_main(@location(0) color: vec4f) -> @location(0) vec4f {
 }
 `
 
-  const shaderModule = device.createShaderModule(shaderCode)
+  const shaderModule = device.createShaderModule({ code: shaderCode })
   console.log('✓ Shader compiled')
 
   // Create vertex data for TWO triangles
@@ -50,19 +48,19 @@ fn fs_main(@location(0) color: vec4f) -> @location(0) vec4f {
     1.0, -0.5, 0.0,           0.0, 1.0, 1.0,  // Bottom-right (cyan)
   ])
 
-  const vertexBuffer1 = device.createBuffer(
-    triangle1Vertices.byteLength,
-    bufferUsage.vertex | bufferUsage.copyDst,
-    false
-  )
-  device.queueWriteBuffer(vertexBuffer1, 0, Buffer.from(triangle1Vertices.buffer))
+  const vertexBuffer1 = device.createBuffer({
+    size: triangle1Vertices.byteLength,
+    usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+    mappedAtCreation: false
+  })
+  device.queue.writeBuffer(vertexBuffer1, 0, Buffer.from(triangle1Vertices.buffer))
 
-  const vertexBuffer2 = device.createBuffer(
-    triangle2Vertices.byteLength,
-    bufferUsage.vertex | bufferUsage.copyDst,
-    false
-  )
-  device.queueWriteBuffer(vertexBuffer2, 0, Buffer.from(triangle2Vertices.buffer))
+  const vertexBuffer2 = device.createBuffer({
+    size: triangle2Vertices.byteLength,
+    usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+    mappedAtCreation: false
+  })
+  device.queue.writeBuffer(vertexBuffer2, 0, Buffer.from(triangle2Vertices.buffer))
 
   console.log('✓ Vertex buffers created (2 triangles)')
 
@@ -133,11 +131,11 @@ fn fs_main(@location(0) color: vec4f) -> @location(0) vec4f {
   const bytesPerRow = 256 * 4
   const readbackSize = bytesPerRow * height
 
-  const readbackBuffer = device.createBuffer(
-    readbackSize,
-    bufferUsage.copyDst | bufferUsage.mapRead,
-    false
-  )
+  const readbackBuffer = device.createBuffer({
+    size: readbackSize,
+    usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
+    mappedAtCreation: false
+  })
 
   // Copy texture to buffer
   device.copyTextureToBuffer(
@@ -154,7 +152,7 @@ fn fs_main(@location(0) color: vec4f) -> @location(0) vec4f {
     1 // depth
   )
 
-  device.queueSubmit(encoder.finish())
+  device.queue.submit([encoder.finish()])
   device.poll(true)
   console.log('✓ Bundles executed')
 

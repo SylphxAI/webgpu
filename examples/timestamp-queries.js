@@ -1,15 +1,13 @@
-const { Gpu, bufferUsage: getBufferUsage } = require('../index.js')
+const { Gpu, GPUBufferUsage } = require('../webgpu.js')
 
 async function main() {
   console.log('⏱️  WebGPU Timestamp Queries Example\n')
 
-  const gpu = Gpu.create()
+  const gpu = Gpu()
   const adapter = await gpu.requestAdapter()
   const device = await adapter.requestDevice()
 
   console.log('✓ Device ready\n')
-
-  const bufferUsage = getBufferUsage()
 
   // Create a query set for timestamp queries (2 timestamps: start and end)
   const querySet = device.createQuerySet('timestamp', 2)
@@ -33,25 +31,25 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
 }
 `
 
-  const shaderModule = device.createShaderModule(shaderCode)
+  const shaderModule = device.createShaderModule({ code: shaderCode })
   console.log('✓ Compute shader compiled')
 
   // Create buffer with some data
   const arraySize = 1024 * 256 // 256K elements
   const byteSize = arraySize * 4
 
-  const buffer = device.createBuffer(
-    byteSize,
-    bufferUsage.storage | bufferUsage.copyDst | bufferUsage.copySrc,
-    false
-  )
+  const buffer = device.createBuffer({
+    size: byteSize,
+    usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC,
+    mappedAtCreation: false
+  })
 
   // Fill with initial data
   const initialData = new Float32Array(arraySize)
   for (let i = 0; i < arraySize; i++) {
     initialData[i] = Math.random()
   }
-  device.queueWriteBuffer(buffer, 0, Buffer.from(initialData.buffer))
+  device.queue.writeBuffer(buffer, 0, Buffer.from(initialData.buffer))
   console.log(`✓ Buffer created with ${arraySize} elements`)
 
   // Create bind group layout
@@ -102,26 +100,26 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
 
   // Create buffer to read back query results
   // Each timestamp is 8 bytes (u64), so 2 timestamps = 16 bytes
-  const queryBuffer = device.createBuffer(
-    16,
-    bufferUsage.queryResolve | bufferUsage.copySrc | bufferUsage.copyDst,
-    false
-  )
+  const queryBuffer = device.createBuffer({
+    size: 16,
+    usage: GPUBufferUsage.QUERY_RESOLVE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST,
+    mappedAtCreation: false
+  })
 
   // Resolve queries to buffer
   encoder.resolveQuerySet(querySet, 0, 2, queryBuffer, 0)
 
   // Create readable buffer for CPU access
-  const readBuffer = device.createBuffer(
-    16,
-    bufferUsage.copyDst | bufferUsage.mapRead,
-    false
-  )
+  const readBuffer = device.createBuffer({
+    size: 16,
+    usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
+    mappedAtCreation: false
+  })
 
   // Copy query results to readable buffer
   device.copyBufferToBuffer(encoder, queryBuffer, 0, readBuffer, 0, 16)
 
-  device.queueSubmit(encoder.finish())
+  device.queue.submit([encoder.finish()])
   device.poll(true)
   console.log('✓ Compute work completed')
 

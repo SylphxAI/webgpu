@@ -1,16 +1,13 @@
-const { Gpu, bufferUsage: getBufferUsage, textureUsage: getTextureUsage } = require('../index.js')
+const { Gpu, GPUBufferUsage, GPUTextureUsage } = require('../webgpu.js')
 
 async function main() {
   console.log('🎨 WebGPU Multiple Render Targets (MRT) Example\n')
 
-  const gpu = Gpu.create()
+  const gpu = Gpu()
   const adapter = await gpu.requestAdapter()
   const device = await adapter.requestDevice()
 
   console.log('✓ Device ready\n')
-
-  const bufferUsage = getBufferUsage()
-  const textureUsage = getTextureUsage()
 
   // Create shader with multiple fragment outputs (G-buffer)
   const shaderCode = `
@@ -59,7 +56,7 @@ fn fs_main(input: VertexOutput) -> GBufferOutput {
 }
 `
 
-  const shaderModule = device.createShaderModule(shaderCode)
+  const shaderModule = device.createShaderModule({ code: shaderCode })
   console.log('✓ Shader compiled with 3 fragment outputs')
 
   // Create pipeline with 3 render targets
@@ -89,13 +86,13 @@ fn fs_main(input: VertexOutput) -> GBufferOutput {
      0.5, -0.5, 0.0,    0.0, 0.0, 1.0,    0.0, 0.0, 1.0,  // Bottom right (blue)
   ])
 
-  const vertexBuffer = device.createBuffer(
-    vertices.byteLength,
-    bufferUsage.vertex | bufferUsage.copyDst,
-    false
-  )
+  const vertexBuffer = device.createBuffer({
+    size: vertices.byteLength,
+    usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+    mappedAtCreation: false
+  })
 
-  device.queueWriteBuffer(vertexBuffer, 0, Buffer.from(vertices.buffer))
+  device.queue.writeBuffer(vertexBuffer, 0, Buffer.from(vertices.buffer))
   console.log('✓ Vertex buffer created')
 
   // Create 3 render target textures (G-buffer)
@@ -108,7 +105,7 @@ fn fs_main(input: VertexOutput) -> GBufferOutput {
     height,
     depth: 1,
     format: 'rgba8unorm',
-    usage: textureUsage.renderAttachment | textureUsage.copySrc,
+    usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
     dimension: '2d',
     mipLevelCount: 1,
     sampleCount: 1,
@@ -120,7 +117,7 @@ fn fs_main(input: VertexOutput) -> GBufferOutput {
     height,
     depth: 1,
     format: 'rgba8unorm',
-    usage: textureUsage.renderAttachment | textureUsage.copySrc,
+    usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
     dimension: '2d',
     mipLevelCount: 1,
     sampleCount: 1,
@@ -132,7 +129,7 @@ fn fs_main(input: VertexOutput) -> GBufferOutput {
     height,
     depth: 1,
     format: 'rgba8unorm',
-    usage: textureUsage.renderAttachment | textureUsage.copySrc,
+    usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
     dimension: '2d',
     mipLevelCount: 1,
     sampleCount: 1,
@@ -167,23 +164,23 @@ fn fs_main(input: VertexOutput) -> GBufferOutput {
   const bytesPerRow = Math.ceil(width * 4 / 256) * 256
   const bufferSize = bytesPerRow * height
 
-  const positionBuffer = device.createBuffer(
-    bufferSize,
-    bufferUsage.copyDst | bufferUsage.mapRead,
-    false
-  )
+  const positionBuffer = device.createBuffer({
+    size: bufferSize,
+    usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
+    mappedAtCreation: false
+  })
 
-  const normalBuffer = device.createBuffer(
-    bufferSize,
-    bufferUsage.copyDst | bufferUsage.mapRead,
-    false
-  )
+  const normalBuffer = device.createBuffer({
+    size: bufferSize,
+    usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
+    mappedAtCreation: false
+  })
 
-  const albedoBuffer = device.createBuffer(
-    bufferSize,
-    bufferUsage.copyDst | bufferUsage.mapRead,
-    false
-  )
+  const albedoBuffer = device.createBuffer({
+    size: bufferSize,
+    usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
+    mappedAtCreation: false
+  })
 
   device.copyTextureToBuffer(
     encoder,
@@ -224,7 +221,7 @@ fn fs_main(input: VertexOutput) -> GBufferOutput {
     1
   )
 
-  device.queueSubmit(encoder.finish())
+  device.queue.submit([encoder.finish()])
   device.poll(true)
   console.log('✓ Render complete')
 

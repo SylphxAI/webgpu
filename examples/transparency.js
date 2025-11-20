@@ -1,16 +1,13 @@
-const { Gpu, bufferUsage: getBufferUsage, textureUsage: getTextureUsage } = require('../index.js')
+const { Gpu, GPUBufferUsage, GPUTextureUsage } = require('../webgpu.js')
 
 async function main() {
   console.log('🎨 WebGPU Transparency Example with Alpha Blending\n')
 
-  const gpu = Gpu.create()
+  const gpu = Gpu()
   const adapter = await gpu.requestAdapter()
   const device = await adapter.requestDevice()
 
   console.log('✓ Device ready\n')
-
-  const bufferUsage = getBufferUsage()
-  const textureUsage = getTextureUsage()
 
   // Create shader with alpha support
   const shaderCode = `
@@ -33,7 +30,7 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4f {
 }
 `
 
-  const shaderModule = device.createShaderModule(shaderCode)
+  const shaderModule = device.createShaderModule({ code: shaderCode })
   console.log('✓ Shader compiled')
 
   // Create pipeline with alpha blending
@@ -88,31 +85,31 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4f {
   ])
 
   // Create buffers
-  const redBuffer = device.createBuffer(
-    redQuad.byteLength,
-    bufferUsage.vertex | bufferUsage.copyDst,
-    false
-  )
-  const greenBuffer = device.createBuffer(
-    greenQuad.byteLength,
-    bufferUsage.vertex | bufferUsage.copyDst,
-    false
-  )
-  const blueBuffer = device.createBuffer(
-    blueQuad.byteLength,
-    bufferUsage.vertex | bufferUsage.copyDst,
-    false
-  )
-  const indexBuffer = device.createBuffer(
-    indices.byteLength,
-    bufferUsage.index | bufferUsage.copyDst,
-    false
-  )
+  const redBuffer = device.createBuffer({
+    size: redQuad.byteLength,
+    usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+    mappedAtCreation: false
+  })
+  const greenBuffer = device.createBuffer({
+    size: greenQuad.byteLength,
+    usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+    mappedAtCreation: false
+  })
+  const blueBuffer = device.createBuffer({
+    size: blueQuad.byteLength,
+    usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+    mappedAtCreation: false
+  })
+  const indexBuffer = device.createBuffer({
+    size: indices.byteLength,
+    usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
+    mappedAtCreation: false
+  })
 
-  device.queueWriteBuffer(redBuffer, 0, Buffer.from(redQuad.buffer))
-  device.queueWriteBuffer(greenBuffer, 0, Buffer.from(greenQuad.buffer))
-  device.queueWriteBuffer(blueBuffer, 0, Buffer.from(blueQuad.buffer))
-  device.queueWriteBuffer(indexBuffer, 0, Buffer.from(indices.buffer))
+  device.queue.writeBuffer(redBuffer, 0, Buffer.from(redQuad.buffer))
+  device.queue.writeBuffer(greenBuffer, 0, Buffer.from(greenQuad.buffer))
+  device.queue.writeBuffer(blueBuffer, 0, Buffer.from(blueQuad.buffer))
+  device.queue.writeBuffer(indexBuffer, 0, Buffer.from(indices.buffer))
   console.log('✓ Vertex and index buffers created')
 
   // Create render target
@@ -125,7 +122,7 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4f {
     height,
     depth: 1,
     format: 'rgba8unorm',
-    usage: textureUsage.renderAttachment | textureUsage.copySrc,
+    usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
     dimension: '2d',
     mipLevelCount: 1,
     sampleCount: 1,
@@ -179,11 +176,11 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4f {
   const bytesPerRow = Math.ceil(width * 4 / 256) * 256
   const bufferSize = bytesPerRow * height
 
-  const readBuffer = device.createBuffer(
-    bufferSize,
-    bufferUsage.copyDst | bufferUsage.mapRead,
-    false
-  )
+  const readBuffer = device.createBuffer({
+    size: bufferSize,
+    usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
+    mappedAtCreation: false
+  })
 
   device.copyTextureToBuffer(
     encoder,
@@ -198,7 +195,7 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4f {
     1
   )
 
-  device.queueSubmit(encoder.finish())
+  device.queue.submit([encoder.finish()])
   device.poll(true)
   console.log('✓ Render complete')
 

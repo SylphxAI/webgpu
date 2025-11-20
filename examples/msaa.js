@@ -1,16 +1,13 @@
-const { Gpu, bufferUsage: getBufferUsage, textureUsage: getTextureUsage } = require('../index.js')
+const { Gpu, GPUBufferUsage, GPUTextureUsage } = require('../webgpu.js')
 
 async function main() {
   console.log('🔍 WebGPU MSAA (Multi-Sample Anti-Aliasing) Example\n')
 
-  const gpu = Gpu.create()
+  const gpu = Gpu()
   const adapter = await gpu.requestAdapter()
   const device = await adapter.requestDevice()
 
   console.log('✓ Device ready\n')
-
-  const bufferUsage = getBufferUsage()
-  const textureUsage = getTextureUsage()
 
   // Create shader for rendering a diagonal line
   const shaderCode = `
@@ -33,7 +30,7 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4f {
 }
 `
 
-  const shaderModule = device.createShaderModule(shaderCode)
+  const shaderModule = device.createShaderModule({ code: shaderCode })
   console.log('✓ Shader compiled')
 
   // Create pipeline WITH MSAA (4x)
@@ -70,20 +67,20 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4f {
     1, 3, 2,  // Second triangle
   ])
 
-  const vertexBuffer = device.createBuffer(
-    vertices.byteLength,
-    bufferUsage.vertex | bufferUsage.copyDst,
-    false
-  )
+  const vertexBuffer = device.createBuffer({
+    size: vertices.byteLength,
+    usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+    mappedAtCreation: false
+  })
 
-  const indexBuffer = device.createBuffer(
-    indices.byteLength,
-    bufferUsage.index | bufferUsage.copyDst,
-    false
-  )
+  const indexBuffer = device.createBuffer({
+    size: indices.byteLength,
+    usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
+    mappedAtCreation: false
+  })
 
-  device.queueWriteBuffer(vertexBuffer, 0, Buffer.from(vertices.buffer))
-  device.queueWriteBuffer(indexBuffer, 0, Buffer.from(indices.buffer))
+  device.queue.writeBuffer(vertexBuffer, 0, Buffer.from(vertices.buffer))
+  device.queue.writeBuffer(indexBuffer, 0, Buffer.from(indices.buffer))
   console.log('✓ Vertex and index buffers created')
 
   // Create render targets
@@ -97,7 +94,7 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4f {
     height,
     depth: 1,
     format: 'rgba8unorm',
-    usage: textureUsage.renderAttachment,
+    usage: GPUTextureUsage.RENDER_ATTACHMENT,
     dimension: '2d',
     mipLevelCount: 1,
     sampleCount: 4,  // 4x MSAA
@@ -112,7 +109,7 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4f {
     height,
     depth: 1,
     format: 'rgba8unorm',
-    usage: textureUsage.renderAttachment | textureUsage.copySrc,
+    usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
     dimension: '2d',
     mipLevelCount: 1,
     sampleCount: 1,  // Single sample
@@ -143,11 +140,11 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4f {
   const bytesPerRow = Math.ceil(width * 4 / 256) * 256
   const bufferSize = bytesPerRow * height
 
-  const readBuffer = device.createBuffer(
-    bufferSize,
-    bufferUsage.copyDst | bufferUsage.mapRead,
-    false
-  )
+  const readBuffer = device.createBuffer({
+    size: bufferSize,
+    usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
+    mappedAtCreation: false
+  })
 
   device.copyTextureToBuffer(
     encoder,
@@ -162,7 +159,7 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4f {
     1
   )
 
-  device.queueSubmit(encoder.finish())
+  device.queue.submit([encoder.finish()])
   device.poll(true)
   console.log('✓ Render complete')
 

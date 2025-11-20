@@ -1,16 +1,13 @@
-const { Gpu, bufferUsage: getBufferUsage, textureUsage: getTextureUsage } = require('../index.js')
+const { Gpu, GPUBufferUsage, GPUTextureUsage } = require('../webgpu.js')
 
 async function main() {
   console.log('🧊 WebGPU 3D Cube Example with Depth Testing\n')
 
-  const gpu = Gpu.create()
+  const gpu = Gpu()
   const adapter = await gpu.requestAdapter()
   const device = await adapter.requestDevice()
 
   console.log('✓ Device ready\n')
-
-  const bufferUsage = getBufferUsage()
-  const textureUsage = getTextureUsage()
 
   // Create shader with transformation matrix
   const shaderCode = `
@@ -39,7 +36,7 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4f {
 }
 `
 
-  const shaderModule = device.createShaderModule(shaderCode)
+  const shaderModule = device.createShaderModule({ code: shaderCode })
   console.log('✓ Shader compiled')
 
   // Create cube vertices (8 vertices, each with position and color)
@@ -72,20 +69,20 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4f {
     0, 4, 7,  0, 7, 3,
   ])
 
-  const vertexBuffer = device.createBuffer(
-    vertices.byteLength,
-    bufferUsage.vertex | bufferUsage.copyDst,
-    false
-  )
+  const vertexBuffer = device.createBuffer({
+    size: vertices.byteLength,
+    usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+    mappedAtCreation: false
+  })
 
-  const indexBuffer = device.createBuffer(
-    indices.byteLength,
-    bufferUsage.index | bufferUsage.copyDst,
-    false
-  )
+  const indexBuffer = device.createBuffer({
+    size: indices.byteLength,
+    usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
+    mappedAtCreation: false
+  })
 
-  device.queueWriteBuffer(vertexBuffer, 0, Buffer.from(vertices.buffer))
-  device.queueWriteBuffer(indexBuffer, 0, Buffer.from(indices.buffer))
+  device.queue.writeBuffer(vertexBuffer, 0, Buffer.from(vertices.buffer))
+  device.queue.writeBuffer(indexBuffer, 0, Buffer.from(indices.buffer))
   console.log('✓ Vertex and index buffers created')
 
   // Create MVP matrix (Model-View-Projection)
@@ -151,13 +148,13 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4f {
   mvpMatrix = multiplyMatrices(projection, mvpMatrix)
 
   // Create uniform buffer for MVP matrix
-  const uniformBuffer = device.createBuffer(
-    64, // 16 floats * 4 bytes
-    bufferUsage.uniform | bufferUsage.copyDst,
-    false
-  )
+  const uniformBuffer = device.createBuffer({
+    size: 64, // 16 floats * 4 bytes
+    usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+    mappedAtCreation: false
+  })
 
-  device.queueWriteBuffer(uniformBuffer, 0, Buffer.from(mvpMatrix.buffer))
+  device.queue.writeBuffer(uniformBuffer, 0, Buffer.from(mvpMatrix.buffer))
   console.log('✓ Uniform buffer created with MVP matrix')
 
   // Create bind group layout for uniforms
@@ -209,7 +206,7 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4f {
     height,
     depth: 1,
     format: 'rgba8unorm',
-    usage: textureUsage.renderAttachment | textureUsage.copySrc,
+    usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
     dimension: '2d',
     mipLevelCount: 1,
     sampleCount: 1,
@@ -224,7 +221,7 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4f {
     height,
     depth: 1,
     format: 'depth24plus',
-    usage: textureUsage.renderAttachment,
+    usage: GPUTextureUsage.RENDER_ATTACHMENT,
     dimension: '2d',
     mipLevelCount: 1,
     sampleCount: 1,
@@ -255,11 +252,11 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4f {
   const bytesPerRow = Math.ceil(width * 4 / 256) * 256
   const bufferSize = bytesPerRow * height
 
-  const readBuffer = device.createBuffer(
-    bufferSize,
-    bufferUsage.copyDst | bufferUsage.mapRead,
-    false
-  )
+  const readBuffer = device.createBuffer({
+    size: bufferSize,
+    usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
+    mappedAtCreation: false
+  })
 
   device.copyTextureToBuffer(
     encoder,
@@ -274,7 +271,7 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4f {
     1
   )
 
-  device.queueSubmit(encoder.finish())
+  device.queue.submit([encoder.finish()])
   device.poll(true)
   console.log('✓ Render complete')
 

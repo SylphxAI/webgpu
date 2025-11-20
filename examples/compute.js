@@ -1,10 +1,9 @@
-const { Gpu, bufferUsage: getBufferUsage } = require('../index.js')
-const bufferUsage = getBufferUsage()
+const { Gpu, GPUBufferUsage } = require('../webgpu.js')
 
 async function main() {
     console.log('🧮 WebGPU Compute Example: Vector Addition\n')
 
-    const gpu = Gpu.create()
+    const gpu = Gpu()
     const adapter = await gpu.requestAdapter()
     const device = await adapter.requestDevice()
     console.log('✓ Device ready\n')
@@ -19,22 +18,22 @@ async function main() {
 
     // Create buffers
     const size = input1.byteLength
-    const buffer1 = device.createBuffer(size, bufferUsage.storage | bufferUsage.copyDst, false)
-    const buffer2 = device.createBuffer(size, bufferUsage.storage | bufferUsage.copyDst, false)
-    const resultBuffer = device.createBuffer(
+    const buffer1 = device.createBuffer({ size, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST, mappedAtCreation: false })
+    const buffer2 = device.createBuffer({ size, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST, mappedAtCreation: false })
+    const resultBuffer = device.createBuffer({
         size,
-        bufferUsage.storage | bufferUsage.copySrc,
-        false
-    )
-    const readBuffer = device.createBuffer(
+        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC,
+        mappedAtCreation: false
+    })
+    const readBuffer = device.createBuffer({
         size,
-        bufferUsage.copyDst | bufferUsage.mapRead,
-        false
-    )
+        usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
+        mappedAtCreation: false
+    })
 
     // Write input data
-    device.queueWriteBuffer(buffer1, 0, Buffer.from(input1.buffer))
-    device.queueWriteBuffer(buffer2, 0, Buffer.from(input2.buffer))
+    device.queue.writeBuffer(buffer1, 0, Buffer.from(input1.buffer))
+    device.queue.writeBuffer(buffer2, 0, Buffer.from(input2.buffer))
     console.log('\n✓ Input data written to buffers')
 
     // Compute shader: simple vector addition
@@ -52,7 +51,7 @@ async function main() {
         }
     `
 
-    const shaderModule = device.createShaderModule(shaderCode)
+    const shaderModule = device.createShaderModule({ code: shaderCode })
     console.log('✓ Shader compiled')
 
     // Create bind group layout
@@ -62,55 +61,69 @@ async function main() {
             {
                 binding: 0,
                 visibility: 0x4, // COMPUTE
-                bufferType: 'read-only-storage',
+                buffer: { type: 'read-only-storage' }
             },
             {
                 binding: 1,
                 visibility: 0x4, // COMPUTE
-                bufferType: 'read-only-storage',
+                buffer: { type: 'read-only-storage' }
             },
             {
                 binding: 2,
                 visibility: 0x4, // COMPUTE
-                bufferType: 'storage',
+                buffer: { type: 'storage' }
             },
         ],
     })
     console.log('✓ Bind group layout created')
 
     // Create pipeline layout
-    const pipelineLayout = device.createPipelineLayout('Compute Pipeline Layout', [bindGroupLayout])
+    const pipelineLayout = device.createPipelineLayout({
+        label: 'Compute Pipeline Layout',
+        bindGroupLayouts: [bindGroupLayout]
+    })
     console.log('✓ Pipeline layout created')
 
     // Create compute pipeline
-    const pipeline = device.createComputePipeline(
-        'Vector Addition Pipeline',
-        pipelineLayout,
-        shaderModule,
-        'main'
-    )
+    const pipeline = device.createComputePipeline({
+        label: 'Vector Addition Pipeline',
+        layout: pipelineLayout,
+        compute: {
+            module: shaderModule,
+            entryPoint: 'main'
+        }
+    })
     console.log('✓ Compute pipeline created')
 
     // Create bind group
-    const bindGroup = device.createBindGroupBuffers(
-        'Compute Bind Group',
-        bindGroupLayout,
-        [buffer1, buffer2, resultBuffer]
-    )
+    const bindGroup = device.createBindGroup({
+        label: 'Compute Bind Group',
+        layout: bindGroupLayout,
+        entries: [
+            { binding: 0, resource: { buffer: buffer1 } },
+            { binding: 1, resource: { buffer: buffer2 } },
+            { binding: 2, resource: { buffer: resultBuffer } }
+        ]
+    })
     console.log('✓ Bind group created')
 
     // Create command encoder and execute compute pass
     const encoder = device.createCommandEncoder()
-    encoder.computePass(pipeline, [bindGroup], input1.length)
+
+    const computePass = encoder.beginComputePass()
+    computePass.setPipeline(pipeline)
+    computePass.setBindGroup(0, bindGroup)
+    computePass.dispatchWorkgroups(input1.length)
+    computePass.end()
 
     // Copy results from resultBuffer to readBuffer
-    device.copyBufferToBuffer(encoder, resultBuffer, 0, readBuffer, 0, size)
+    encoder.copyBufferToBuffer(resultBuffer, 0, readBuffer, 0, size)
 
     const commandBuffer = encoder.finish()
     console.log('✓ Commands encoded')
 
     // Submit to queue
-    device.queueSubmit(commandBuffer)
+    device.queue.submit([commandBuffer])
     device.poll(true)
     console.log('✓ GPU work complete\n')
 

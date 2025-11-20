@@ -1,17 +1,14 @@
-const { Gpu, bufferUsage: getBufferUsage, textureUsage: getTextureUsage } = require('../index.js')
+const { Gpu, GPUBufferUsage, GPUTextureUsage } = require('../webgpu.js')
 
 async function main() {
   console.log('🖼️  WebGPU Texture Upload Example\n')
 
   // Initialize GPU
-  const gpu = Gpu.create()
+  const gpu = Gpu()
   const adapter = await gpu.requestAdapter()
   const device = await adapter.requestDevice()
 
   console.log('✓ Device ready\n')
-
-  const bufferUsage = getBufferUsage()
-  const textureUsage = getTextureUsage()
 
   // Create a simple 4x4 texture with a pattern
   // Format: RGBA8 (4 bytes per pixel)
@@ -56,14 +53,14 @@ async function main() {
     alignedData.set(imageData.subarray(srcOffset, srcOffset + bytesPerRow), dstOffset)
   }
 
-  const uploadBuffer = device.createBuffer(
-    bufferSize,
-    bufferUsage.copySrc | bufferUsage.copyDst,
-    false
-  )
+  const uploadBuffer = device.createBuffer({
+    size: bufferSize,
+    usage: GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST,
+    mappedAtCreation: false
+  })
 
   // Write image data to buffer
-  device.queueWriteBuffer(uploadBuffer, 0, Buffer.from(alignedData.buffer))
+  device.queue.writeBuffer(uploadBuffer, 0, Buffer.from(alignedData.buffer))
   console.log('✓ Image data written to upload buffer')
 
   // Create texture
@@ -73,7 +70,7 @@ async function main() {
     height,
     depth: 1,
     format: 'rgba8unorm',
-    usage: textureUsage.textureBinding | textureUsage.copyDst | textureUsage.copySrc,
+    usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.COPY_SRC,
     dimension: '2d',
     mipLevelCount: 1,
     sampleCount: 1,
@@ -100,11 +97,11 @@ async function main() {
   console.log('✓ Buffer copied to texture')
 
   // Verify by copying back to a read buffer
-  const readBuffer = device.createBuffer(
-    bufferSize,
-    bufferUsage.copyDst | bufferUsage.mapRead,
-    false
-  )
+  const readBuffer = device.createBuffer({
+    size: bufferSize,
+    usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
+    mappedAtCreation: false
+  })
 
   device.copyTextureToBuffer(
     encoder,
@@ -123,7 +120,7 @@ async function main() {
 
   // Submit commands
   const commandBuffer = encoder.finish()
-  device.queueSubmit(commandBuffer)
+  device.queue.submit([commandBuffer])
   device.poll(true)
   console.log('✓ GPU work complete\n')
 

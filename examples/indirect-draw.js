@@ -1,15 +1,13 @@
-const { Gpu, bufferUsage: getBufferUsage } = require('../index.js')
+const { Gpu, GPUBufferUsage } = require('../webgpu.js')
 
 async function main() {
   console.log('🎮 WebGPU Indirect Draw Example\n')
 
-  const gpu = Gpu.create()
+  const gpu = Gpu()
   const adapter = await gpu.requestAdapter()
   const device = await adapter.requestDevice()
 
   console.log('✓ Device ready\n')
-
-  const bufferUsage = getBufferUsage()
 
   // Shader for rendering a simple triangle
   const shaderCode = `
@@ -32,7 +30,7 @@ fn fs_main(@location(0) color: vec4f) -> @location(0) vec4f {
 }
 `
 
-  const shaderModule = device.createShaderModule(shaderCode)
+  const shaderModule = device.createShaderModule({ code: shaderCode })
   console.log('✓ Shader compiled')
 
   // Vertex data: positions and colors for a triangle
@@ -43,12 +41,12 @@ fn fs_main(@location(0) color: vec4f) -> @location(0) vec4f {
     0.5, -0.5, 0.0,           0.0, 0.0, 1.0,  // Bottom-right (blue)
   ])
 
-  const vertexBuffer = device.createBuffer(
-    vertices.byteLength,
-    bufferUsage.vertex | bufferUsage.copyDst,
-    false
-  )
-  device.queueWriteBuffer(vertexBuffer, 0, Buffer.from(vertices.buffer))
+  const vertexBuffer = device.createBuffer({
+    size: vertices.byteLength,
+    usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+    mappedAtCreation: false
+  })
+  device.queue.writeBuffer(vertexBuffer, 0, Buffer.from(vertices.buffer))
   console.log('✓ Vertex buffer created')
 
   // Create indirect draw buffer
@@ -60,12 +58,12 @@ fn fs_main(@location(0) color: vec4f) -> @location(0) vec4f {
     0,  // first_instance (start at instance 0)
   ])
 
-  const indirectBuffer = device.createBuffer(
-    indirectParams.byteLength,
-    bufferUsage.indirect | bufferUsage.copyDst,
-    false
-  )
-  device.queueWriteBuffer(indirectBuffer, 0, Buffer.from(indirectParams.buffer))
+  const indirectBuffer = device.createBuffer({
+    size: indirectParams.byteLength,
+    usage: GPUBufferUsage.INDIRECT | GPUBufferUsage.COPY_DST,
+    mappedAtCreation: false
+  })
+  device.queue.writeBuffer(indirectBuffer, 0, Buffer.from(indirectParams.buffer))
   console.log('✓ Indirect draw buffer created')
 
   // Create render texture (256x256 RGBA)
@@ -119,11 +117,11 @@ fn fs_main(@location(0) color: vec4f) -> @location(0) vec4f {
   const bytesPerRow = 256 * 4 // 4 bytes per pixel (RGBA)
   const readbackSize = bytesPerRow * height
 
-  const readbackBuffer = device.createBuffer(
-    readbackSize,
-    bufferUsage.copyDst | bufferUsage.mapRead,
-    false
-  )
+  const readbackBuffer = device.createBuffer({
+    size: readbackSize,
+    usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
+    mappedAtCreation: false
+  })
 
   // Copy texture to buffer
   device.copyTextureToBuffer(
@@ -140,7 +138,7 @@ fn fs_main(@location(0) color: vec4f) -> @location(0) vec4f {
     1 // depth
   )
 
-  device.queueSubmit(encoder.finish())
+  device.queue.submit([encoder.finish()])
   device.poll(true)
   console.log('✓ Indirect draw executed')
 

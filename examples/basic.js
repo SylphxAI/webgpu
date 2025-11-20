@@ -4,7 +4,7 @@ async function main() {
     console.log('🚀 WebGPU Basic Example\n')
 
     // Create GPU instance
-    const gpu = Gpu.create()
+    const gpu = Gpu()
     console.log('✓ GPU instance created')
 
     // Enumerate adapters
@@ -20,7 +20,7 @@ async function main() {
     console.log('✓ Adapter acquired')
 
     // Get adapter info
-    const info = adapter.getInfo()
+    const info = adapter.info
     console.log('\nAdapter Information:')
     console.log(`  Name: ${info.name}`)
     console.log(`  Vendor: 0x${info.vendor.toString(16)}`)

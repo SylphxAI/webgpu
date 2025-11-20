@@ -1,15 +1,13 @@
-const { Gpu, bufferUsage: getBufferUsage } = require('../index.js')
+const { Gpu, GPUBufferUsage } = require('../webgpu.js')
 
 async function main() {
   console.log('🔢 WebGPU Indirect Compute Dispatch Example\n')
 
-  const gpu = Gpu.create()
+  const gpu = Gpu()
   const adapter = await gpu.requestAdapter()
   const device = await adapter.requestDevice()
 
   console.log('✓ Device ready\n')
-
-  const bufferUsage = getBufferUsage()
 
   // Compute shader for vector addition
   const shaderCode = `
@@ -26,7 +24,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
 }
 `
 
-  const shaderModule = device.createShaderModule(shaderCode)
+  const shaderModule = device.createShaderModule({ code: shaderCode })
   console.log('✓ Compute shader compiled')
 
   // Create input/output buffers
@@ -40,25 +38,25 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
     inputB[i] = i * 10
   }
 
-  const bufferA = device.createBuffer(
-    byteSize,
-    bufferUsage.storage | bufferUsage.copyDst,
-    false
-  )
-  device.queueWriteBuffer(bufferA, 0, Buffer.from(inputA.buffer))
+  const bufferA = device.createBuffer({
+    size: byteSize,
+    usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+    mappedAtCreation: false
+  })
+  device.queue.writeBuffer(bufferA, 0, Buffer.from(inputA.buffer))
 
-  const bufferB = device.createBuffer(
-    byteSize,
-    bufferUsage.storage | bufferUsage.copyDst,
-    false
-  )
-  device.queueWriteBuffer(bufferB, 0, Buffer.from(inputB.buffer))
+  const bufferB = device.createBuffer({
+    size: byteSize,
+    usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+    mappedAtCreation: false
+  })
+  device.queue.writeBuffer(bufferB, 0, Buffer.from(inputB.buffer))
 
-  const outputBuffer = device.createBuffer(
-    byteSize,
-    bufferUsage.storage | bufferUsage.copySrc,
-    false
-  )
+  const outputBuffer = device.createBuffer({
+    size: byteSize,
+    usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC,
+    mappedAtCreation: false
+  })
 
   console.log(`✓ Buffers created (${arraySize} elements each)`)
 
@@ -73,12 +71,12 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
     1,              // workgroups_z
   ])
 
-  const indirectBuffer = device.createBuffer(
-    indirectParams.byteLength,
-    bufferUsage.indirect | bufferUsage.copyDst,
-    false
-  )
-  device.queueWriteBuffer(indirectBuffer, 0, Buffer.from(indirectParams.buffer))
+  const indirectBuffer = device.createBuffer({
+    size: indirectParams.byteLength,
+    usage: GPUBufferUsage.INDIRECT | GPUBufferUsage.COPY_DST,
+    mappedAtCreation: false
+  })
+  device.queue.writeBuffer(indirectBuffer, 0, Buffer.from(indirectParams.buffer))
   console.log('✓ Indirect dispatch buffer created')
   console.log(`   Workgroups: ${numWorkgroups}x1x1 (from GPU buffer)`)
 
@@ -131,15 +129,15 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
   )
 
   // Copy result to readable buffer
-  const readbackBuffer = device.createBuffer(
-    byteSize,
-    bufferUsage.copyDst | bufferUsage.mapRead,
-    false
-  )
+  const readbackBuffer = device.createBuffer({
+    size: byteSize,
+    usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
+    mappedAtCreation: false
+  })
 
   device.copyBufferToBuffer(encoder, outputBuffer, 0, readbackBuffer, 0, byteSize)
 
-  device.queueSubmit(encoder.finish())
+  device.queue.submit([encoder.finish()])
   device.poll(true)
   console.log('✓ Indirect compute dispatch executed')
 

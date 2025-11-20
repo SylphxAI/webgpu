@@ -1,16 +1,13 @@
-const { Gpu, bufferUsage: getBufferUsage, textureUsage: getTextureUsage } = require('../index.js')
+const { Gpu, GPUBufferUsage, GPUTextureUsage } = require('../webgpu.js')
 
 async function main() {
   console.log('🖼️  WebGPU Textured Quad Example\n')
 
-  const gpu = Gpu.create()
+  const gpu = Gpu()
   const adapter = await gpu.requestAdapter()
   const device = await adapter.requestDevice()
 
   console.log('✓ Device ready\n')
-
-  const bufferUsage = getBufferUsage()
-  const textureUsage = getTextureUsage()
 
   // Create a 2x2 checkerboard texture
   const texWidth = 2
@@ -33,13 +30,13 @@ async function main() {
     alignedData.set(texData.subarray(srcOffset, srcOffset + bytesPerRow), dstOffset)
   }
 
-  const uploadBuffer = device.createBuffer(
-    bufferSize,
-    bufferUsage.copySrc | bufferUsage.copyDst,
-    false
-  )
+  const uploadBuffer = device.createBuffer({
+    size: bufferSize,
+    usage: GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST,
+    mappedAtCreation: false
+  })
 
-  device.queueWriteBuffer(uploadBuffer, 0, Buffer.from(alignedData.buffer))
+  device.queue.writeBuffer(uploadBuffer, 0, Buffer.from(alignedData.buffer))
 
   // Create texture
   const texture = device.createTexture({
@@ -48,7 +45,7 @@ async function main() {
     height: texHeight,
     depth: 1,
     format: 'rgba8unorm',
-    usage: textureUsage.textureBinding | textureUsage.copyDst,
+    usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST,
     dimension: '2d',
     mipLevelCount: 1,
     sampleCount: 1,
@@ -79,7 +76,7 @@ async function main() {
     texHeight,
     1
   )
-  device.queueSubmit(encoder.finish())
+  device.queue.submit([encoder.finish()])
   device.poll(true)
   console.log('✓ Texture uploaded')
 
@@ -107,7 +104,7 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4f {
 }
 `
 
-  const shaderModule = device.createShaderModule(shaderCode)
+  const shaderModule = device.createShaderModule({ code: shaderCode })
   console.log('✓ Shader compiled')
 
   // Create bind group layout
@@ -177,20 +174,20 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4f {
     0, 2, 3,  // Second triangle
   ])
 
-  const vertexBuffer = device.createBuffer(
-    vertices.byteLength,
-    bufferUsage.vertex | bufferUsage.copyDst,
-    false
-  )
+  const vertexBuffer = device.createBuffer({
+    size: vertices.byteLength,
+    usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+    mappedAtCreation: false
+  })
 
-  const indexBuffer = device.createBuffer(
-    indices.byteLength,
-    bufferUsage.index | bufferUsage.copyDst,
-    false
-  )
+  const indexBuffer = device.createBuffer({
+    size: indices.byteLength,
+    usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
+    mappedAtCreation: false
+  })
 
-  device.queueWriteBuffer(vertexBuffer, 0, Buffer.from(vertices.buffer))
-  device.queueWriteBuffer(indexBuffer, 0, Buffer.from(indices.buffer))
+  device.queue.writeBuffer(vertexBuffer, 0, Buffer.from(vertices.buffer))
+  device.queue.writeBuffer(indexBuffer, 0, Buffer.from(indices.buffer))
   console.log('✓ Vertex and index buffers created')
 
   // Render to texture
@@ -203,7 +200,7 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4f {
     height: renderHeight,
     depth: 1,
     format: 'rgba8unorm',
-    usage: textureUsage.renderAttachment | textureUsage.copySrc,
+    usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
     dimension: '2d',
     mipLevelCount: 1,
     sampleCount: 1,
@@ -233,11 +230,11 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4f {
   const readBytesPerRow = Math.ceil(renderWidth * 4 / 256) * 256
   const readBufferSize = readBytesPerRow * renderHeight
 
-  const readBuffer = device.createBuffer(
-    readBufferSize,
-    bufferUsage.copyDst | bufferUsage.mapRead,
-    false
-  )
+  const readBuffer = device.createBuffer({
+    size: readBufferSize,
+    usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
+    mappedAtCreation: false
+  })
 
   device.copyTextureToBuffer(
     encoder,
@@ -252,7 +249,7 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4f {
     1
   )
 
-  device.queueSubmit(encoder.finish())
+  device.queue.submit([encoder.finish()])
   device.poll(true)
   console.log('✓ Render complete')
 

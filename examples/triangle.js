@@ -1,10 +1,10 @@
-const { Gpu, bufferUsage: getBufferUsage, textureUsage: getTextureUsage } = require('../index.js')
+const { Gpu, GPUBufferUsage, GPUTextureUsage } = require('../webgpu.js')
 
 async function main() {
   console.log('🔺 WebGPU Render Example: Triangle\n')
 
   // Initialize GPU
-  const gpu = Gpu.create()
+  const gpu = Gpu()
   const adapter = await gpu.requestAdapter()
   const device = await adapter.requestDevice()
 
@@ -23,7 +23,7 @@ fn fs_main() -> @location(0) vec4f {
 }
 `
 
-  const shaderModule = device.createShaderModule(shaderCode)
+  const shaderModule = device.createShaderModule({ code: shaderCode })
   console.log('✓ Shader compiled')
 
   // Create pipeline layout
@@ -51,9 +51,6 @@ fn fs_main() -> @location(0) vec4f {
   console.log('✓ Render pipeline created')
 
   // Create vertex buffer with triangle data
-  const bufferUsage = getBufferUsage()
-  const textureUsage = getTextureUsage()
-
   const vertices = new Float32Array([
     // Triangle vertices (x, y)
      0.0,  0.5,  // Top
@@ -61,13 +58,13 @@ fn fs_main() -> @location(0) vec4f {
      0.5, -0.5,  // Bottom right
   ])
 
-  const vertexBuffer = device.createBuffer(
-    vertices.byteLength,
-    bufferUsage.vertex | bufferUsage.copyDst,
-    false
-  )
+  const vertexBuffer = device.createBuffer({
+    size: vertices.byteLength,
+    usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+    mappedAtCreation: false
+  })
 
-  device.queueWriteBuffer(vertexBuffer, 0, Buffer.from(vertices.buffer))
+  device.queue.writeBuffer(vertexBuffer, 0, Buffer.from(vertices.buffer))
   console.log('✓ Vertex buffer created')
 
   // Create texture for rendering
@@ -80,7 +77,7 @@ fn fs_main() -> @location(0) vec4f {
     height,
     depth: 1,
     format: 'rgba8unorm',
-    usage: textureUsage.renderAttachment | textureUsage.copySrc,
+    usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
     dimension: '2d',
     mipLevelCount: 1,
     sampleCount: 1,
@@ -112,11 +109,11 @@ fn fs_main() -> @location(0) vec4f {
   const paddedBytesPerRow = Math.ceil(bytesPerRow / 256) * 256 // WebGPU requires 256-byte alignment
   const bufferSize = paddedBytesPerRow * height
 
-  const readBuffer = device.createBuffer(
-    bufferSize,
-    bufferUsage.copyDst | bufferUsage.mapRead,
-    false
-  )
+  const readBuffer = device.createBuffer({
+    size: bufferSize,
+    usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
+    mappedAtCreation: false
+  })
 
   // Copy texture to buffer for readback
   device.copyTextureToBuffer(
@@ -136,7 +133,7 @@ fn fs_main() -> @location(0) vec4f {
 
   // Submit commands
   const commandBuffer = encoder.finish()
-  device.queueSubmit(commandBuffer)
+  device.queue.submit([commandBuffer])
   device.poll(true)
   console.log('✓ GPU work complete\n')
 
