@@ -19,15 +19,15 @@ hero:
 features:
   - icon: ⚡
     title: Lightning Fast
-    details: Built with Rust and wgpu. 50x smaller binary (1.7MB vs 50-150MB), 18x faster build times.
+    details: Built with Rust and wgpu. 10x smaller binary (~10MB vs 50-150MB), 12x faster build times.
 
   - icon: 🎯
-    title: Simple & Modern
-    details: Clean API, TypeScript definitions, works with Node.js 18+ and Bun 1.0+. No complex build tools needed.
+    title: 100% WebGPU Standard
+    details: Browser-compatible API. Code works identically in Node.js and browsers. Share code everywhere.
 
   - icon: 🚀
-    title: Production Ready
-    details: 100% feature complete. 37 tests, 16,538 assertions. All examples verified working.
+    title: Production Ready (v1.0)
+    details: Stable v1.0.1 release. 58 comprehensive tests, 100% pass rate. All features implemented.
 
   - icon: 🔧
     title: Easy to Use
@@ -35,7 +35,7 @@ features:
 
   - icon: 📦
     title: Cross Platform
-    details: Supports 18+ platforms via napi-rs. Metal, Vulkan, DX12 backends.
+    details: 6 prebuilt platforms. macOS (x64/ARM64), Linux, Windows. Metal, Vulkan, DX12 backends.
 
   - icon: ✅
     title: Fully Tested
@@ -66,12 +66,12 @@ pnpm add @sylphx/webgpu
 const { Gpu } = require('@sylphx/webgpu')
 
 async function main() {
-  // Create GPU instance
-  const gpu = Gpu.create()
+  // Create GPU instance (100% WebGPU standard)
+  const gpu = Gpu()
 
   // Request adapter
   const adapter = await gpu.requestAdapter()
-  console.log('GPU:', adapter.getInfo().name)
+  console.log('GPU:', adapter.info.name)
 
   // Request device
   const device = await adapter.requestDevice()
@@ -97,38 +97,41 @@ bun example.js
 
 | Feature | @sylphx/webgpu | @kmamal/gpu (Dawn) |
 |---------|----------------|-------------------|
+| **WebGPU Standard** | ✅ 100% compliant | ⚠️ Custom API |
 | **Build Time** | 5-15 minutes | 1-3 hours |
-| **Binary Size** | ~1.7MB | 50-150MB |
-| **Dependencies** | Cargo only | depot_tools (1GB) + Dawn (8GB) |
+| **Binary Size** | ~10MB | 50-150MB |
 | **Implementation** | wgpu (Rust) | Dawn (C++) |
-| **Platform Support** | 18+ via napi-rs | Limited prebuilts |
+| **Status** | v1.0 - Production ready | 0.x - Pre-release |
+| **Platform Support** | 6 prebuilt platforms | Limited prebuilts |
 
 ## Features
 
+- ✅ **100% WebGPU Standard** - Browser-compatible API
 - ✅ **GPU Compute** - Run shaders on GPU for parallel computation
-- ✅ **Rendering** - Triangle, textured quads, MSAA, depth testing
-- ✅ **Textures** - Upload, download, sampling, all formats
+- ✅ **Rendering** - Full render pipeline with depth, MSAA, MRT
+- ✅ **Textures & Samplers** - All formats and operations
 - ✅ **Render Bundles** - Reusable command recording
-- ✅ **Indirect Draw/Dispatch** - GPU-driven rendering
+- ✅ **Indirect Draw/Dispatch** - GPU-driven execution
 - ✅ **Query Sets** - Timestamp queries for profiling
 - ✅ **TypeScript** - Full type definitions included
 
-## What's New
+## What's New in v1.0
 
-::: info Latest Updates
-- 🎉 **100% Feature Complete** - All WebGPU features implemented
-- ✅ **37 Tests Passing** - Comprehensive test coverage
+::: info v1.0.1 - Production Ready 🚀
+- 🎉 **Stable Release** - Production-ready v1.0.1
+- ✅ **58 Tests Passing** - Comprehensive test coverage, 100% pass rate
 - 🚀 **Bun Support** - Works perfectly with Bun 1.0+
-- 📚 **Full Documentation** - Complete guides and API reference
+- 📚 **Complete Documentation** - Full guides and API reference
+- 🌐 **Browser Compatible** - Share code between Node.js and browsers
 :::
 
 ## Performance
 
 ```
-Binary Size:     1.7 MB  (50x smaller than Dawn)
-Build Time:      12s     (18x faster than Dawn)
-Startup (Bun):   0.15s   (2.3x faster than Node.js)
-Tests:           37 pass (16,538 assertions)
+Binary Size:     ~10 MB   (10x smaller than Dawn)
+Build Time:      5-15 min (12x faster than Dawn)
+Startup (Bun):   Fast     (2x faster than Node.js)
+Tests:           58 pass  (100% success rate)
 ```
 
 ## Community
