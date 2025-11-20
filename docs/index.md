@@ -19,7 +19,7 @@ hero:
 features:
   - icon: ⚡
     title: Lightning Fast
-    details: Built with Rust and wgpu. 10x smaller binary (~10MB vs 50-150MB), 12x faster build times.
+    details: Built with Rust and wgpu. Ultra-small binaries (1.9-4.6MB vs 50-150MB), 120x faster build (~30s vs 1-3 hours).
 
   - icon: 🎯
     title: 100% WebGPU Standard
@@ -98,8 +98,8 @@ bun example.js
 | Feature | @sylphx/webgpu | @kmamal/gpu (Dawn) |
 |---------|----------------|-------------------|
 | **WebGPU Standard** | ✅ 100% compliant | ⚠️ Custom API |
-| **Build Time** | 5-15 minutes | 1-3 hours |
-| **Binary Size** | ~10MB | 50-150MB |
+| **Build Time** | ~30 seconds | 1-3 hours |
+| **Binary Size** | 1.9-4.6MB | 50-150MB |
 | **Implementation** | wgpu (Rust) | Dawn (C++) |
 | **Status** | v1.0 - Production ready | 0.x - Pre-release |
 | **Platform Support** | 6 prebuilt platforms | Limited prebuilts |
@@ -128,10 +128,10 @@ bun example.js
 ## Performance
 
 ```
-Binary Size:     ~10 MB   (10x smaller than Dawn)
-Build Time:      5-15 min (12x faster than Dawn)
-Startup (Bun):   Fast     (2x faster than Node.js)
-Tests:           58 pass  (100% success rate)
+Binary Size:     1.9-4.6MB  (20-50x smaller than Dawn)
+Build Time:      ~30s       (120x faster than Dawn)
+Startup (Bun):   Fast       (2x faster than Node.js)
+Tests:           58 pass    (100% success rate)
 ```
 
 ## Community

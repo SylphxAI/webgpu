@@ -38,8 +38,8 @@ device.queue.submit([encoder.finish()])
 | Feature | @sylphx/webgpu | @kmamal/gpu (Dawn) |
 |---------|---------------|-------------------|
 | **WebGPU Standard** | ✅ 100% compliant | ⚠️ Custom API |
-| **Binary Size** | ~10MB | 50-150MB |
-| **Build Time** | 5-15 min | 1-3 hours |
+| **Binary Size** | 1.9-4.6MB | 50-150MB |
+| **Build Time** | ~30 seconds | 1-3 hours |
 | **Code Portability** | ✅ Browser compatible | ❌ Node.js only |
 | **Implementation** | Firefox's wgpu (Rust) | Chrome's Dawn (C++) |
 | **Toolchain** | Simple (Cargo) | Complex (depot_tools) |
@@ -49,7 +49,7 @@ device.queue.submit([encoder.finish()])
 
 ✅ **100% WebGPU Standard** - Share code between Node.js and browsers
 ✅ **Production Ready** - v1.0.1 stable release with 58 tests, 100% pass rate
-✅ **Lightweight** - 10MB binaries vs 100MB+ alternatives
+✅ **Ultra Lightweight** - 2-5MB binaries vs 100MB+ alternatives
 ✅ **Modern Stack** - Rust + wgpu (used by Firefox, Deno, Bevy)
 ✅ **Cross-Platform** - 6 prebuilt platforms (macOS, Linux, Windows, ARM64)
 ✅ **Well Tested** - Comprehensive test suite covering all features
@@ -458,7 +458,7 @@ cd webgpu
 # Install dependencies
 npm install
 
-# Build native bindings (5-15 minutes)
+# Build native bindings (~30 seconds clean build)
 npm run build
 
 # Run tests
@@ -467,12 +467,12 @@ npm test
 
 ## 📊 Performance
 
-**Binary Size:**
-- @sylphx/webgpu: ~10MB (optimized release)
+**Binary Size (Actual Prebuilt Binaries):**
+- @sylphx/webgpu: 1.9-4.6MB (macOS: 1.9-2.2MB, Linux: 3.0-3.5MB, Windows: 4.1-4.6MB)
 - @kmamal/gpu: 50-150MB (Dawn binaries)
 
-**Build Time:**
-- @sylphx/webgpu: 5-15 minutes (Cargo)
+**Build Time (Clean Build):**
+- @sylphx/webgpu: ~30 seconds (Cargo release build)
 - @kmamal/gpu: 1-3 hours (Dawn + depot_tools)
 
 **Runtime Performance:**

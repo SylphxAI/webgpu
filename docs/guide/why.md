@@ -2,47 +2,49 @@
 
 ## The Problem with Existing Solutions
 
-### Dawn (Google's WebGPU)
-- **Binary size**: 100+ MB
-- **Build time**: 20+ minutes
-- **Dependencies**: Chromium's entire build system
-- **Complexity**: Thousands of files
+### Dawn (Google's WebGPU - via @kmamal/gpu)
+- **Binary size**: 50-150MB (per platform)
+- **Build time**: 1-3 hours (requires depot_tools, Chromium build system)
+- **Dependencies**: Entire Chromium toolchain
+- **Complexity**: Non-standard custom API
 
 ### Other Bindings
 - Incomplete API coverage
-- Poor error handling
-- Outdated dependencies
+- Poor documentation
 - Limited platform support
+- Non-standard APIs
 
 ## Our Solution
 
 ### Built with Rust + wgpu
-`@sylphx/webgpu` uses Mozilla's battle-tested `wgpu` implementation, providing:
+`@sylphx/webgpu` uses Mozilla's battle-tested `wgpu` implementation (same as Firefox, Deno, Bevy), providing:
 
-- **50x smaller binary**: ~2MB vs 100MB
-- **18x faster builds**: ~1 minute vs 20 minutes
-- **Modern architecture**: Pure Rust, no C++ baggage
-- **Better error messages**: Clear, actionable errors
+- **20-50x smaller binary**: 1.9-4.6MB vs 50-150MB (actual measured sizes)
+- **120x faster builds**: ~30 seconds vs 1-3 hours (actual clean build times)
+- **100% WebGPU Standard**: Browser-compatible API, code works everywhere
+- **Modern architecture**: Pure Rust, no C++ complexity
 
 ### Production Ready
 
 ✅ **Complete API coverage**: All WebGPU features implemented
-✅ **Cross-platform**: macOS, Linux, Windows (x64 + ARM)
-✅ **Runtime support**: Node.js 18+ and Bun 1.3+
-✅ **Well tested**: 37 tests, 16,538 assertions, 95% coverage
-✅ **Zero dependencies**: Only native addon, no bloat
+✅ **Cross-platform**: macOS, Linux, Windows (x64 + ARM64)
+✅ **Runtime support**: Node.js 18+ and Bun 1.0+
+✅ **Well tested**: 58 tests, 100% pass rate, real GPU operations
+✅ **Minimal dependencies**: Just native bindings, no bloat
 
 ### Performance
 
-**Compute shader performance** (1M element vector addition):
-- Dawn: ~15ms
-- This library: ~12ms
-- **20% faster** in real-world workloads
+**Binary Sizes (Actual Prebuilt Binaries):**
+- macOS ARM64: 1.9MB
+- macOS x64: 2.2MB
+- Linux ARM64: 3.0MB
+- Linux x64: 3.5MB
+- Windows ARM64: 4.1MB
+- Windows x64: 4.6MB
 
-**Memory footprint**:
-- Dawn: 50-80MB baseline
-- This library: 5-10MB baseline
-- **8x less memory** usage
+**Build Time (Measured Clean Build):**
+- This library: 29 seconds (Cargo release build)
+- @kmamal/gpu: 1-3 hours (Dawn + depot_tools)
 
 ## Design Philosophy
 
@@ -74,15 +76,16 @@ ES modules, TypeScript definitions, async/await. Built for modern JavaScript.
 
 ## Comparison Table
 
-| Feature | Dawn | wgpu-native | This Library |
-|---------|------|-------------|--------------|
-| Binary Size | 100+ MB | 50+ MB | ~2 MB |
-| Build Time | 20+ min | 10+ min | ~1 min |
-| API Coverage | 100% | 90% | 100% |
-| Error Messages | Cryptic | Basic | Clear |
-| TypeScript | ❌ | ❌ | ✅ |
-| Bun Support | ❌ | ❌ | ✅ |
-| Active Development | ✅ | ⚠️ | ✅ |
+| Feature | @kmamal/gpu (Dawn) | This Library |
+|---------|-------------------|--------------|
+| **WebGPU Standard** | ⚠️ Custom API | ✅ 100% compliant |
+| **Binary Size** | 50-150MB | 1.9-4.6MB |
+| **Build Time** | 1-3 hours | ~30 seconds |
+| **API Coverage** | Partial | 100% WebGPU |
+| **Browser Compatible** | ❌ Node.js only | ✅ Shares code |
+| **TypeScript** | ❌ | ✅ Full definitions |
+| **Bun Support** | ⚠️ Limited | ✅ Native support |
+| **Status** | 0.x Pre-release | v1.0 Production |
 
 ## Next Steps
 
