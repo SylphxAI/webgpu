@@ -1,5 +1,12 @@
 # @sylphx/webgpu
 
+## 1.0.2
+
+### Patch Changes
+
+- d3678a4: Test Slack notifications with updated reusable workflow
+- d7bb5ad: Test release workflow with reusable publish-npm workflow
+
 ## 1.0.0
 
 ### Major Changes
