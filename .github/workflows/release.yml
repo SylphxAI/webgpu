@@ -116,5 +116,4 @@ jobs:
         mv artifacts/bindings-aarch64-pc-windows-msvc/*.node npm/win32-arm64-msvc/
         node scripts/create-platform-packages.js
       publish-command: node scripts/publish-with-platform-packages.js
-      slack-webhook: ${{ secrets.SLACK_WEBHOOK }}
     secrets: inherit
