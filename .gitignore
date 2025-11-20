@@ -22,4 +22,11 @@ Thumbs.db
 # Test output
 coverage/
 .nyc_output/
+
+# Deployment
 .vercel
+.secrets/
+
+# Agent configs
+.opencode/
+.sylphx-flow/

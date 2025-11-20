@@ -1,0 +1,32 @@
+{
+  "mcpServers": {
+    "context7": {
+      "type": "http",
+      "url": "https://mcp.context7.com/mcp"
+    },
+    "grep": {
+      "type": "http",
+      "url": "https://mcp.grep.app"
+    },
+    "coderag": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@sylphx/coderag-mcp"
+      ],
+      "env": {
+        "OPENAI_API_KEY": "",
+        "CODEBASE_ROOT": ".",
+        "INDEX_PATH": ".coderag"
+      }
+    },
+    "playwright": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "@playwright/mcp@latest"
+      ]
+    }
+  }
+}
