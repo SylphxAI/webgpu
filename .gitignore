@@ -30,3 +30,5 @@ coverage/
 # Agent configs
 .opencode/
 .sylphx-flow/
+.claude/
+.mcp.json
