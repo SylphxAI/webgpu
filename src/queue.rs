@@ -16,12 +16,14 @@ impl GpuQueue {
 
 #[napi]
 impl GpuQueue {
-    /// Submit command buffers to the queue
+    /// Submit command buffers to the queue (WebGPU standard - accepts array)
     #[napi]
-    pub fn submit(&self, command_buffer: &mut crate::GpuCommandBuffer) {
-        if let Some(buffer) = command_buffer.buffer.take() {
-            self.queue.submit(std::iter::once(buffer));
-        }
+    pub fn submit(&self, command_buffers: Vec<&mut crate::GpuCommandBuffer>) {
+        let buffers: Vec<wgpu::CommandBuffer> = command_buffers
+            .into_iter()
+            .filter_map(|cb| cb.buffer.take())
+            .collect();
+        self.queue.submit(buffers);
     }
 
     /// Write data to a buffer using the queue

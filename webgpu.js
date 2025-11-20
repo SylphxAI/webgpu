@@ -76,6 +76,13 @@ class GpuBuffer {
         return this._native.mapAsync(mode)
     }
 
+    // Non-standard convenience method for examples
+    // WebGPU standard: use mapAsync('READ') + getMappedRange()
+    async mapRead() {
+        await this._native.mapAsync('READ')
+        return this._native.getMappedRange()
+    }
+
     destroy() {
         return this._native.destroy()
     }
@@ -104,7 +111,10 @@ class GpuQueue {
     }
 
     submit(commandBuffers) {
-        return this._native.submit(commandBuffers)
+        // WebGPU standard: submit() takes array of command buffers
+        // Support both array and single command buffer for backward compatibility
+        const bufferArray = Array.isArray(commandBuffers) ? commandBuffers : [commandBuffers]
+        return this._native.submit(bufferArray)
     }
 
     writeBuffer(buffer, offset, data) {
@@ -400,6 +410,12 @@ class GpuDevice {
         return this._native.destroy()
     }
 
+    // Non-standard helper method for examples (poll device for completion)
+    // WebGPU standard: use device.queue.onSubmittedWorkDone() instead
+    poll(forceWait) {
+        return this._native.poll(forceWait)
+    }
+
     // Simple pass-through methods
     createBuffer(descriptor) {
         const nativeBuffer = this._native.createBuffer(descriptor)
@@ -455,8 +471,24 @@ class GpuDevice {
         for (const entry of descriptor.entries) {
             const resource = entry.resource
 
-            // Buffer binding
-            if (resource.buffer) {
+            // Texture view binding (check first - resource is the view directly)
+            if (resource.constructor?.name === 'GpuTextureView') {
+                entries.push({
+                    binding: entry.binding,
+                    resourceType: 'texture'
+                })
+                textures.push(resource)
+            }
+            // Sampler binding (check second)
+            else if (resource.constructor?.name === 'GpuSampler') {
+                entries.push({
+                    binding: entry.binding,
+                    resourceType: 'sampler'
+                })
+                samplers.push(resource)
+            }
+            // Buffer binding (resource is an object with .buffer property)
+            else if (resource.buffer) {
                 const entry_obj = {
                     binding: entry.binding,
                     resourceType: 'buffer'
@@ -469,24 +501,8 @@ class GpuDevice {
                 const nativeBuffer = resource.buffer._native || resource.buffer
                 buffers.push(nativeBuffer)
             }
-            // Texture view binding (resource is the view directly, or has .texture property)
-            else if (resource.constructor?.name === 'GpuTextureView' || resource.texture) {
-                entries.push({
-                    binding: entry.binding,
-                    resourceType: 'texture'
-                })
-                textures.push(resource.texture || resource)
-            }
-            // Sampler binding
-            else if (resource.constructor?.name === 'GpuSampler' || resource.sampler) {
-                entries.push({
-                    binding: entry.binding,
-                    resourceType: 'sampler'
-                })
-                samplers.push(resource.sampler || resource)
-            }
             else {
-                throw new Error(`Invalid bind group resource at binding ${entry.binding}`)
+                throw new Error(`Invalid bind group resource at binding ${entry.binding}: ${resource?.constructor?.name || typeof resource}`)
             }
         }
 

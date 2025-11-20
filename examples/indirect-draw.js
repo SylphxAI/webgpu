@@ -79,39 +79,58 @@ fn fs_main(@location(0) color: vec4f) -> @location(0) vec4f {
   const textureView = texture.createView('Render Target')
   console.log('✓ Render texture created')
 
-  // Create pipeline
+  // Create pipeline - WebGPU standard API
   const pipelineLayout = device.createPipelineLayout('Pipeline Layout', [])
-  const pipeline = device.createRenderPipeline(
-    'Triangle Pipeline',
-    pipelineLayout,
-    shaderModule,
-    'vs_main',
-    ['float32x3', 'float32x3'], // position + color attributes
-    shaderModule,
-    'fs_main',
-    ['rgba8unorm'],
-    null,  // no depth
-    null,  // default blend
-    null,  // all channels
-    null   // no MSAA
-  )
+  const pipeline = device.createRenderPipeline({
+    label: 'Triangle Pipeline',
+    layout: pipelineLayout,
+    vertex: {
+      module: shaderModule,
+      entryPoint: 'vs_main',
+      buffers: [{
+        arrayStride: 24, // 6 floats * 4 bytes (position + color)
+        attributes: [
+          {
+            shaderLocation: 0,
+            offset: 0,
+            format: 'float32x3' // position
+          },
+          {
+            shaderLocation: 1,
+            offset: 12,
+            format: 'float32x3' // color
+          }
+        ]
+      }]
+    },
+    fragment: {
+      module: shaderModule,
+      entryPoint: 'fs_main',
+      targets: [{
+        format: 'rgba8unorm'
+      }]
+    },
+    primitive: {
+      topology: 'triangle-list'
+    }
+  })
   console.log('✓ Render pipeline created')
 
-  // Create encoder and execute indirect render pass
+  // Create encoder and execute indirect render pass - WebGPU standard API
   const encoder = device.createCommandEncoder()
 
-  encoder.renderPassIndirect(
-    pipeline,
-    [vertexBuffer],
-    indirectBuffer,
-    0, // indirect offset
-    [textureView],
-    [[0.1, 0.1, 0.1, 1.0]], // Dark gray background
-    null,  // no bind groups
-    null,  // no depth
-    null,  // no clear depth
-    null   // no resolve targets
-  )
+  const pass = encoder.beginRenderPass({
+    colorAttachments: [{
+      view: textureView,
+      loadOp: 'clear',
+      storeOp: 'store',
+      clearValue: { r: 0.1, g: 0.1, b: 0.1, a: 1.0 }
+    }]
+  })
+  pass.setPipeline(pipeline)
+  pass.setVertexBuffer(0, vertexBuffer)
+  pass.drawIndirect(indirectBuffer, 0)
+  pass.end()
 
   // Create readback buffer
   const bytesPerRow = 256 * 4 // 4 bytes per pixel (RGBA)
@@ -124,8 +143,7 @@ fn fs_main(@location(0) color: vec4f) -> @location(0) vec4f {
   })
 
   // Copy texture to buffer
-  device.copyTextureToBuffer(
-    encoder,
+  encoder.copyTextureToBuffer(
     texture,
     0, // mip level
     0, 0, 0, // origin

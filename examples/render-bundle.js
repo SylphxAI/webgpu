@@ -77,55 +77,76 @@ fn fs_main(@location(0) color: vec4f) -> @location(0) vec4f {
   const textureView = texture.createView('Render Target')
   console.log('✓ Render texture created')
 
-  // Create pipeline
+  // Create pipeline - WebGPU standard API
   const pipelineLayout = device.createPipelineLayout('Pipeline Layout', [])
-  const pipeline = device.createRenderPipeline(
-    'Triangle Pipeline',
-    pipelineLayout,
-    shaderModule,
-    'vs_main',
-    ['float32x3', 'float32x3'], // position + color attributes
-    shaderModule,
-    'fs_main',
-    ['rgba8unorm'],
-    null,  // no depth
-    null,  // default blend
-    null,  // all channels
-    null   // no MSAA
-  )
+  const pipeline = device.createRenderPipeline({
+    label: 'Triangle Pipeline',
+    layout: pipelineLayout,
+    vertex: {
+      module: shaderModule,
+      entryPoint: 'vs_main',
+      buffers: [{
+        arrayStride: 24, // 6 floats * 4 bytes (position + color)
+        attributes: [
+          {
+            shaderLocation: 0,
+            offset: 0,
+            format: 'float32x3' // position
+          },
+          {
+            shaderLocation: 1,
+            offset: 12,
+            format: 'float32x3' // color
+          }
+        ]
+      }]
+    },
+    fragment: {
+      module: shaderModule,
+      entryPoint: 'fs_main',
+      targets: [{
+        format: 'rgba8unorm'
+      }]
+    },
+    primitive: {
+      topology: 'triangle-list'
+    }
+  })
   console.log('✓ Render pipeline created')
 
-  // Create TWO render bundles - one for each triangle
+  // Create TWO render bundles - one for each triangle (WebGPU standard API)
   // These can be created once and reused many times!
-  const bundle1 = device.createRenderBundle(
-    'Triangle 1 Bundle',
-    pipeline,
-    [vertexBuffer1],
-    3, // vertex count
-    null, // no bind groups
-    ['rgba8unorm'] // color format
-  )
+  const bundleEncoder1 = device.createRenderBundleEncoder({
+    colorFormats: ['rgba8unorm']
+  })
+  bundleEncoder1.setPipeline(pipeline)
+  bundleEncoder1.setVertexBuffer(0, vertexBuffer1)
+  bundleEncoder1.draw(3)
+  const bundle1 = bundleEncoder1.finish()
 
-  const bundle2 = device.createRenderBundle(
-    'Triangle 2 Bundle',
-    pipeline,
-    [vertexBuffer2],
-    3, // vertex count
-    null, // no bind groups
-    ['rgba8unorm'] // color format
-  )
+  const bundleEncoder2 = device.createRenderBundleEncoder({
+    colorFormats: ['rgba8unorm']
+  })
+  bundleEncoder2.setPipeline(pipeline)
+  bundleEncoder2.setVertexBuffer(0, vertexBuffer2)
+  bundleEncoder2.draw(3)
+  const bundle2 = bundleEncoder2.finish()
 
   console.log('✓ Render bundles created (2 bundles - reusable!)')
 
-  // Execute BOTH bundles in a single render pass
-  // This demonstrates the key benefit: bundles can be created once and executed multiple times
+  // Execute BOTH bundles in a single render pass - WebGPU standard API
   const encoder = device.createCommandEncoder()
 
-  encoder.renderPassBundles(
-    [bundle1, bundle2], // Execute both bundles
-    [textureView],
-    [[0.1, 0.1, 0.1, 1.0]] // Dark gray background
-  )
+  const pass = encoder.beginRenderPass({
+    colorAttachments: [{
+      view: textureView,
+      loadOp: 'clear',
+      storeOp: 'store',
+      clearValue: { r: 0.1, g: 0.1, b: 0.1, a: 1.0 }
+    }]
+  })
+  pass.executeBundles([bundle1, bundle2])
+  pass.end()
 
   // Create readback buffer
   const bytesPerRow = 256 * 4
@@ -138,8 +159,7 @@ fn fs_main(@location(0) color: vec4f) -> @location(0) vec4f {
   })
 
   // Copy texture to buffer
-  device.copyTextureToBuffer(
-    encoder,
+  encoder.copyTextureToBuffer(
     texture,
     0, // mip level
     0, 0, 0, // origin
@@ -203,8 +223,6 @@ fn fs_main(@location(0) color: vec4f) -> @location(0) vec4f {
   vertexBuffer2.destroy()
   readbackBuffer.destroy()
   texture.destroy()
-  bundle1.destroy()
-  bundle2.destroy()
   device.destroy()
 
   console.log('\n✨ Example completed')

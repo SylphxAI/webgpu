@@ -33,23 +33,54 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4f {
   const shaderModule = device.createShaderModule({ code: shaderCode })
   console.log('✓ Shader compiled')
 
-  // Create pipeline with alpha blending
+  // Create pipeline with alpha blending (WebGPU standard API)
   const pipelineLayout = device.createPipelineLayout('Transparency Layout', [])
 
-  const pipeline = device.createRenderPipeline(
-    'Transparency Pipeline',
-    pipelineLayout,
-    shaderModule,
-    'vs_main',
-    ['float32x2', 'float32x4'], // position + RGBA color
-    shaderModule,
-    'fs_main',
-    ['rgba8unorm'],
-    null,     // no depth/stencil
-    'alpha',  // alpha blending mode
-    null,     // all channels
-    null      // no MSAA
-  )
+  const pipeline = device.createRenderPipeline({
+    label: 'Transparency Pipeline',
+    layout: pipelineLayout,
+    vertex: {
+      module: shaderModule,
+      entryPoint: 'vs_main',
+      buffers: [{
+        arrayStride: 24, // 6 floats * 4 bytes (position + RGBA color)
+        attributes: [
+          {
+            shaderLocation: 0,
+            offset: 0,
+            format: 'float32x2' // position
+          },
+          {
+            shaderLocation: 1,
+            offset: 8,
+            format: 'float32x4' // RGBA color
+          }
+        ]
+      }]
+    },
+    fragment: {
+      module: shaderModule,
+      entryPoint: 'fs_main',
+      targets: [{
+        format: 'rgba8unorm',
+        blend: {
+          color: {
+            srcFactor: 'src-alpha',
+            dstFactor: 'one-minus-src-alpha',
+            operation: 'add'
+          },
+          alpha: {
+            srcFactor: 'one',
+            dstFactor: 'one-minus-src-alpha',
+            operation: 'add'
+          }
+        }
+      }]
+    },
+    primitive: {
+      topology: 'triangle-list'
+    }
+  })
   console.log('✓ Pipeline created with alpha blending')
 
   // Create three overlapping quads with different colors and transparency
@@ -131,44 +162,51 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4f {
   const renderView = renderTexture.createView('render-view')
   console.log('✓ Render texture created')
 
-  // Render all three quads with alpha blending
+  // Render all three quads with alpha blending (WebGPU standard API)
   const encoder = device.createCommandEncoder()
 
-  // First quad (red)
-  encoder.renderPassIndexed(
-    pipeline,
-    [redBuffer],
-    indexBuffer,
-    'uint16',
-    6,
-    [renderView],
-    [[0.9, 0.9, 0.9, 1.0]], // Light gray background
-    null // no bind groups
-  )
+  // First quad (red) - clear background
+  let pass = encoder.beginRenderPass({
+    colorAttachments: [{
+      view: renderView,
+      loadOp: 'clear',
+      storeOp: 'store',
+      clearValue: { r: 0.9, g: 0.9, b: 0.9, a: 1.0 }
+    }]
+  })
+  pass.setPipeline(pipeline)
+  pass.setVertexBuffer(0, redBuffer)
+  pass.setIndexBuffer(indexBuffer, 'uint16')
+  pass.drawIndexed(6)
+  pass.end()
 
-  // Second quad (green) - will blend with red where they overlap
-  encoder.renderPassIndexed(
-    pipeline,
-    [greenBuffer],
-    indexBuffer,
-    'uint16',
-    6,
-    [renderView],
-    null, // Don't clear this time - we want to blend
-    null
-  )
+  // Second quad (green) - load previous content and blend
+  pass = encoder.beginRenderPass({
+    colorAttachments: [{
+      view: renderView,
+      loadOp: 'load', // Load previous content
+      storeOp: 'store'
+    }]
+  })
+  pass.setPipeline(pipeline)
+  pass.setVertexBuffer(0, greenBuffer)
+  pass.setIndexBuffer(indexBuffer, 'uint16')
+  pass.drawIndexed(6)
+  pass.end()
 
-  // Third quad (blue) - will blend with both
-  encoder.renderPassIndexed(
-    pipeline,
-    [blueBuffer],
-    indexBuffer,
-    'uint16',
-    6,
-    [renderView],
-    null, // Don't clear
-    null
-  )
+  // Third quad (blue) - load previous content and blend
+  pass = encoder.beginRenderPass({
+    colorAttachments: [{
+      view: renderView,
+      loadOp: 'load', // Load previous content
+      storeOp: 'store'
+    }]
+  })
+  pass.setPipeline(pipeline)
+  pass.setVertexBuffer(0, blueBuffer)
+  pass.setIndexBuffer(indexBuffer, 'uint16')
+  pass.drawIndexed(6)
+  pass.end()
 
   console.log('✓ Three quads rendered with alpha blending')
 
@@ -182,8 +220,7 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4f {
     mappedAtCreation: false
   })
 
-  device.copyTextureToBuffer(
-    encoder,
+  encoder.copyTextureToBuffer(
     renderTexture,
     0, 0, 0, 0,
     readBuffer,

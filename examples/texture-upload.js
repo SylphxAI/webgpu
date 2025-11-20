@@ -81,8 +81,7 @@ async function main() {
   const encoder = device.createCommandEncoder()
 
   // Copy buffer to texture
-  device.copyBufferToTexture(
-    encoder,
+  encoder.copyBufferToTexture(
     uploadBuffer,
     0, // source offset
     alignedBytesPerRow,
@@ -103,8 +102,7 @@ async function main() {
     mappedAtCreation: false
   })
 
-  device.copyTextureToBuffer(
-    encoder,
+  encoder.copyTextureToBuffer(
     texture,
     0, // mip_level
     0, 0, 0, // origin x, y, z

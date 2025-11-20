@@ -157,43 +157,72 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4f {
   device.queue.writeBuffer(uniformBuffer, 0, Buffer.from(mvpMatrix.buffer))
   console.log('✓ Uniform buffer created with MVP matrix')
 
-  // Create bind group layout for uniforms
+  // Create bind group layout for uniforms (WebGPU standard API)
   const bindGroupLayout = device.createBindGroupLayout({
     label: 'Uniform Bind Group Layout',
     entries: [
       {
         binding: 0,
         visibility: 0x1, // VERTEX
-        bufferType: 'uniform',
+        buffer: { type: 'uniform' },
       },
     ],
   })
 
-  // Create bind group
-  const bindGroup = device.createBindGroupBuffers(
-    'Uniform Bind Group',
-    bindGroupLayout,
-    [uniformBuffer]
-  )
+  // Create bind group (WebGPU standard API)
+  const bindGroup = device.createBindGroup({
+    label: 'Uniform Bind Group',
+    layout: bindGroupLayout,
+    entries: [
+      { binding: 0, resource: { buffer: uniformBuffer } }
+    ]
+  })
   console.log('✓ Bind group created')
 
-  // Create pipeline
-  const pipelineLayout = device.createPipelineLayout('Cube Pipeline Layout', [bindGroupLayout])
+  // Create pipeline with WebGPU standard API
+  const pipelineLayout = device.createPipelineLayout({
+    label: 'Cube Pipeline Layout',
+    bindGroupLayouts: [bindGroupLayout]
+  })
 
-  const pipeline = device.createRenderPipeline(
-    'Cube Pipeline',
-    pipelineLayout,
-    shaderModule,
-    'vs_main',
-    ['float32x3', 'float32x3'], // position + color
-    shaderModule,
-    'fs_main',
-    ['rgba8unorm'],
-    'depth24plus', // depth/stencil format
-    null,          // default blend mode
-    null,          // default write mask
-    null           // no MSAA
-  )
+  const pipeline = device.createRenderPipeline({
+    label: 'Cube Pipeline',
+    layout: pipelineLayout,
+    vertex: {
+      module: shaderModule,
+      entryPoint: 'vs_main',
+      buffers: [{
+        arrayStride: 24, // 6 floats * 4 bytes (position + color)
+        attributes: [
+          {
+            shaderLocation: 0,
+            offset: 0,
+            format: 'float32x3' // position
+          },
+          {
+            shaderLocation: 1,
+            offset: 12,
+            format: 'float32x3' // color
+          }
+        ]
+      }]
+    },
+    fragment: {
+      module: shaderModule,
+      entryPoint: 'fs_main',
+      targets: [{
+        format: 'rgba8unorm'
+      }]
+    },
+    primitive: {
+      topology: 'triangle-list'
+    },
+    depthStencil: {
+      format: 'depth24plus',
+      depthWriteEnabled: true,
+      depthCompare: 'less'
+    }
+  })
   console.log('✓ Pipeline created')
 
   // Create render targets
@@ -230,22 +259,29 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4f {
   const depthView = depthTexture.createView('depth-view')
   console.log('✓ Color and depth textures created')
 
-  // Render the cube
+  // Render the cube with WebGPU standard API
   const encoder = device.createCommandEncoder()
 
-  encoder.renderPassIndexed(
-    pipeline,
-    [vertexBuffer],
-    indexBuffer,
-    'uint16',
-    36, // 12 triangles * 3 indices
-    [colorView],
-    [[0.1, 0.1, 0.1, 1.0]], // Dark background
-    [bindGroup],
-    depthView, // Depth attachment
-    1.0,       // Clear depth to 1.0
-    null       // No MSAA resolve targets
-  )
+  const pass = encoder.beginRenderPass({
+    colorAttachments: [{
+      view: colorView,
+      loadOp: 'clear',
+      storeOp: 'store',
+      clearValue: { r: 0.1, g: 0.1, b: 0.1, a: 1.0 }
+    }],
+    depthStencilAttachment: {
+      view: depthView,
+      depthLoadOp: 'clear',
+      depthStoreOp: 'store',
+      depthClearValue: 1.0
+    }
+  })
+  pass.setPipeline(pipeline)
+  pass.setVertexBuffer(0, vertexBuffer)
+  pass.setIndexBuffer(indexBuffer, 'uint16')
+  pass.setBindGroup(0, bindGroup)
+  pass.drawIndexed(36)
+  pass.end()
   console.log('✓ Cube rendered with depth testing')
 
   // Read back result to verify
@@ -258,8 +294,7 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4f {
     mappedAtCreation: false
   })
 
-  device.copyTextureToBuffer(
-    encoder,
+  encoder.copyTextureToBuffer(
     colorTexture,
     0, 0, 0, 0,
     readBuffer,

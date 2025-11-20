@@ -64,8 +64,7 @@ async function main() {
 
   // Copy data to texture
   let encoder = device.createCommandEncoder()
-  device.copyBufferToTexture(
-    encoder,
+  encoder.copyBufferToTexture(
     uploadBuffer,
     0,
     alignedBytesPerRow,
@@ -107,19 +106,19 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4f {
   const shaderModule = device.createShaderModule({ code: shaderCode })
   console.log('✓ Shader compiled')
 
-  // Create bind group layout
+  // Create bind group layout (WebGPU standard API)
   const bindGroupLayout = device.createBindGroupLayout({
     label: 'Texture Bind Group Layout',
     entries: [
       {
         binding: 0,
         visibility: 0x2, // FRAGMENT
-        textureSampleType: 'float',
+        texture: { sampleType: 'float' },
       },
       {
         binding: 1,
         visibility: 0x2, // FRAGMENT
-        samplerType: 'filtering',
+        sampler: { type: 'filtering' },
       },
     ],
   })
@@ -127,37 +126,56 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4f {
   // Create textureView
   const textureView = texture.createView('checkerboard-view')
 
-  // Create bind group with texture and sampler
-  const bindGroup = device.createBindGroup(
-    'Texture Bind Group',
-    bindGroupLayout,
-    [
-      { binding: 0, resourceType: 'texture', textureIndex: 0 },
-      { binding: 1, resourceType: 'sampler', samplerIndex: 0 },
-    ],
-    [], // no buffers
-    [textureView], // textures
-    [sampler] // samplers
-  )
+  // Create bind group with texture and sampler (WebGPU standard API)
+  const bindGroup = device.createBindGroup({
+    label: 'Texture Bind Group',
+    layout: bindGroupLayout,
+    entries: [
+      { binding: 0, resource: textureView },
+      { binding: 1, resource: sampler },
+    ]
+  })
   console.log('✓ Bind group created with texture and sampler')
 
-  // Create pipeline
-  const pipelineLayout = device.createPipelineLayout('Textured Quad Layout', [bindGroupLayout])
+  // Create pipeline with WebGPU standard API
+  const pipelineLayout = device.createPipelineLayout({
+    label: 'Textured Quad Layout',
+    bindGroupLayouts: [bindGroupLayout]
+  })
 
-  const pipeline = device.createRenderPipeline(
-    'Textured Quad Pipeline',
-    pipelineLayout,
-    shaderModule,
-    'vs_main',
-    ['float32x2', 'float32x2'], // position + uv
-    shaderModule,
-    'fs_main',
-    ['rgba8unorm'],
-    null, // no depth/stencil
-    null, // default blend mode
-    null, // default write mask
-    null  // no MSAA
-  )
+  const pipeline = device.createRenderPipeline({
+    label: 'Textured Quad Pipeline',
+    layout: pipelineLayout,
+    vertex: {
+      module: shaderModule,
+      entryPoint: 'vs_main',
+      buffers: [{
+        arrayStride: 16, // 4 floats * 4 bytes (position + uv)
+        attributes: [
+          {
+            shaderLocation: 0,
+            offset: 0,
+            format: 'float32x2' // position
+          },
+          {
+            shaderLocation: 1,
+            offset: 8,
+            format: 'float32x2' // uv
+          }
+        ]
+      }]
+    },
+    fragment: {
+      module: shaderModule,
+      entryPoint: 'fs_main',
+      targets: [{
+        format: 'rgba8unorm'
+      }]
+    },
+    primitive: {
+      topology: 'triangle-list'
+    }
+  })
   console.log('✓ Pipeline created')
 
   // Create quad vertices (position + UV)
@@ -208,22 +226,23 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4f {
 
   const renderView = renderTexture.createView('render-view')
 
-  // Render
+  // Render with WebGPU standard API
   encoder = device.createCommandEncoder()
 
-  encoder.renderPassIndexed(
-    pipeline,
-    [vertexBuffer],
-    indexBuffer,
-    'uint16',
-    6, // index count
-    [renderView],
-    [[0.2, 0.2, 0.2, 1.0]], // Dark gray background
-    [bindGroup], // Bind group with texture and sampler
-    null,        // No depth/stencil
-    null,        // No depth clear
-    null         // No MSAA resolve targets
-  )
+  const pass = encoder.beginRenderPass({
+    colorAttachments: [{
+      view: renderView,
+      loadOp: 'clear',
+      storeOp: 'store',
+      clearValue: { r: 0.2, g: 0.2, b: 0.2, a: 1.0 }
+    }]
+  })
+  pass.setPipeline(pipeline)
+  pass.setVertexBuffer(0, vertexBuffer)
+  pass.setIndexBuffer(indexBuffer, 'uint16')
+  pass.setBindGroup(0, bindGroup)
+  pass.drawIndexed(6)
+  pass.end()
   console.log('✓ Textured quad rendered')
 
   // Read back to verify
@@ -236,8 +255,7 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4f {
     mappedAtCreation: false
   })
 
-  device.copyTextureToBuffer(
-    encoder,
+  encoder.copyTextureToBuffer(
     renderTexture,
     0, 0, 0, 0,
     readBuffer,

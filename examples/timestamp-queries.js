@@ -80,20 +80,18 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
   )
   console.log('✓ Compute pipeline created')
 
-  // Create encoder and execute compute with timestamps
+  // Create encoder and execute compute with timestamps - WebGPU standard API
   const encoder = device.createCommandEncoder()
 
   // Write start timestamp
   encoder.writeTimestamp(querySet, 0)
 
   // Execute compute work
-  encoder.computePass(
-    pipeline,
-    [bindGroup],
-    Math.ceil(arraySize / 256), // workgroup count
-    1,
-    1
-  )
+  const pass = encoder.beginComputePass()
+  pass.setPipeline(pipeline)
+  pass.setBindGroup(0, bindGroup)
+  pass.dispatchWorkgroups(Math.ceil(arraySize / 256), 1, 1)
+  pass.end()
 
   // Write end timestamp
   encoder.writeTimestamp(querySet, 1)
@@ -117,7 +115,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
   })
 
   // Copy query results to readable buffer
-  device.copyBufferToBuffer(encoder, queryBuffer, 0, readBuffer, 0, 16)
+  encoder.copyBufferToBuffer( queryBuffer, 0, readBuffer, 0, 16)
 
   device.queue.submit([encoder.finish()])
   device.poll(true)
@@ -162,7 +160,6 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
   buffer.destroy()
   queryBuffer.destroy()
   readBuffer.destroy()
-  querySet.destroy()
   device.destroy()
 
   console.log('\n✨ Example completed')

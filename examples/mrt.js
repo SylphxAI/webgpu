@@ -59,23 +59,49 @@ fn fs_main(input: VertexOutput) -> GBufferOutput {
   const shaderModule = device.createShaderModule({ code: shaderCode })
   console.log('✓ Shader compiled with 3 fragment outputs')
 
-  // Create pipeline with 3 render targets
+  // Create pipeline with 3 render targets - WebGPU standard API
   const pipelineLayout = device.createPipelineLayout('MRT Pipeline Layout', [])
 
-  const pipeline = device.createRenderPipeline(
-    'MRT Pipeline',
-    pipelineLayout,
-    shaderModule,
-    'vs_main',
-    ['float32x3', 'float32x3', 'float32x3'], // position + normal + color
-    shaderModule,
-    'fs_main',
-    ['rgba8unorm', 'rgba8unorm', 'rgba8unorm'], // 3 render targets
-    null,  // no depth/stencil
-    null,  // default blend mode
-    null,  // all channels
-    null   // no MSAA
-  )
+  const pipeline = device.createRenderPipeline({
+    label: 'MRT Pipeline',
+    layout: pipelineLayout,
+    vertex: {
+      module: shaderModule,
+      entryPoint: 'vs_main',
+      buffers: [{
+        arrayStride: 36, // 9 floats * 4 bytes (position + normal + color)
+        attributes: [
+          {
+            shaderLocation: 0,
+            offset: 0,
+            format: 'float32x3' // position
+          },
+          {
+            shaderLocation: 1,
+            offset: 12,
+            format: 'float32x3' // normal
+          },
+          {
+            shaderLocation: 2,
+            offset: 24,
+            format: 'float32x3' // color
+          }
+        ]
+      }]
+    },
+    fragment: {
+      module: shaderModule,
+      entryPoint: 'fs_main',
+      targets: [
+        { format: 'rgba8unorm' }, // position target
+        { format: 'rgba8unorm' }, // normal target
+        { format: 'rgba8unorm' }  // albedo target
+      ]
+    },
+    primitive: {
+      topology: 'triangle-list'
+    }
+  })
   console.log('✓ Pipeline created with 3 render targets')
 
   // Create triangle with position, normal, and color data
@@ -140,24 +166,35 @@ fn fs_main(input: VertexOutput) -> GBufferOutput {
   const albedoView = albedoTexture.createView('albedo-view')
   console.log('✓ Created 3 render target textures (G-buffer)')
 
-  // Render to all 3 targets simultaneously
+  // Render to all 3 targets simultaneously - WebGPU standard API
   const encoder = device.createCommandEncoder()
 
-  encoder.renderPass(
-    pipeline,
-    [vertexBuffer],
-    3, // vertex count
-    [positionView, normalView, albedoView], // 3 color attachments
-    [
-      [0.0, 0.0, 0.0, 1.0], // Clear position buffer to black
-      [0.5, 0.5, 1.0, 1.0], // Clear normal buffer to blue (z-forward in texture space)
-      [0.0, 0.0, 0.0, 1.0], // Clear albedo buffer to black
-    ],
-    null, // No bind groups
-    null, // No depth/stencil
-    null, // No depth clear
-    null  // No MSAA resolve targets
-  )
+  const pass = encoder.beginRenderPass({
+    colorAttachments: [
+      {
+        view: positionView,
+        loadOp: 'clear',
+        storeOp: 'store',
+        clearValue: { r: 0.0, g: 0.0, b: 0.0, a: 1.0 }
+      },
+      {
+        view: normalView,
+        loadOp: 'clear',
+        storeOp: 'store',
+        clearValue: { r: 0.5, g: 0.5, b: 1.0, a: 1.0 }
+      },
+      {
+        view: albedoView,
+        loadOp: 'clear',
+        storeOp: 'store',
+        clearValue: { r: 0.0, g: 0.0, b: 0.0, a: 1.0 }
+      }
+    ]
+  })
+  pass.setPipeline(pipeline)
+  pass.setVertexBuffer(0, vertexBuffer)
+  pass.draw(3)
+  pass.end()
   console.log('✓ Rendered to 3 targets simultaneously (MRT)')
 
   // Read back all 3 textures to verify
@@ -182,8 +219,7 @@ fn fs_main(input: VertexOutput) -> GBufferOutput {
     mappedAtCreation: false
   })
 
-  device.copyTextureToBuffer(
-    encoder,
+  encoder.copyTextureToBuffer(
     positionTexture,
     0, 0, 0, 0,
     positionBuffer,
@@ -195,8 +231,7 @@ fn fs_main(input: VertexOutput) -> GBufferOutput {
     1
   )
 
-  device.copyTextureToBuffer(
-    encoder,
+  encoder.copyTextureToBuffer(
     normalTexture,
     0, 0, 0, 0,
     normalBuffer,
@@ -208,8 +243,7 @@ fn fs_main(input: VertexOutput) -> GBufferOutput {
     1
   )
 
-  device.copyTextureToBuffer(
-    encoder,
+  encoder.copyTextureToBuffer(
     albedoTexture,
     0, 0, 0, 0,
     albedoBuffer,

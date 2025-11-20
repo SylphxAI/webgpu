@@ -1,4 +1,4 @@
-const { Gpu } = require('../index.js')
+const { Gpu } = require('../webgpu.js')
 
 async function main() {
     console.log('🚀 WebGPU Basic Example\n')
@@ -7,16 +7,9 @@ async function main() {
     const gpu = Gpu()
     console.log('✓ GPU instance created')
 
-    // Enumerate adapters
-    const adapters = gpu.enumerateAdapters()
-    console.log(`✓ Found ${adapters.length} adapter(s):`)
-    adapters.forEach((adapter, i) => {
-        console.log(`  ${i + 1}. ${adapter}`)
-    })
-
     // Request adapter
     console.log('\nRequesting adapter...')
-    const adapter = await gpu.requestAdapter('high-performance')
+    const adapter = await gpu.requestAdapter({ powerPreference: 'high-performance' })
     console.log('✓ Adapter acquired')
 
     // Get adapter info
@@ -28,15 +21,15 @@ async function main() {
     console.log(`  Type: ${info.deviceType}`)
     console.log(`  Backend: ${info.backend}`)
 
-    // Get adapter limits
-    const limits = adapter.getLimits()
+    // Get adapter limits (property, not method)
+    const limits = adapter.limits
     console.log('\nAdapter Limits:')
     console.log(`  Max Texture 2D: ${limits.maxTextureDimension2d}`)
     console.log(`  Max Bind Groups: ${limits.maxBindGroups}`)
     console.log(`  Max Buffer Size: ${limits.maxBufferSize}`)
 
-    // Get features
-    const features = adapter.getFeatures()
+    // Get features (property, not method)
+    const features = adapter.features
     console.log(`\nSupported Features: ${features.length}`)
     features.forEach(feature => {
         console.log(`  - ${feature}`)

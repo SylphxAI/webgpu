@@ -33,23 +33,45 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4f {
   const shaderModule = device.createShaderModule({ code: shaderCode })
   console.log('✓ Shader compiled')
 
-  // Create pipeline WITH MSAA (4x)
+  // Create pipeline WITH MSAA (4x) - WebGPU standard API
   const pipelineLayout = device.createPipelineLayout('MSAA Pipeline Layout', [])
 
-  const msaaPipeline = device.createRenderPipeline(
-    'MSAA Pipeline',
-    pipelineLayout,
-    shaderModule,
-    'vs_main',
-    ['float32x2', 'float32x3'], // position + color
-    shaderModule,
-    'fs_main',
-    ['rgba8unorm'],
-    null,  // no depth/stencil
-    null,  // default blend mode
-    null,  // all channels
-    4      // 4x MSAA
-  )
+  const msaaPipeline = device.createRenderPipeline({
+    label: 'MSAA Pipeline',
+    layout: pipelineLayout,
+    vertex: {
+      module: shaderModule,
+      entryPoint: 'vs_main',
+      buffers: [{
+        arrayStride: 20, // 5 floats * 4 bytes (position + color)
+        attributes: [
+          {
+            shaderLocation: 0,
+            offset: 0,
+            format: 'float32x2' // position
+          },
+          {
+            shaderLocation: 1,
+            offset: 8,
+            format: 'float32x3' // color
+          }
+        ]
+      }]
+    },
+    fragment: {
+      module: shaderModule,
+      entryPoint: 'fs_main',
+      targets: [{
+        format: 'rgba8unorm'
+      }]
+    },
+    primitive: {
+      topology: 'triangle-list'
+    },
+    multisample: {
+      count: 4
+    }
+  })
   console.log('✓ Pipeline created with 4x MSAA')
 
   // Create vertices for a diagonal line (thin triangle strip to show aliasing)
@@ -118,22 +140,23 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4f {
   const resolveView = resolveTexture.createView('resolve-view')
   console.log('✓ MSAA and resolve textures created')
 
-  // Render with MSAA
+  // Render with MSAA - WebGPU standard API
   const encoder = device.createCommandEncoder()
 
-  encoder.renderPassIndexed(
-    msaaPipeline,
-    [vertexBuffer],
-    indexBuffer,
-    'uint16',
-    6,
-    [msaaView],           // Render to MSAA texture
-    [[0.0, 0.0, 0.0, 1.0]], // Black background
-    null,                 // No bind groups
-    null,                 // No depth/stencil
-    null,                 // No depth clear
-    [resolveView]         // Resolve to single-sample texture
-  )
+  const pass = encoder.beginRenderPass({
+    colorAttachments: [{
+      view: msaaView,
+      resolveTarget: resolveView,
+      loadOp: 'clear',
+      storeOp: 'store',
+      clearValue: { r: 0.0, g: 0.0, b: 0.0, a: 1.0 }
+    }]
+  })
+  pass.setPipeline(msaaPipeline)
+  pass.setVertexBuffer(0, vertexBuffer)
+  pass.setIndexBuffer(indexBuffer, 'uint16')
+  pass.drawIndexed(6)
+  pass.end()
   console.log('✓ Rendered with 4x MSAA and resolved')
 
   // Read back result
@@ -146,8 +169,7 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4f {
     mappedAtCreation: false
   })
 
-  device.copyTextureToBuffer(
-    encoder,
+  encoder.copyTextureToBuffer(
     resolveTexture,
     0, 0, 0, 0,
     readBuffer,

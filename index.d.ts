@@ -626,8 +626,8 @@ export declare class GpuRenderBundle {
 }
 /** GPU queue for submitting commands following WebGPU spec */
 export declare class GpuQueue {
-  /** Submit command buffers to the queue */
-  submit(commandBuffer: GpuCommandBuffer): void
+  /** Submit command buffers to the queue (WebGPU standard - accepts array) */
+  submit(commandBuffers: Array<GpuCommandBuffer>): void
   /** Write data to a buffer using the queue */
   writeBuffer(buffer: GpuBuffer, offset: number, data: Buffer): void
   /** Get the label of this queue */

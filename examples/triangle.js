@@ -26,28 +26,39 @@ fn fs_main() -> @location(0) vec4f {
   const shaderModule = device.createShaderModule({ code: shaderCode })
   console.log('✓ Shader compiled')
 
-  // Create pipeline layout
-  const pipelineLayout = device.createPipelineLayout(
-    'triangle-pipeline-layout',
-    [] // No bind groups for simple triangle
-  )
-  console.log('✓ Pipeline layout created')
+  // Create pipeline layout (no bind groups needed for simple triangle)
+  const pipelineLayout = device.createPipelineLayout({
+    label: 'triangle-pipeline-layout',
+    bindGroupLayouts: []
+  })
 
-  // Create render pipeline
-  const pipeline = device.createRenderPipeline(
-    'triangle-pipeline',
-    pipelineLayout,
-    shaderModule,
-    'vs_main',
-    ['float32x2'], // vertex format: 2D positions
-    shaderModule,
-    'fs_main',
-    ['rgba8unorm'], // render target format
-    null, // no depth/stencil
-    null, // default blend mode (replace)
-    null, // default write mask (all channels)
-    null  // no MSAA (sample_count = 1)
-  )
+  // Create render pipeline with WebGPU standard API
+  const pipeline = device.createRenderPipeline({
+    label: 'triangle-pipeline',
+    layout: pipelineLayout,
+    vertex: {
+      module: shaderModule,
+      entryPoint: 'vs_main',
+      buffers: [{
+        arrayStride: 8, // 2 floats * 4 bytes
+        attributes: [{
+          shaderLocation: 0,
+          offset: 0,
+          format: 'float32x2'
+        }]
+      }]
+    },
+    fragment: {
+      module: shaderModule,
+      entryPoint: 'fs_main',
+      targets: [{
+        format: 'rgba8unorm'
+      }]
+    },
+    primitive: {
+      topology: 'triangle-list'
+    }
+  })
   console.log('✓ Render pipeline created')
 
   // Create vertex buffer with triangle data
@@ -89,18 +100,19 @@ fn fs_main() -> @location(0) vec4f {
   // Create command encoder
   const encoder = device.createCommandEncoder()
 
-  // Execute render pass
-  encoder.renderPass(
-    pipeline,
-    [vertexBuffer],
-    3, // vertex count
-    [textureView],
-    [[0.0, 0.0, 0.0, 1.0]], // Clear color: black
-    null, // No bind groups
-    null, // No depth/stencil
-    null, // No depth clear
-    null  // No MSAA resolve targets
-  )
+  // Execute render pass with WebGPU standard API
+  const pass = encoder.beginRenderPass({
+    colorAttachments: [{
+      view: textureView,
+      loadOp: 'clear',
+      storeOp: 'store',
+      clearValue: { r: 0.0, g: 0.0, b: 0.0, a: 1.0 }
+    }]
+  })
+  pass.setPipeline(pipeline)
+  pass.setVertexBuffer(0, vertexBuffer)
+  pass.draw(3)
+  pass.end()
   console.log('✓ Render pass executed')
 
   // Create buffer for reading back pixels
@@ -115,19 +127,18 @@ fn fs_main() -> @location(0) vec4f {
     mappedAtCreation: false
   })
 
-  // Copy texture to buffer for readback
-  device.copyTextureToBuffer(
-    encoder,
-    renderTexture,
-    0, // mip_level
-    0, 0, 0, // origin x, y, z
-    readBuffer,
-    0, // destination offset
-    paddedBytesPerRow,
-    null, // rows_per_image
+  // Copy texture to buffer for readback (using wrapper's flattened API)
+  encoder.copyTextureToBuffer(
+    renderTexture,     // source texture
+    0,                 // mip level
+    0, 0, 0,          // origin x, y, z
+    readBuffer,        // destination buffer
+    0,                 // destination offset
+    paddedBytesPerRow, // bytes per row
+    null,              // rows per image
     width,
     height,
-    1 // depth
+    1                  // depth
   )
   console.log('✓ Texture copied to buffer')
 

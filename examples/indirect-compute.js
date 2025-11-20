@@ -118,15 +118,14 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
   )
   console.log('✓ Compute pipeline created')
 
-  // Execute indirect compute pass
+  // Execute indirect compute pass - WebGPU standard API
   const encoder = device.createCommandEncoder()
 
-  encoder.computePassIndirect(
-    pipeline,
-    [bindGroup],
-    indirectBuffer,
-    0 // offset
-  )
+  const pass = encoder.beginComputePass()
+  pass.setPipeline(pipeline)
+  pass.setBindGroup(0, bindGroup)
+  pass.dispatchWorkgroupsIndirect(indirectBuffer, 0)
+  pass.end()
 
   // Copy result to readable buffer
   const readbackBuffer = device.createBuffer({
@@ -135,7 +134,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
     mappedAtCreation: false
   })
 
-  device.copyBufferToBuffer(encoder, outputBuffer, 0, readbackBuffer, 0, byteSize)
+  encoder.copyBufferToBuffer( outputBuffer, 0, readbackBuffer, 0, byteSize)
 
   device.queue.submit([encoder.finish()])
   device.poll(true)
