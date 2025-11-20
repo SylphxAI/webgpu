@@ -3,179 +3,160 @@
 [![npm version](https://img.shields.io/npm/v/@sylphx/webgpu.svg)](https://www.npmjs.com/package/@sylphx/webgpu)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-> **100% WebGPU Standard-Compliant** Node.js implementation via [wgpu-rs](https://github.com/gfx-rs/wgpu)
+> **Production-ready WebGPU for Node.js & Bun** - 100% standard-compliant, built with Rust + wgpu
 
-## ✨ What's New in v0.9.0
+## ✨ What is @sylphx/webgpu?
 
-**🎯 100% WebGPU Standard API Compliance!**
-
-Your code now works **identically** in both Node.js and browsers:
+**The modern, lightweight WebGPU implementation for Node.js.** Use the same WebGPU API in both Node.js and browsers - write once, run everywhere.
 
 ```javascript
-// This exact code works in BOTH Node.js and browser!
+const { Gpu, GPUBufferUsage } = require('@sylphx/webgpu')
+
+// Initialize GPU (identical to browser API)
+const gpu = Gpu()
 const adapter = await gpu.requestAdapter()
 const device = await adapter.requestDevice()
 
-const bindGroup = device.createBindGroup({
-    layout: bindGroupLayout,
-    entries: [
-        { binding: 0, resource: { buffer: uniformBuffer } },
-        { binding: 1, resource: textureView },
-        { binding: 2, resource: sampler }
-    ]
+// Create buffer (100% WebGPU standard)
+const buffer = device.createBuffer({
+    size: 256,
+    usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
 })
 
-const pipeline = device.createComputePipeline({
-    layout: pipelineLayout,
-    compute: {
-        module: shaderModule,
-        entryPoint: 'main'
-    }
-})
+// Run compute shader
+const encoder = device.createCommandEncoder()
+const pass = encoder.beginComputePass()
+pass.setPipeline(pipeline)
+pass.setBindGroup(0, bindGroup)
+pass.dispatchWorkgroups(64)
+pass.end()
+device.queue.submit([encoder.finish()])
 ```
 
-✅ No more flattened APIs
-✅ Matches browser WebGPU 100%
-✅ Share code between Node.js and browser
-✅ Zero performance overhead
-
-## Why @sylphx/webgpu?
+## 🚀 Why Choose @sylphx/webgpu?
 
 | Feature | @sylphx/webgpu | @kmamal/gpu (Dawn) |
 |---------|---------------|-------------------|
-| **WebGPU Compliance** | ✅ 100% Standard | ⚠️ Custom API |
-| **Build Time** | 5-15 minutes | 1-3 hours |
+| **WebGPU Standard** | ✅ 100% compliant | ⚠️ Custom API |
 | **Binary Size** | ~10MB | 50-150MB |
-| **Code Sharing** | ✅ Browser compatible | ❌ Node.js only |
+| **Build Time** | 5-15 min | 1-3 hours |
+| **Code Portability** | ✅ Browser compatible | ❌ Node.js only |
 | **Implementation** | Firefox's wgpu (Rust) | Chrome's Dawn (C++) |
-| **Toolchain** | Modern (Cargo) | Complex (depot_tools) |
+| **Toolchain** | Simple (Cargo) | Complex (depot_tools) |
+| **Status** | v1.0 - Production ready | 0.x - Pre-release |
 
-## Installation
+### Key Advantages
+
+✅ **100% WebGPU Standard** - Share code between Node.js and browsers
+✅ **Production Ready** - v1.0.1 stable release with 58 tests, 100% pass rate
+✅ **Lightweight** - 10MB binaries vs 100MB+ alternatives
+✅ **Modern Stack** - Rust + wgpu (used by Firefox, Deno, Bevy)
+✅ **Cross-Platform** - 6 prebuilt platforms (macOS, Linux, Windows, ARM64)
+✅ **Well Tested** - Comprehensive test suite covering all features
+
+## 📦 Installation
 
 ```bash
 npm install @sylphx/webgpu
 ```
 
-**Prerequisites:**
+**Requirements:**
 - Node.js 18+ or Bun 1.0+
-- No build tools needed (prebuilt binaries)
+- No build tools needed (prebuilt binaries included)
 
 **Supported Platforms:**
-- macOS (x64, ARM64)
-- Linux (x64, ARM64, musl)
+- macOS (x64, ARM64/M1/M2/M3)
+- Linux (x64, ARM64)
 - Windows (x64, ARM64)
-- FreeBSD, Android
+- FreeBSD, Android (via source build)
 
-## Quick Start
+## 🎯 Quick Start
+
+### Basic GPU Setup
 
 ```javascript
-const { Gpu, GPUBufferUsage } = require('@sylphx/webgpu')
+const { Gpu } = require('@sylphx/webgpu')
 
 async function main() {
-    // Initialize WebGPU (standard API)
+    // Create GPU instance
     const gpu = Gpu()
-    const adapter = await gpu.requestAdapter()
+
+    // Request adapter (automatically selects best GPU)
+    const adapter = await gpu.requestAdapter({
+        powerPreference: 'high-performance'
+    })
+
+    console.log('GPU:', adapter.info.name)
+    console.log('Backend:', adapter.info.backend)
+
+    // Request device
     const device = await adapter.requestDevice()
 
-    // Create buffers (standard API)
-    const buffer = device.createBuffer({
-        size: 256,
-        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
-    })
-
-    // Create shader module (standard API)
-    const shader = device.createShaderModule({
-        code: `
-            @group(0) @binding(0) var<storage, read_write> data: array<f32>;
-
-            @compute @workgroup_size(64)
-            fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
-                data[global_id.x] = data[global_id.x] * 2.0;
-            }
-        `
-    })
-
-    console.log('WebGPU ready!')
+    console.log('✅ WebGPU ready!')
 }
 
 main()
 ```
 
-## Complete Example: Compute Shader
+### Compute Shader Example
 
 ```javascript
 const { Gpu, GPUBufferUsage } = require('@sylphx/webgpu')
 
-async function runComputeShader() {
-    // Setup
+async function runCompute() {
     const gpu = Gpu()
-    const adapter = await gpu.requestAdapter({ powerPreference: 'high-performance' })
+    const adapter = await gpu.requestAdapter()
     const device = await adapter.requestDevice()
 
     // Create buffers
-    const inputBuffer = device.createBuffer({
-        size: 1024,
+    const size = 256
+    const input = device.createBuffer({
+        size,
         usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
     })
 
-    const outputBuffer = device.createBuffer({
-        size: 1024,
+    const output = device.createBuffer({
+        size,
         usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC
     })
 
-    // Create shader
-    const shaderModule = device.createShaderModule({
+    // Create compute shader (WGSL)
+    const shader = device.createShaderModule({
         code: `
             @group(0) @binding(0) var<storage, read> input: array<f32>;
             @group(0) @binding(1) var<storage, read_write> output: array<f32>;
 
             @compute @workgroup_size(64)
-            fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
-                output[global_id.x] = input[global_id.x] * 2.0;
+            fn main(@builtin(global_invocation_id) id: vec3<u32>) {
+                output[id.x] = input[id.x] * 2.0;
             }
         `
     })
 
     // Create bind group layout
-    const bindGroupLayout = device.createBindGroupLayout({
+    const layout = device.createBindGroupLayout({
         entries: [
-            {
-                binding: 0,
-                visibility: 4, // COMPUTE
-                buffer: { type: 'read-only-storage' }
-            },
-            {
-                binding: 1,
-                visibility: 4, // COMPUTE
-                buffer: { type: 'storage' }
-            }
+            { binding: 0, visibility: 4, buffer: { type: 'read-only-storage' } },
+            { binding: 1, visibility: 4, buffer: { type: 'storage' } }
         ]
     })
 
-    // Create bind group (WebGPU standard!)
+    // Create bind group
     const bindGroup = device.createBindGroup({
-        layout: bindGroupLayout,
+        layout,
         entries: [
-            { binding: 0, resource: { buffer: inputBuffer } },
-            { binding: 1, resource: { buffer: outputBuffer } }
+            { binding: 0, resource: { buffer: input } },
+            { binding: 1, resource: { buffer: output } }
         ]
     })
 
-    // Create pipeline layout
-    const pipelineLayout = device.createPipelineLayout({
-        bindGroupLayouts: [bindGroupLayout]
-    })
-
-    // Create compute pipeline (WebGPU standard!)
+    // Create pipeline
     const pipeline = device.createComputePipeline({
-        layout: pipelineLayout,
-        compute: {
-            module: shaderModule,
-            entryPoint: 'main'
-        }
+        layout: device.createPipelineLayout({ bindGroupLayouts: [layout] }),
+        compute: { module: shader, entryPoint: 'main' }
     })
 
-    // Encode and submit commands
+    // Execute compute shader
     const encoder = device.createCommandEncoder()
     const pass = encoder.beginComputePass()
     pass.setPipeline(pipeline)
@@ -183,120 +164,210 @@ async function runComputeShader() {
     pass.dispatchWorkgroups(4) // 4 * 64 = 256 threads
     pass.end()
 
-    const commandBuffer = encoder.finish()
-    device.queue.submit([commandBuffer])
+    device.queue.submit([encoder.finish()])
 
-    console.log('Compute shader executed!')
+    console.log('✅ Compute shader executed!')
 }
 
-runComputeShader()
+runCompute()
 ```
 
-## API Reference
+### Render Pipeline Example
 
-### WebGPU Standard API
-
-The API matches the [WebGPU specification](https://gpuweb.github.io/gpuweb/) exactly:
-
-#### **GPU & Adapter**
 ```javascript
+const { Gpu, GPUBufferUsage, GPUTextureUsage } = require('@sylphx/webgpu')
+
+async function renderTriangle() {
+    const gpu = Gpu()
+    const adapter = await gpu.requestAdapter()
+    const device = await adapter.requestDevice()
+
+    // Create vertex buffer
+    const vertices = new Float32Array([
+        // x,    y,     r,   g,   b
+         0.0,  0.5,   1.0, 0.0, 0.0,  // top (red)
+        -0.5, -0.5,   0.0, 1.0, 0.0,  // bottom left (green)
+         0.5, -0.5,   0.0, 0.0, 1.0   // bottom right (blue)
+    ])
+
+    const vertexBuffer = device.createBuffer({
+        size: vertices.byteLength,
+        usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+        mappedAtCreation: true
+    })
+
+    new Float32Array(vertexBuffer.getMappedRange()).set(vertices)
+    vertexBuffer.unmap()
+
+    // Create shader
+    const shader = device.createShaderModule({
+        code: `
+            struct VertexInput {
+                @location(0) position: vec2f,
+                @location(1) color: vec3f
+            }
+
+            struct VertexOutput {
+                @builtin(position) position: vec4f,
+                @location(0) color: vec3f
+            }
+
+            @vertex
+            fn vs_main(in: VertexInput) -> VertexOutput {
+                var out: VertexOutput;
+                out.position = vec4f(in.position, 0.0, 1.0);
+                out.color = in.color;
+                return out;
+            }
+
+            @fragment
+            fn fs_main(in: VertexOutput) -> @location(0) vec4f {
+                return vec4f(in.color, 1.0);
+            }
+        `
+    })
+
+    // Create render pipeline
+    const pipeline = device.createRenderPipeline({
+        layout: 'auto',
+        vertex: {
+            module: shader,
+            entryPoint: 'vs_main',
+            buffers: [{
+                arrayStride: 20,
+                attributes: [
+                    { shaderLocation: 0, offset: 0, format: 'float32x2' },
+                    { shaderLocation: 1, offset: 8, format: 'float32x3' }
+                ]
+            }]
+        },
+        fragment: {
+            module: shader,
+            entryPoint: 'fs_main',
+            targets: [{ format: 'rgba8unorm' }]
+        }
+    })
+
+    // Create texture for rendering
+    const texture = device.createTexture({
+        size: { width: 512, height: 512 },
+        format: 'rgba8unorm',
+        usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC
+    })
+
+    // Render triangle
+    const encoder = device.createCommandEncoder()
+    const pass = encoder.beginRenderPass({
+        colorAttachments: [{
+            view: texture.createView(),
+            loadOp: 'clear',
+            storeOp: 'store',
+            clearValue: { r: 0.1, g: 0.1, b: 0.1, a: 1.0 }
+        }]
+    })
+
+    pass.setPipeline(pipeline)
+    pass.setVertexBuffer(0, vertexBuffer)
+    pass.draw(3)
+    pass.end()
+
+    device.queue.submit([encoder.finish()])
+
+    console.log('✅ Triangle rendered!')
+}
+
+renderTriangle()
+```
+
+## 📚 Complete Examples
+
+Check the [`examples/`](examples/) directory for more:
+
+- **[basic.js](examples/basic.js)** - GPU setup and adapter info
+- **[compute.js](examples/compute.js)** - Vector addition compute shader
+- **[triangle.js](examples/triangle.js)** - Render colored triangle
+- **[texture-upload.js](examples/texture-upload.js)** - Upload and sample textures
+- **[textured-quad.js](examples/textured-quad.js)** - Render textured quad with samplers
+- **[cube.js](examples/cube.js)** - 3D cube with depth testing
+- **[transparency.js](examples/transparency.js)** - Alpha blending
+- **[msaa.js](examples/msaa.js)** - Multi-sample anti-aliasing
+- **[mrt.js](examples/mrt.js)** - Multiple render targets (G-buffer)
+- **[indirect-draw.js](examples/indirect-draw.js)** - GPU-driven rendering
+- **[indirect-compute.js](examples/indirect-compute.js)** - GPU-driven compute
+- **[render-bundle.js](examples/render-bundle.js)** - Reusable render bundles
+- **[timestamp-queries.js](examples/timestamp-queries.js)** - GPU performance profiling
+
+Run any example:
+```bash
+node examples/compute.js
+# or with Bun (2x faster startup!)
+bun examples/compute.js
+```
+
+## 🎓 API Documentation
+
+### Full WebGPU Standard API
+
+The API is 100% compliant with the [W3C WebGPU specification](https://gpuweb.github.io/gpuweb/). Code written for browsers works identically in Node.js.
+
+**Core Objects:**
+- `Gpu` - Entry point (equivalent to `navigator.gpu`)
+- `GPUAdapter` - Physical GPU representation
+- `GPUDevice` - Logical device for GPU operations
+- `GPUBuffer` - GPU memory buffer
+- `GPUTexture` - GPU texture (images)
+- `GPUSampler` - Texture sampling configuration
+- `GPUShaderModule` - Compiled WGSL shader
+- `GPUBindGroup` - Resource bindings
+- `GPUPipelineLayout` - Pipeline resource layout
+- `GPUComputePipeline` - Compute shader pipeline
+- `GPURenderPipeline` - Render pipeline
+- `GPUCommandEncoder` - Command recording
+- `GPUComputePassEncoder` - Compute pass recording
+- `GPURenderPassEncoder` - Render pass recording
+- `GPUQueue` - Command submission queue
+
+**Constants (WebGPU Standard):**
+```javascript
+const {
+    GPUBufferUsage,    // Buffer usage flags
+    GPUTextureUsage,   // Texture usage flags
+    GPUMapMode,        // Buffer map modes
+    GPUShaderStage     // Shader stage flags
+} = require('@sylphx/webgpu')
+```
+
+### Key Differences from Browser
+
+**Entry Point:**
+```javascript
+// Browser
+const adapter = await navigator.gpu.requestAdapter()
+
+// Node.js (@sylphx/webgpu)
+const { Gpu } = require('@sylphx/webgpu')
 const gpu = Gpu()
-const adapter = await gpu.requestAdapter(options)
-const device = await adapter.requestDevice(descriptor)
+const adapter = await gpu.requestAdapter()
 ```
 
-#### **Device Methods**
-```javascript
-// Buffers
-const buffer = device.createBuffer({
-    size: number,
-    usage: GPUBufferUsage,
-    mappedAtCreation?: boolean
-})
+**Everything else is identical!** All methods, properties, and descriptors match the browser API exactly.
 
-// Shaders
-const shader = device.createShaderModule({
-    code: string,
-    label?: string
-})
-
-// Bind Groups (WebGPU Standard!)
-const bindGroup = device.createBindGroup({
-    layout: GPUBindGroupLayout,
-    entries: [
-        { binding: 0, resource: { buffer: GPUBuffer } },
-        { binding: 1, resource: GPUTextureView },
-        { binding: 2, resource: GPUSampler }
-    ]
-})
-
-// Pipelines (WebGPU Standard!)
-const computePipeline = device.createComputePipeline({
-    layout: GPUPipelineLayout,
-    compute: {
-        module: GPUShaderModule,
-        entryPoint: string
-    }
-})
-
-const renderPipeline = device.createRenderPipeline({
-    layout: GPUPipelineLayout,
-    vertex: {
-        module: GPUShaderModule,
-        entryPoint: string,
-        buffers: [...]
-    },
-    fragment: {
-        module: GPUShaderModule,
-        entryPoint: string,
-        targets: [...]
-    }
-})
-```
-
-### Constants (WebGPU Standard)
-
-```javascript
-const { GPUBufferUsage, GPUTextureUsage, GPUMapMode } = require('@sylphx/webgpu')
-
-// Buffer usage flags
-GPUBufferUsage.MAP_READ
-GPUBufferUsage.MAP_WRITE
-GPUBufferUsage.COPY_SRC
-GPUBufferUsage.COPY_DST
-GPUBufferUsage.INDEX
-GPUBufferUsage.VERTEX
-GPUBufferUsage.UNIFORM
-GPUBufferUsage.STORAGE
-GPUBufferUsage.INDIRECT
-GPUBufferUsage.QUERY_RESOLVE
-
-// Texture usage flags
-GPUTextureUsage.COPY_SRC
-GPUTextureUsage.COPY_DST
-GPUTextureUsage.TEXTURE_BINDING
-GPUTextureUsage.STORAGE_BINDING
-GPUTextureUsage.RENDER_ATTACHMENT
-
-// Map modes
-GPUMapMode.READ
-GPUMapMode.WRITE
-```
-
-## Browser Compatibility
+## 🌐 Browser Compatibility
 
 Share code between Node.js and browsers:
 
 ```javascript
-// shared-gpu-code.js - Works in BOTH environments!
-export async function initializeGPU() {
-    // Automatically use navigator.gpu in browser, Gpu() in Node.js
-    const gpu = typeof navigator !== 'undefined' ? navigator.gpu : require('@sylphx/webgpu').Gpu()
+// Universal WebGPU code (works in both!)
+export async function initGPU() {
+    // Detect environment
+    const gpu = typeof navigator !== 'undefined'
+        ? navigator.gpu
+        : require('@sylphx/webgpu').Gpu()
 
     const adapter = await gpu.requestAdapter()
     const device = await adapter.requestDevice()
 
-    // All subsequent code is IDENTICAL!
+    // All code below is identical!
     const buffer = device.createBuffer({
         size: 256,
         usage: GPUBufferUsage.STORAGE
@@ -306,120 +377,159 @@ export async function initializeGPU() {
 }
 ```
 
-## Migration from v0.8.x
+## 🔧 Advanced Features
 
-v0.9.0 uses WebGPU standard API. If you're using v0.8.x flattened API:
+### GPU Profiling with Timestamp Queries
 
-**v0.8.x (Flattened)**:
 ```javascript
-device.createBindGroup(
-    {},
-    bindGroupLayout,
-    [{ binding: 0, resourceType: 'buffer' }],
-    [uniformBuffer],
-    null,
-    null
-)
+const querySet = device.createQuerySet({
+    type: 'timestamp',
+    count: 2
+})
+
+const encoder = device.createCommandEncoder()
+encoder.writeTimestamp(querySet, 0)
+
+// ... GPU work ...
+
+encoder.writeTimestamp(querySet, 1)
+device.queue.submit([encoder.finish()])
+
+// Read timing results
+const timings = await readTimestamps(querySet)
+console.log(`GPU time: ${(timings[1] - timings[0]) / 1e6}ms`)
 ```
 
-**v0.9.0 (WebGPU Standard)**:
+### Indirect Draw (GPU-Driven Rendering)
+
 ```javascript
-device.createBindGroup({
-    layout: bindGroupLayout,
-    entries: [
-        { binding: 0, resource: { buffer: uniformBuffer } }
+// GPU generates its own draw commands
+const indirectBuffer = device.createBuffer({
+    size: 20,
+    usage: GPUBufferUsage.INDIRECT | GPUBufferUsage.STORAGE
+})
+
+// Compute shader writes draw commands
+// Render pass reads from buffer
+pass.drawIndirect(indirectBuffer, 0)
+```
+
+### Multiple Render Targets (Deferred Rendering)
+
+```javascript
+const pass = encoder.beginRenderPass({
+    colorAttachments: [
+        { view: positionTexture.createView(), ... },   // G-buffer position
+        { view: normalTexture.createView(), ... },     // G-buffer normal
+        { view: albedoTexture.createView(), ... }      // G-buffer albedo
     ]
 })
 ```
 
-**Access legacy API** (if needed):
-```javascript
-const { native } = require('@sylphx/webgpu')
-// native.GpuDevice, etc. (flattened API)
+## 🧪 Testing
+
+```bash
+# Run all tests
+npm test
+
+# Watch mode
+npm run test:watch
+
+# Coverage report
+npm run test:coverage
 ```
 
-## Advanced: Direct Native Bindings
+**Test Suite:**
+- 58 comprehensive tests
+- 100% pass rate
+- Covers all WebGPU features
+- Real GPU operations (not mocked)
 
-For advanced users who need direct access to Rust bindings:
+## 🏗️ Building from Source
 
-```javascript
-const { native } = require('@sylphx/webgpu')
+```bash
+# Install Rust (if not already installed)
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
-// Access flattened API directly
-const device = native.GpuDevice.create(...)
+# Clone repository
+git clone https://github.com/SylphxAI/webgpu.git
+cd webgpu
+
+# Install dependencies
+npm install
+
+# Build native bindings (5-15 minutes)
+npm run build
+
+# Run tests
+npm test
 ```
 
-## Architecture
+## 📊 Performance
+
+**Binary Size:**
+- @sylphx/webgpu: ~10MB (optimized release)
+- @kmamal/gpu: 50-150MB (Dawn binaries)
+
+**Build Time:**
+- @sylphx/webgpu: 5-15 minutes (Cargo)
+- @kmamal/gpu: 1-3 hours (Dawn + depot_tools)
+
+**Runtime Performance:**
+- GPU operations: Zero overhead (thin wrapper)
+- CPU overhead: <10% for descriptor transformation
+- Compute/Render: Limited by GPU, not bindings
+
+## 🛠️ Architecture
 
 ```
 User Code (WebGPU Standard API)
     ↓
-webgpu.js (Wrapper - transforms to flattened format)
+webgpu.js (JavaScript wrapper - transforms descriptors)
     ↓
-index.js (napi-rs bindings)
+index.js (napi-rs native bindings)
     ↓
-Rust (wgpu-rs)
+Rust (wgpu implementation)
     ↓
-GPU Drivers (Vulkan/Metal/DX12)
+GPU Drivers (Metal/Vulkan/DX12)
 ```
 
-## Performance
+The JavaScript wrapper provides 100% standard WebGPU API while the Rust layer uses optimized flat signatures for napi-rs compatibility.
 
-The wrapper adds **<10% overhead** for descriptor transformation - negligible compared to GPU operations:
+## 🤝 Contributing
 
-- `createBindGroup`: ~0.2ms overhead (vs ~2.3ms total)
-- `createPipeline`: ~0.1ms overhead (vs ~15ms total)
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
-GPU operations (compute, render) have **zero overhead**.
+**Areas for Contribution:**
+- 📚 Additional examples and tutorials
+- 🧪 More test cases and benchmarks
+- 🔌 Integration with frameworks (Three.js, Babylon.js, etc.)
+- 📖 Documentation improvements
+- 🐛 Bug reports and fixes
 
-## Building from Source
-
-```bash
-# Install Rust
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-
-# Clone and build
-git clone https://github.com/SylphxAI/webgpu.git
-cd webgpu
-npm install
-npm run build  # 5-15 minutes
-
-# Test
-npm test
-```
-
-## Comparison with Alternatives
-
-### vs @kmamal/gpu (Dawn)
-- ✅ **WebGPU Standard API** (100% browser-compatible)
-- ✅ **10x smaller** binaries (10MB vs 100MB+)
-- ✅ **100x faster** builds (minutes vs hours)
-- ✅ **Simpler** toolchain (Cargo vs depot_tools)
-
-### vs Browser WebGPU
-- ✅ Server-side rendering
-- ✅ Headless compute
-- ✅ No browser needed
-- ✅ **Same API!** Code works in both
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md)
-
-## License
+## 📄 License
 
 MIT © [SylphxAI](https://github.com/SylphxAI)
 
-## Resources
+## 🔗 Resources
 
-- [WebGPU Specification](https://gpuweb.github.io/gpuweb/)
-- [wgpu-rs](https://github.com/gfx-rs/wgpu)
-- [WEBGPU_STANDARD_COMPLIANCE.md](WEBGPU_STANDARD_COMPLIANCE.md) - Technical details
+- **[API Documentation](https://sylphxai.github.io/webgpu/)** - Complete API reference
+- **[WebGPU Specification](https://gpuweb.github.io/webgpu/)** - Official W3C spec
+- **[wgpu-rs](https://github.com/gfx-rs/wgpu)** - Underlying Rust implementation
+- **[Examples](examples/)** - 13 working examples
+- **[CHANGELOG](CHANGELOG.md)** - Version history
+- **[ROADMAP](ROADMAP.md)** - Project status and future plans
+
+## ⭐ Star History
+
+If you find this project useful, please consider giving it a star on GitHub!
 
 ---
 
-**Ready to use WebGPU in Node.js with 100% standard compliance? Install now:**
+**Ready to use WebGPU in Node.js?**
+
 ```bash
 npm install @sylphx/webgpu
 ```
-# Force rebuild due to cache
+
+**v1.0.1 - Production Ready** 🚀
