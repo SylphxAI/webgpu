@@ -1,5 +1,11 @@
 # @sylphx/webgpu
 
+## 1.0.3
+
+### Patch Changes
+
+- ce36032: Test Slack notifications after workflow fix
+
 ## 1.0.2
 
 ### Patch Changes
