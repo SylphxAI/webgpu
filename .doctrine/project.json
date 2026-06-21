@@ -1,0 +1,177 @@
+{
+  "schemaVersion": 1,
+  "project": {
+    "repo": "SylphxAI/webgpu",
+    "name": "@sylphx/webgpu",
+    "lifecycle": "production",
+    "layer": "foundation",
+    "summary": "Foundation native WebGPU package for Node.js and Bun with Rust/wgpu bindings, platform packages, examples, tests, documentation, CI, and release workflow.",
+    "goals": [
+      "Provide a standards-aligned WebGPU implementation for Node.js and Bun through documented package exports.",
+      "Keep Rust native bindings, JavaScript wrappers, TypeScript declarations, platform packages, examples, tests, docs, and release artifacts coherent.",
+      "Publish consumer-neutral WebGPU behavior and reproducible compatibility claims."
+    ],
+    "nonGoals": [
+      "Own one consumer application's rendering policy, shader library, asset pipeline, GPU scheduling policy, or benchmark narrative.",
+      "Own the WebGPU standard, wgpu upstream behavior, browser behavior, or all GPU platform driver issues.",
+      "Publish enterprise doctrine, project manifest schema, org rulesets, rollout issue reconciliation, or shared CI policy."
+    ]
+  },
+  "boundaries": {
+    "owns": [
+      {
+        "name": "webgpu-native-package",
+        "description": "The Rust/wgpu native implementation, napi binding surface, JavaScript wrapper, TypeScript declarations, and package export behavior."
+      },
+      {
+        "name": "webgpu-platform-artifacts",
+        "description": "Platform-specific native packages, build scripts, CI matrix, and release artifact assembly."
+      },
+      {
+        "name": "webgpu-docs-tests-examples",
+        "description": "Documentation, examples, compatibility tests, and release notes that prove consumer-visible behavior."
+      }
+    ],
+    "doesNotOwn": [
+      "Consumer app rendering policy, shader libraries, benchmark narratives, product-specific GPU workloads, or asset pipelines.",
+      "The WebGPU standard, upstream wgpu behavior, browser behavior, GPU driver behavior, or OS platform policy.",
+      "Enterprise doctrine, project manifest schema, rollout issue reconciliation, org rulesets, or shared workflow implementation."
+    ],
+    "publicSurfaces": [
+      {
+        "type": "documentation",
+        "name": "Package README",
+        "location": "README.md"
+      },
+      {
+        "type": "documentation",
+        "name": "API and guide documentation",
+        "location": "docs/"
+      },
+      {
+        "type": "package-export",
+        "name": "Main npm package",
+        "location": "package.json"
+      },
+      {
+        "type": "package-export",
+        "name": "Native platform packages",
+        "location": "npm/"
+      },
+      {
+        "type": "api",
+        "name": "Native Rust implementation",
+        "location": "src/"
+      },
+      {
+        "type": "documentation",
+        "name": "Examples and tests",
+        "location": "examples/ and test/"
+      },
+      {
+        "type": "workflow",
+        "name": "CI workflow",
+        "location": ".github/workflows/ci.yml"
+      },
+      {
+        "type": "workflow",
+        "name": "Test workflow",
+        "location": ".github/workflows/test.yml"
+      },
+      {
+        "type": "workflow",
+        "name": "Release workflow",
+        "location": ".github/workflows/release.yml"
+      },
+      {
+        "type": "manifest",
+        "name": "Project control-plane manifest",
+        "location": ".doctrine/project.json"
+      }
+    ],
+    "allowedDependencies": [
+      {
+        "repo": "SylphxAI/doctrine",
+        "surface": "project manifest schema, standards, and rollout audit",
+        "direction": "downward"
+      },
+      {
+        "repo": "SylphxAI/.github",
+        "surface": "central reusable release workflow",
+        "direction": "downward"
+      },
+      {
+        "repo": "gfx-rs/wgpu",
+        "surface": "documented Rust wgpu implementation behavior",
+        "direction": "external"
+      },
+      {
+        "repo": "napi-rs/napi-rs",
+        "surface": "documented napi-rs build and binding behavior",
+        "direction": "external"
+      }
+    ],
+    "forbiddenCouplings": [
+      "Do not require consumers to import internal Rust modules, unpublished native artifacts, or private CI outputs instead of package exports.",
+      "Do not encode one consumer product's rendering policy, shader assets, GPU workload assumptions, or benchmark narrative as hidden package behavior.",
+      "Do not publish native artifacts or compatibility claims without reproducible build, test, package readback, and consumer smoke evidence.",
+      "Do not publish enterprise process policy from this repository instead of SylphxAI/doctrine or SylphxAI/.github."
+    ]
+  },
+  "documentation": {
+    "adr": {
+      "path": "docs/adr/",
+      "status": "planned"
+    },
+    "specs": {
+      "path": "docs/",
+      "status": "present"
+    },
+    "catalog": {
+      "path": ".doctrine/project.json",
+      "status": "present"
+    },
+    "runbooks": {
+      "path": "CONTRIBUTING.md",
+      "status": "present"
+    },
+    "generatedReferences": {
+      "path": "docs/api/",
+      "status": "present"
+    }
+  },
+  "delivery": {
+    "ciModel": "legacy-ci",
+    "requiredContexts": [
+      "Build",
+      "Test",
+      "Release"
+    ],
+    "deployPath": "Pull requests run native build and test workflows; main pushes run the release workflow, build platform artifacts, and delegate package release handling to the central reusable release workflow.",
+    "productionProof": "Published package changes require CI, native artifact readback, package registry readback, and consumer smoke evidence for affected exports and platform packages.",
+    "recoveryClass": "forward-fix-only"
+  },
+  "adoption": {
+    "status": "baseline",
+    "gaps": [
+      {
+        "id": "adr29-not-adopted",
+        "description": "Upgrade from legacy CI to ADR-29 admission contexts when the native package is ready for full central policy enforcement.",
+        "owner": "SylphxAI/webgpu",
+        "target": "Before full adoption"
+      },
+      {
+        "id": "release-proof-missing",
+        "description": "Document registry readback, artifact integrity, and consumer smoke evidence required after native package releases.",
+        "owner": "SylphxAI/webgpu",
+        "target": "Before commercial-grade package operation"
+      },
+      {
+        "id": "compatibility-contract-needs-adr",
+        "description": "Turn supported platforms, native ABI compatibility, WebGPU compliance scope, and benchmark methodology into an ADR or generated compatibility report.",
+        "owner": "SylphxAI/webgpu",
+        "target": "Before full package adoption"
+      }
+    ]
+  }
+}
