@@ -73,14 +73,15 @@ impl GpuAdapter {
     /// Request a device from this adapter
     ///
     /// Creates a logical device for executing GPU operations.
-    /// Currently requests timestamp query feature by default.
+    /// Optional features must be requested explicitly by callers that need them.
     #[napi]
     pub async fn request_device(&self) -> Result<crate::GpuDevice> {
-        let (device, queue) = self.adapter
+        let (device, queue) = self
+            .adapter
             .request_device(
                 &wgpu::DeviceDescriptor {
                     label: None,
-                    required_features: wgpu::Features::TIMESTAMP_QUERY,
+                    required_features: wgpu::Features::empty(),
                     required_limits: wgpu::Limits::default(),
                 },
                 None,
