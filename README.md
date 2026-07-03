@@ -3,11 +3,13 @@
 [![npm version](https://img.shields.io/npm/v/@sylphx/webgpu.svg)](https://www.npmjs.com/package/@sylphx/webgpu)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-> **Production-ready WebGPU for Node.js & Bun** - 100% standard-compliant, built with Rust + wgpu
+> **Production-ready WebGPU for Node.js & Bun** - standards-aligned, lightweight, built with Rust + wgpu
 
 ## ✨ What is @sylphx/webgpu?
 
-**The modern, lightweight WebGPU implementation for Node.js.** Use the same WebGPU API in both Node.js and browsers - write once, run everywhere.
+**The modern, lightweight WebGPU implementation for Node.js.** Use a
+browser-compatible WebGPU API in Node.js and Bun, backed by Rust/wgpu native
+bindings.
 
 ```javascript
 const { Gpu, GPUBufferUsage } = require('@sylphx/webgpu')
@@ -17,7 +19,7 @@ const gpu = Gpu()
 const adapter = await gpu.requestAdapter()
 const device = await adapter.requestDevice()
 
-// Create buffer (100% WebGPU standard)
+// Create buffer (WebGPU-standard descriptor shape)
 const buffer = device.createBuffer({
     size: 256,
     usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
@@ -33,11 +35,30 @@ pass.end()
 device.queue.submit([encoder.finish()])
 ```
 
+## Role in Python-Class TypeScript ML
+
+`@sylphx/webgpu` is the native GPU substrate for the broader SylphxAI
+Python-to-TypeScript stack. It is not the NumPy or PyTorch API layer itself;
+instead, it gives libraries such as `@sylphx/numpy` and `@sylphx/torch` a
+consumer-neutral Rust/wgpu execution path for kernels, tensors, and GPU-backed
+workloads.
+
+The boundary matters:
+
+- numerical libraries should expose Python-familiar synchronous hot-path APIs;
+- backend selection and GPU synchronization should be explicit, sparse async
+  boundaries;
+- this package owns WebGPU package behavior, native artifacts, and examples,
+  not one consumer's benchmark story.
+
+See `docs/adr/001-python-performance-backend-contract.md` for the backend
+contract.
+
 ## 🚀 Why Choose @sylphx/webgpu?
 
 | Feature | @sylphx/webgpu | @kmamal/gpu (Dawn) |
 |---------|---------------|-------------------|
-| **WebGPU Standard** | ✅ 100% compliant | ⚠️ Custom API |
+| **WebGPU API** | ✅ Standards-aligned browser API | ⚠️ Custom API |
 | **Binary Size** | 1.9-4.6MB | 50-150MB |
 | **Build Time** | ~30 seconds | 1-3 hours |
 | **Code Portability** | ✅ Browser compatible | ❌ Node.js only |
@@ -47,8 +68,8 @@ device.queue.submit([encoder.finish()])
 
 ### Key Advantages
 
-✅ **100% WebGPU Standard** - Share code between Node.js and browsers
-✅ **Production Ready** - v1.0.1 stable release with 58 tests, 100% pass rate
+✅ **WebGPU-standard API** - Share code between Node.js and browsers
+✅ **Production Ready** - v1.0.4 stable release with a 58-test local suite
 ✅ **Ultra Lightweight** - 2-5MB binaries vs 100MB+ alternatives
 ✅ **Modern Stack** - Rust + wgpu (used by Firefox, Deno, Bevy)
 ✅ **Cross-Platform** - 6 prebuilt platforms (macOS, Linux, Windows, ARM64)
@@ -306,9 +327,12 @@ bun examples/compute.js
 
 ## 🎓 API Documentation
 
-### Full WebGPU Standard API
+### WebGPU Standard API
 
-The API is 100% compliant with the [W3C WebGPU specification](https://gpuweb.github.io/gpuweb/). Code written for browsers works identically in Node.js.
+The API follows the [W3C WebGPU specification](https://gpuweb.github.io/gpuweb/)
+shape closely enough that browser-oriented WebGPU code can be ported to Node.js
+and Bun with minimal changes. Full conformance claims require the package's test
+and compatibility evidence, not README wording alone.
 
 **Core Objects:**
 - `Gpu` - Entry point (equivalent to `navigator.gpu`)
@@ -441,8 +465,8 @@ npm run test:coverage
 
 **Test Suite:**
 - 58 comprehensive tests
-- 100% pass rate
-- Covers all WebGPU features
+- Current suite has passed 58/58 in local validation
+- Covers the documented WebGPU package surface
 - Real GPU operations (not mocked)
 
 ## 🏗️ Building from Source
@@ -483,7 +507,7 @@ npm test
 ## 🛠️ Architecture
 
 ```
-User Code (WebGPU Standard API)
+User Code (WebGPU-style API)
     ↓
 webgpu.js (JavaScript wrapper - transforms descriptors)
     ↓
@@ -494,7 +518,8 @@ Rust (wgpu implementation)
 GPU Drivers (Metal/Vulkan/DX12)
 ```
 
-The JavaScript wrapper provides 100% standard WebGPU API while the Rust layer uses optimized flat signatures for napi-rs compatibility.
+The JavaScript wrapper provides the WebGPU-style package API while the Rust
+layer uses optimized flat signatures for napi-rs compatibility.
 
 ## 🤝 Contributing
 
@@ -532,4 +557,4 @@ If you find this project useful, please consider giving it a star on GitHub!
 npm install @sylphx/webgpu
 ```
 
-**v1.0.1 - Production Ready** 🚀
+**v1.0.4 - Production Ready**

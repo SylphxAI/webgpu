@@ -20,6 +20,7 @@ export default defineConfig({
     nav: [
       { text: 'Guide', link: '/guide/' },
       { text: 'API', link: '/api/' },
+      { text: 'ADR', link: '/adr/' },
       { text: 'Examples', link: '/examples/' },
       { text: 'GitHub', link: 'https://github.com/SylphxAI/webgpu' },
     ],
@@ -67,6 +68,18 @@ export default defineConfig({
             { text: 'Texture', link: '/api/texture' },
             { text: 'Pipeline', link: '/api/pipeline' },
             { text: 'Command Encoder', link: '/api/command-encoder' },
+          ],
+        },
+      ],
+      '/adr/': [
+        {
+          text: 'Architecture Decision Log',
+          items: [
+            { text: 'Overview', link: '/adr/' },
+            {
+              text: 'Python Performance Backend Contract',
+              link: '/adr/001-python-performance-backend-contract',
+            },
           ],
         },
       ],

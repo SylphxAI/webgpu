@@ -1,6 +1,6 @@
 {
   "name": "@sylphx/webgpu-linux-arm64-gnu",
-  "version": "0.11.2",
+  "version": "1.0.4",
   "description": "WebGPU native bindings for linux-arm64-gnu",
   "main": "index.darwin-arm64.node",
   "files": [

@@ -21,15 +21,15 @@
 
 - **20-50x smaller binary**: 1.9-4.6MB vs 50-150MB (actual measured sizes)
 - **120x faster builds**: ~30 seconds vs 1-3 hours (actual clean build times)
-- **100% WebGPU Standard**: Browser-compatible API, code works everywhere
+- **WebGPU-standard API**: Browser-compatible API shape for portable code
 - **Modern architecture**: Pure Rust, no C++ complexity
 
 ### Production Ready
 
-✅ **Complete API coverage**: All WebGPU features implemented
+✅ **Documented API coverage**: Covered package surface is implemented and tested
 ✅ **Cross-platform**: macOS, Linux, Windows (x64 + ARM64)
 ✅ **Runtime support**: Node.js 18+ and Bun 1.0+
-✅ **Well tested**: 58 tests, 100% pass rate, real GPU operations
+✅ **Well tested**: 58-test local suite with real GPU operations
 ✅ **Minimal dependencies**: Just native bindings, no bloat
 
 ### Performance
@@ -78,10 +78,10 @@ ES modules, TypeScript definitions, async/await. Built for modern JavaScript.
 
 | Feature | @kmamal/gpu (Dawn) | This Library |
 |---------|-------------------|--------------|
-| **WebGPU Standard** | ⚠️ Custom API | ✅ 100% compliant |
+| **WebGPU API** | ⚠️ Custom API | ✅ Standards-aligned browser API |
 | **Binary Size** | 50-150MB | 1.9-4.6MB |
 | **Build Time** | 1-3 hours | ~30 seconds |
-| **API Coverage** | Partial | 100% WebGPU |
+| **API Coverage** | Partial | Documented package surface |
 | **Browser Compatible** | ❌ Node.js only | ✅ Shares code |
 | **TypeScript** | ❌ | ✅ Full definitions |
 | **Bun Support** | ⚠️ Limited | ✅ Native support |

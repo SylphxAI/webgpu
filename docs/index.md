@@ -22,12 +22,12 @@ features:
     details: Built with Rust and wgpu. Ultra-small binaries (1.9-4.6MB vs 50-150MB), 120x faster build (~30s vs 1-3 hours).
 
   - icon: 🎯
-    title: 100% WebGPU Standard
-    details: Browser-compatible API. Code works identically in Node.js and browsers. Share code everywhere.
+    title: WebGPU-Standard API
+    details: Browser-compatible API shape for Node.js and Bun. Share WebGPU code across runtime boundaries with minimal changes.
 
   - icon: 🚀
-    title: Production Ready (v1.0)
-    details: Stable v1.0.1 release. 58 comprehensive tests, 100% pass rate. All features implemented.
+    title: Production Ready (v1.0.4)
+    details: Stable v1.0.4 release with a 58-test local suite covering the documented package surface.
 
   - icon: 🔧
     title: Easy to Use
@@ -66,7 +66,7 @@ pnpm add @sylphx/webgpu
 const { Gpu } = require('@sylphx/webgpu')
 
 async function main() {
-  // Create GPU instance (100% WebGPU standard)
+  // Create GPU instance with the WebGPU-standard API shape
   const gpu = Gpu()
 
   // Request adapter
@@ -97,7 +97,7 @@ bun example.js
 
 | Feature | @sylphx/webgpu | @kmamal/gpu (Dawn) |
 |---------|----------------|-------------------|
-| **WebGPU Standard** | ✅ 100% compliant | ⚠️ Custom API |
+| **WebGPU API** | ✅ Standards-aligned browser API | ⚠️ Custom API |
 | **Build Time** | ~30 seconds | 1-3 hours |
 | **Binary Size** | 1.9-4.6MB | 50-150MB |
 | **Implementation** | wgpu (Rust) | Dawn (C++) |
@@ -106,7 +106,7 @@ bun example.js
 
 ## Features
 
-- ✅ **100% WebGPU Standard** - Browser-compatible API
+- ✅ **WebGPU-standard API** - Browser-compatible API shape
 - ✅ **GPU Compute** - Run shaders on GPU for parallel computation
 - ✅ **Rendering** - Full render pipeline with depth, MSAA, MRT
 - ✅ **Textures & Samplers** - All formats and operations
@@ -117,9 +117,9 @@ bun example.js
 
 ## What's New in v1.0
 
-::: info v1.0.1 - Production Ready 🚀
-- 🎉 **Stable Release** - Production-ready v1.0.1
-- ✅ **58 Tests Passing** - Comprehensive test coverage, 100% pass rate
+::: info v1.0.4 - Production Ready
+- 🎉 **Stable Release** - Production-ready v1.0.4
+- ✅ **58 Tests Passing** - Local suite covers the documented package surface
 - 🚀 **Bun Support** - Works perfectly with Bun 1.0+
 - 📚 **Complete Documentation** - Full guides and API reference
 - 🌐 **Browser Compatible** - Share code between Node.js and browsers
@@ -130,7 +130,7 @@ bun example.js
 ```
 Binary Size:     1.9-4.6MB  (20-50x smaller than Dawn)
 Build Time:      ~30s       (120x faster than Dawn)
-Tests:           58 pass    (100% success rate)
+Tests:           58 pass    (local package suite)
 ```
 
 ## Community
