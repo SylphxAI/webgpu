@@ -113,5 +113,5 @@ jobs:
         mv artifacts/bindings-aarch64-unknown-linux-gnu/*.node npm/linux-arm64-gnu/ 2>/dev/null || true
         mv artifacts/bindings-x86_64-pc-windows-msvc/*.node npm/win32-x64-msvc/ 2>/dev/null || true
         mv artifacts/bindings-aarch64-pc-windows-msvc/*.node npm/win32-arm64-msvc/ 2>/dev/null || true
-        node scripts/create-platform-packages.js
+        bun scripts/create-platform-packages.js
     secrets: inherit
