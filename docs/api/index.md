@@ -1,6 +1,6 @@
 # API Reference
 
-Complete API reference for `@sylphx/webgpu` v1.0 - 100% WebGPU Standard Compliant.
+Complete API reference for `@sylphx/webgpu` v1.0 - standards-aligned WebGPU API for Node.js and Bun.
 
 ## Overview
 
@@ -633,14 +633,15 @@ device.destroy()
 - **[Rendering Guide](/guide/rendering)** - Rendering tutorial
 - **[Examples](/examples/)** - Complete working examples
 
-## Standards Compliance
+## Standards Alignment
 
-This library implements WebGPU v1.0 with **100% standard compliance**:
+This library follows the WebGPU v1.0 API shape for the documented Node.js and
+Bun package surface:
 
 - ✅ Standard buffer mapping with overlapping range detection
 - ✅ Standard texture operations
 - ✅ Standard pipeline creation
 - ✅ Standard error handling
-- ✅ No non-standard APIs
+- ✅ Browser-compatible naming for the covered package surface
 
 See the [WebGPU Specification](https://www.w3.org/TR/webgpu/) for full API details.

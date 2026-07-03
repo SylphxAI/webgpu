@@ -1,6 +1,6 @@
 {
   "name": "@sylphx/webgpu-darwin-arm64",
-  "version": "0.11.2",
+  "version": "1.0.4",
   "description": "WebGPU native bindings for darwin-arm64",
   "main": "index.darwin-arm64.node",
   "files": [

@@ -11,19 +11,12 @@
         "vitepress": "^1.6.4",
       },
       "optionalDependencies": {
-        "@sylphx/webgpu-android-arm-eabi": "0.1.0",
-        "@sylphx/webgpu-android-arm64": "0.1.0",
-        "@sylphx/webgpu-darwin-arm64": "0.1.0",
-        "@sylphx/webgpu-darwin-x64": "0.1.0",
-        "@sylphx/webgpu-freebsd-x64": "0.1.0",
-        "@sylphx/webgpu-linux-arm-gnueabihf": "0.1.0",
-        "@sylphx/webgpu-linux-arm64-gnu": "0.1.0",
-        "@sylphx/webgpu-linux-arm64-musl": "0.1.0",
-        "@sylphx/webgpu-linux-x64-gnu": "0.1.0",
-        "@sylphx/webgpu-linux-x64-musl": "0.1.0",
-        "@sylphx/webgpu-win32-arm64-msvc": "0.1.0",
-        "@sylphx/webgpu-win32-ia32-msvc": "0.1.0",
-        "@sylphx/webgpu-win32-x64-msvc": "0.1.0",
+        "@sylphx/webgpu-darwin-arm64": "1.0.4",
+        "@sylphx/webgpu-darwin-x64": "1.0.4",
+        "@sylphx/webgpu-linux-arm64-gnu": "1.0.4",
+        "@sylphx/webgpu-linux-x64-gnu": "1.0.4",
+        "@sylphx/webgpu-win32-arm64-msvc": "1.0.4",
+        "@sylphx/webgpu-win32-x64-msvc": "1.0.4",
       },
     },
   },
@@ -313,6 +306,18 @@
     "@shikijs/vscode-textmate": ["@shikijs/vscode-textmate@10.0.2", "", {}, "sha512-83yeghZ2xxin3Nj8z1NMd/NCuca+gsYXswywDy5bHvwlWL8tpTQmzGeUuHd9FC3E/SBEMvzJRwWEOz5gGes9Qg=="],
 
     "@sinclair/typebox": ["@sinclair/typebox@0.25.24", "", {}, "sha512-XJfwUVUKDHF5ugKwIcxEgc9k8b7HbznCp6eUfWgu710hMPNIO4aw4/zB5RogDQz8nd6gyCDpU9O/m6qYEWY6yQ=="],
+
+    "@sylphx/webgpu-darwin-arm64": ["@sylphx/webgpu-darwin-arm64@1.0.4", "", { "os": "darwin", "cpu": "arm64" }, "sha512-h2PB1aQgnE+W5cFaZ/IGiMhJO3PirjpNZCPoUmyz9Y5kU8korFWsUr8Ggkjs3ARSnglJzfYRhWtRyMLclfKAFg=="],
+
+    "@sylphx/webgpu-darwin-x64": ["@sylphx/webgpu-darwin-x64@1.0.4", "", { "os": "darwin", "cpu": "x64" }, "sha512-QRlLP6hIBOAOT5WVaKHl5cxES7gcLsQeFsmVvLfSbdNPu2Cy3R1wWjdt2F1dBTgTj9SgRIRkqSPEduuphGSzCQ=="],
+
+    "@sylphx/webgpu-linux-arm64-gnu": ["@sylphx/webgpu-linux-arm64-gnu@1.0.4", "", { "os": "linux", "cpu": "arm64" }, "sha512-62hQWfOJTW8MM+U2VLjVtQzNXpcw5ba32BebXr/6e9wyZPA96CGAVJ+xJKcPtcgPHMBHoSbDPSesRzG1aW2/XQ=="],
+
+    "@sylphx/webgpu-linux-x64-gnu": ["@sylphx/webgpu-linux-x64-gnu@1.0.4", "", { "os": "linux", "cpu": "x64" }, "sha512-sJWLH20rExzDQLV36sf/iQS197HWNyWjv6XQYosks+BHhFUk7ErEO5Uh/C5NPGN5iWUvhD9CGy9meGHHESmrlg=="],
+
+    "@sylphx/webgpu-win32-arm64-msvc": ["@sylphx/webgpu-win32-arm64-msvc@1.0.4", "", { "os": "win32", "cpu": "arm64" }, "sha512-3rX60fwmXa3S9jHR3LG9nw79icgDRZWEx8ooAPTTc7oPsxzZFNJ3oVLm51ZxmeIpmQY9APpmTYrCE1P0JALnsw=="],
+
+    "@sylphx/webgpu-win32-x64-msvc": ["@sylphx/webgpu-win32-x64-msvc@1.0.4", "", { "os": "win32", "cpu": "x64" }, "sha512-0MERCmcHjYLcjKped3BBxaxUpP2zAnQGwj8r+fWIIvT6naVI6sI6P+kWDK7kSiKyHBrZV8Enue9qhdtwSbZDvQ=="],
 
     "@tootallnate/once": ["@tootallnate/once@2.0.0", "", {}, "sha512-XCuKFP5PS55gnMVu3dty8KPatLqUoy/ZYzDzAGCQ8JNFCkLXzmI7vNHCR+XpbZaMWQK/vQubr7PkYq8g470J/A=="],
 

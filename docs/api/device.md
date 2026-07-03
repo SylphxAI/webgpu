@@ -320,9 +320,9 @@ Creates a bind group.
   - `label` (String, optional): Debug label
 - `layout` (GPUBindGroupLayout): Bind group layout
 - `entries` (Array): Binding entries with `binding` and `resourceType`
-- `buffers` (Array<GPUBuffer>, optional): Buffers referenced by entries
-- `textures` (Array<GPUTextureView>, optional): Texture views referenced by entries
-- `samplers` (Array<GPUSampler>, optional): Samplers referenced by entries
+- `buffers` (`Array<GPUBuffer>`, optional): Buffers referenced by entries
+- `textures` (`Array<GPUTextureView>`, optional): Texture views referenced by entries
+- `samplers` (`Array<GPUSampler>`, optional): Samplers referenced by entries
 
 **Returns:** `GPUBindGroup`
 
@@ -348,7 +348,7 @@ Creates a pipeline layout.
 **Parameters:**
 - `descriptor` (Object):
   - `label` (String, optional): Debug label
-- `bindGroupLayouts` (Array<GPUBindGroupLayout>): Bind group layouts
+- `bindGroupLayouts` (`Array<GPUBindGroupLayout>`): Bind group layouts
 
 **Returns:** `GPUPipelineLayout`
 

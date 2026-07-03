@@ -365,7 +365,7 @@ export declare class GpuAdapter {
    * Request a device from this adapter
    *
    * Creates a logical device for executing GPU operations.
-   * Currently requests timestamp query feature by default.
+   * Optional features must be requested explicitly by callers that need them.
    */
   requestDevice(): Promise<GpuDevice>
 }

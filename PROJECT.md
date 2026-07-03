@@ -39,6 +39,8 @@ not internal Rust modules, unpublished native files, or private CI artifacts.
 
 - `README.md`, `docs/`, `CONTRIBUTING.md`, `ROADMAP.md`, and `CHANGELOG.md`
   document the package, API, examples, and release history.
+- `docs/adr/` records durable package contracts, including the backend boundary
+  for Python-class numerical performance consumers.
 - `package.json`, `index.js`, `webgpu.js`, `index.d.ts`, and `webgpu.d.ts`
   define the package surface.
 - `src/` defines native Rust implementation exposed through napi.
