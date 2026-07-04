@@ -50,7 +50,8 @@
     "release": "echo \"Direct changeset publish is unsafe for native platform packages; use the Sylphx release workflow.\" && exit 1",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
-    "docs:preview": "vitepress preview docs"
+    "docs:preview": "vitepress preview docs",
+    "test:project-control": "node --test test/project-control.node-test.mjs"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.7",

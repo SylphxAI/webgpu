@@ -85,8 +85,18 @@
       },
       {
         "type": "manifest",
-        "name": "Project control-plane manifest",
+        "name": "Doctrine adapter manifest",
         "location": ".doctrine/project.json"
+      },
+      {
+        "type": "manifest",
+        "name": "Vendor-neutral project manifest",
+        "location": "project.manifest.json"
+      },
+      {
+        "type": "test",
+        "name": "Project-control boundary test",
+        "location": "test/project-control.node-test.mjs"
       }
     ],
     "allowedDependencies": [
@@ -109,6 +119,11 @@
         "repo": "napi-rs/napi-rs",
         "surface": "documented napi-rs build and binding behavior",
         "direction": "external"
+      },
+      {
+        "repo": "SylphxAI/groundatlas",
+        "surface": "Released GroundAtlas package/action for vendor-neutral project manifest validation and fleet dogfooding.",
+        "direction": "peer-public"
       }
     ],
     "forbiddenCouplings": [
@@ -121,18 +136,18 @@
   "documentation": {
     "adr": {
       "path": "docs/adr/",
-      "status": "planned"
+      "status": "present"
     },
     "specs": {
-      "path": "docs/",
+      "path": "docs/ and docs/specs/",
       "status": "present"
     },
     "catalog": {
-      "path": ".doctrine/project.json",
+      "path": "PROJECT.md and project.manifest.json",
       "status": "present"
     },
     "runbooks": {
-      "path": "CONTRIBUTING.md",
+      "path": "CONTRIBUTING.md, AGENTS.md, and SECURITY.md",
       "status": "present"
     },
     "generatedReferences": {
@@ -141,27 +156,37 @@
     }
   },
   "delivery": {
-    "ciModel": "legacy-ci",
+    "ciModel": "legacy-native-ci-with-groundatlas",
     "requiredContexts": [
       "Build",
       "Test",
       "Release"
     ],
-    "deployPath": "Pull requests run native build and test workflows; main pushes run the release workflow, build platform artifacts, and delegate package release handling to the central reusable release workflow. Direct local changeset publish is disabled; package publication must go through the Release workflow.",
-    "productionProof": "Published package changes require CI, native artifact readback, package registry readback, and consumer smoke evidence for affected exports and platform packages.",
+    "deployPath": "Pull requests run a GroundAtlas project-control gate before the native build matrix plus the existing test workflow; main pushes run the release workflow, build platform artifacts, and delegate package release handling to the central reusable workflow. Direct local changeset publish is disabled; package publication must go through the Release workflow.",
+    "productionProof": "Control-plane proof is CI evidence including GroundAtlas package dogfood. Published package changes require CI, native artifact readback, package registry readback, release:readback, and consumer smoke evidence for affected exports and platform packages.",
     "recoveryClass": "forward-fix-only",
     "packageRelease": {
       "publishesPackages": true,
-      "ecosystems": ["npm"],
+      "ecosystems": [
+        "npm"
+      ],
       "releaseIntent": "Changesets under .changeset/ are the release-intent source. Direct local publish is disabled; package publication must go through .github/workflows/release.yml and the central Sylphx reusable release workflow.",
       "versionPr": "Declared through the central Sylphx reusable release workflow, which runs changesets/action for version PRs when release intent exists. A dedicated Sylphx release-bot/GitHub App identity remains a release-hardening gap before full doctrine adoption.",
       "publisher": "Declared through the protected central Sylphx reusable release workflow with id-token: write OIDC posture and inherited bounded NPM_TOKEN fallback.",
-      "requiredContexts": ["Build", "Test", "Release", "release:readback"],
+      "requiredContexts": [
+        "Build",
+        "Test",
+        "Release",
+        "release:readback"
+      ],
       "publishProof": "Required after publish: release:readback must verify the main npm package and all platform optionalDependencies in the npm registry. Provenance/attestation evidence, native artifact evidence, changelog evidence, and consumer smoke proof are still required for affected exports and platform packages."
-    }
+    },
+    "localContexts": [
+      "CI GroundAtlas job gates native build matrix through needs: groundatlas"
+    ]
   },
   "adoption": {
-    "status": "baseline",
+    "status": "adopted",
     "gaps": [
       {
         "id": "adr29-not-adopted",
@@ -177,7 +202,7 @@
       },
       {
         "id": "compatibility-contract-needs-adr",
-        "description": "Turn supported platforms, native ABI compatibility, WebGPU compliance scope, and benchmark methodology into an ADR or generated compatibility report.",
+        "description": "Supported platforms, native ABI compatibility, WebGPU compliance scope, and benchmark methodology still need a fuller generated compatibility report beyond ADR-001 and the GroundAtlas control gate.",
         "owner": "SylphxAI/webgpu",
         "target": "Before full package adoption"
       }

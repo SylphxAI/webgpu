@@ -10,6 +10,8 @@ Bun consumers.
 
 - Lifecycle: `production`
 - Layer: `foundation`
+- Vendor-neutral project manifest: `project.manifest.json`
+- Doctrine adapter manifest: `.doctrine/project.json`
 
 ## Goals
 
@@ -48,14 +50,18 @@ not internal Rust modules, unpublished native files, or private CI artifacts.
 - `examples/` and `test/` provide executable compatibility evidence.
 - `.github/workflows/ci.yml`, `test.yml`, and `release.yml` define build,
   test, and release paths.
-- `.doctrine/project.json` is the machine-readable project manifest.
+- `project.manifest.json` is the vendor-neutral project manifest for
+  GroundAtlas and external agents.
+- `.doctrine/project.json` is the Sylphx Doctrine adapter and local governance
+  catalog.
 
 ## Delivery
 
-Pull requests run legacy native build and test workflows across supported
-platforms. Main pushes run the release workflow, including native artifact
-builds and central reusable release handling. Direct local publish is disabled;
-package publication must go through `.github/workflows/release.yml`.
+Pull requests run a GroundAtlas project-control gate before the native build
+matrix, then legacy native build and test workflows across supported platforms.
+Main pushes run the release workflow, including native artifact builds and
+central reusable release handling. Direct local publish is disabled; package
+publication must go through `.github/workflows/release.yml`.
 
 Published package and native artifact changes require CI, artifact readback,
 `release:readback` registry verification for the main package and platform
@@ -66,4 +72,9 @@ The `@sylphx/webgpu@1.0.4` release has npm registry readback evidence for the
 main package and all six platform optional dependencies from Release run
 `28689182140`. Future releases must preserve that readback boundary.
 
-The authoritative control-plane record is `.doctrine/project.json`.
+## Project Control
+
+`project.manifest.json` is the vendor-neutral control file for GroundAtlas and
+external agents. `.doctrine/project.json` remains the Sylphx Doctrine adapter and
+local governance catalog. Generated `.groundatlas*` reports are evidence and
+navigation only; they are not source of truth.
