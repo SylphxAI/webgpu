@@ -4,7 +4,7 @@ layout: home
 hero:
   name: "@sylphx/webgpu"
   text: "WebGPU for Node.js & Bun"
-  tagline: Modern, lightweight alternative to Dawn. Built with Rust + wgpu.
+  tagline: Rust/wgpu native GPU substrate for server-side graphics, compute, and TypeScript numerical backends.
   image:
     src: /logo.svg
     alt: WebGPU
@@ -40,6 +40,10 @@ features:
   - icon: ✅
     title: Fully Tested
     details: Comprehensive test suite with real GPU operations. All compute, render, and texture features verified.
+
+  - icon: 🧠
+    title: Numerical Backend Substrate
+    details: Consumer-neutral GPU package for higher-level libraries such as @sylphx/numpy and @sylphx/torch. Python API parity is proven in those libraries, not in this backend.
 ---
 
 ## Quick Start
@@ -103,6 +107,17 @@ bun example.js
 | **Implementation** | wgpu (Rust) | Dawn (C++) |
 | **Status** | v1.0 - Production ready | 0.x - Pre-release |
 | **Platform Support** | 6 prebuilt platforms | Limited prebuilts |
+
+## Role in TypeScript Numerical Computing
+
+`@sylphx/webgpu` is the WebGPU substrate underneath Python-familiar TypeScript
+numerical libraries. It owns GPU adapter/device behavior, command execution,
+native artifacts, and package readback. It does not own NumPy or PyTorch API
+parity, tensor semantics, autograd semantics, or model training claims.
+
+Use this package directly for WebGPU compute/render workloads. Use higher-level
+libraries such as `@sylphx/numpy` or `@sylphx/torch` when you want Python-style
+array or tensor APIs backed by an accelerator.
 
 ## Features
 

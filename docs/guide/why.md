@@ -32,6 +32,24 @@
 ✅ **Well tested**: 58-test local suite with real GPU operations
 ✅ **Minimal dependencies**: Just native bindings, no bloat
 
+## Role in the SylphxAI Python-Class TypeScript Stack
+
+`@sylphx/webgpu` is the GPU substrate, not the NumPy or PyTorch API layer.
+That boundary is intentional:
+
+- this package owns WebGPU adapter/device behavior, command submission, buffer
+  and texture primitives, native platform artifacts, examples, and release
+  readback;
+- numerical libraries own Python-compatible syntax, tensor/array semantics,
+  autograd semantics, benchmark admission, and release claims;
+- benchmark reports may cite this backend only when they record package version,
+  platform package, adapter/backend info, and workload shape.
+
+This keeps the WebGPU package reusable across rendering, compute, scientific
+workloads, and ML backends without hardcoding one consumer's benchmark story.
+For the durable boundary decision, see
+[Python Performance Backend Contract](/adr/001-python-performance-backend-contract).
+
 ### Performance
 
 **Binary Sizes (Actual Prebuilt Binaries):**
@@ -63,6 +81,7 @@ ES modules, TypeScript definitions, async/await. Built for modern JavaScript.
 ## When to Use This
 
 ✅ **Machine learning inference** on GPU
+✅ **Backend kernels** for TypeScript numerical libraries
 ✅ **Image/video processing** pipelines
 ✅ **Scientific computing** in Node.js
 ✅ **Data visualization** rendering

@@ -1,7 +1,7 @@
 {
   "name": "@sylphx/webgpu",
   "version": "1.0.4",
-  "description": "WebGPU for Node.js via wgpu-rs (modern, lightweight alternative to Dawn)",
+  "description": "WebGPU for Node.js and Bun via Rust/wgpu, built for graphics, compute, and TypeScript numerical backends",
   "main": "webgpu.js",
   "types": "webgpu.d.ts",
   "repository": {
@@ -15,6 +15,10 @@
     "wgpu",
     "graphics",
     "compute",
+    "gpgpu",
+    "tensor",
+    "machine-learning",
+    "scientific-computing",
     "shader",
     "napi-rs",
     "rust"
