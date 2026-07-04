@@ -170,12 +170,6 @@
         "target": "Before full adoption"
       },
       {
-        "id": "release-workflow-readback-unproven",
-        "description": "Release workflow, packageRelease manifest facts, and npm readback are declared, but a successful release run using the new postpublish readback hook has not been observed yet.",
-        "owner": "SylphxAI/webgpu",
-        "target": "Before commercial-grade package operation"
-      },
-      {
         "id": "release-bot-identity-unproven",
         "description": "The central reusable workflow runs Changesets automation, but a dedicated Sylphx release-bot/GitHub App version-PR identity is not proven from this repo-local evidence.",
         "owner": "SylphxAI/webgpu",

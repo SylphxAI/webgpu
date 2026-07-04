@@ -1,8 +1,14 @@
 # @sylphx/webgpu - Roadmap
 
-## ✅ Current Status: v1.0.1 - Production Ready (100% Complete)
+## ✅ Current Status: v1.0.4 - Published And Readback Verified
 
-**All core WebGPU features implemented and tested!**
+`@sylphx/webgpu@1.0.4` and all six platform packages are available on npm.
+Release run `28689182140` built the native artifacts and completed
+post-publish registry readback.
+
+The package is production-ready for documented Node.js and Bun WebGPU usage.
+Current WebGPU specification coverage is tracked below as approximately 95%;
+remaining gaps are explicit Node/wgpu caveats rather than hidden launch claims.
 
 ---
 
@@ -85,9 +91,14 @@
 
 ## 📦 Release History
 
-### v1.0.1 (Current - 2024-11-20)
-- Patch release after v1.0.0
-- Production stable
+### v1.0.4 (Current)
+- Published and registry-readback verified for the main package and six
+  platform packages.
+- Release workflow postpublish readback is proven on run `28689182140`.
+
+### v1.0.1
+- Patch release after v1.0.0.
+- Production stable.
 
 ### v1.0.0 (2024-11-19)
 - 🎉 **Major release - Production ready**
@@ -168,7 +179,7 @@ Missing features are wgpu limitations or browser-specific features not applicabl
 - [x] Performance verified (GPU operations)
 - [x] Memory management tested
 - [x] Cross-platform binaries (6 platforms)
-- [x] Published to npm (v1.0.1)
+- [x] Published to npm with registry readback (`1.0.4`)
 - [x] Semantic versioning
 - [x] CHANGELOG maintained
 
@@ -195,4 +206,4 @@ We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ---
 
-**Status**: 🟢 Production Ready - v1.0.1 released and stable
+**Status**: 🟢 Production Ready - v1.0.4 published and readback verified
