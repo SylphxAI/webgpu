@@ -62,4 +62,8 @@ Published package and native artifact changes require CI, artifact readback,
 optional dependencies, provenance/attestation evidence, changelog evidence, and
 consumer smoke proof because source revert alone does not unpublish packages.
 
+The `@sylphx/webgpu@1.0.4` release has npm registry readback evidence for the
+main package and all six platform optional dependencies from Release run
+`28689182140`. Future releases must preserve that readback boundary.
+
 The authoritative control-plane record is `.doctrine/project.json`.

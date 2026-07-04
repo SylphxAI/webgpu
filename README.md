@@ -54,6 +54,26 @@ The boundary matters:
 See `docs/adr/001-python-performance-backend-contract.md` for the backend
 contract.
 
+## Published Package Status
+
+`@sylphx/webgpu` is published and registry-readback verified at `1.0.4`.
+Release run `28689182140` built all six native targets, published through the
+central Sylphx release workflow, and completed post-publish readback.
+
+Registry readback is currently verified for:
+
+- `@sylphx/webgpu@1.0.4`
+- `@sylphx/webgpu-darwin-arm64@1.0.4`
+- `@sylphx/webgpu-darwin-x64@1.0.4`
+- `@sylphx/webgpu-linux-arm64-gnu@1.0.4`
+- `@sylphx/webgpu-linux-x64-gnu@1.0.4`
+- `@sylphx/webgpu-win32-arm64-msvc@1.0.4`
+- `@sylphx/webgpu-win32-x64-msvc@1.0.4`
+
+This proves package availability and native artifact publication. Python API
+parity and NumPy/PyTorch-style performance claims still belong to the consumer
+numerical library using this backend.
+
 ## 🚀 Why Choose @sylphx/webgpu?
 
 | Feature | @sylphx/webgpu | @kmamal/gpu (Dawn) |
