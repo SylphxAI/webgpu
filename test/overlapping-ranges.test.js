@@ -213,7 +213,7 @@ async function testOverlappingRanges() {
     console.log('  ✅ Ranges cleared after unmap()')
     console.log('  ✅ Multiple non-overlapping ranges supported')
     console.log('')
-    console.log('🎉 100% WebGPU Standard Compliant!')
+    console.log('✅ Covered mapped range overlap behavior verified')
     console.log('═══════════════════════════════════════════════════════')
 }
 

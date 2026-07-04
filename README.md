@@ -14,7 +14,7 @@ bindings.
 ```javascript
 const { Gpu, GPUBufferUsage } = require('@sylphx/webgpu')
 
-// Initialize GPU (identical to browser API)
+// Initialize GPU (same async shape as browser WebGPU)
 const gpu = Gpu()
 const adapter = await gpu.requestAdapter()
 const device = await adapter.requestDevice()
@@ -90,10 +90,10 @@ numerical library using this backend.
 
 ✅ **WebGPU-standard API** - Share code between Node.js and browsers
 ✅ **Production Ready** - v1.0.4 stable release with a 58-test local suite
-✅ **Ultra Lightweight** - 2-5MB binaries vs 100MB+ alternatives
+✅ **Ultra Lightweight** - 2-5MB prebuilt platform binaries
 ✅ **Modern Stack** - Rust + wgpu (used by Firefox, Deno, Bevy)
 ✅ **Cross-Platform** - 6 prebuilt platforms (macOS, Linux, Windows, ARM64)
-✅ **Well Tested** - Comprehensive test suite covering all features
+✅ **Well Tested** - Comprehensive test suite covering the documented package surface
 
 ## 📦 Installation
 
@@ -394,14 +394,16 @@ const gpu = Gpu()
 const adapter = await gpu.requestAdapter()
 ```
 
-**Everything else is identical!** All methods, properties, and descriptors match the browser API exactly.
+The wrapper intentionally follows browser WebGPU naming and descriptor shapes,
+but conformance claims must be backed by the package's tests and compatibility
+evidence.
 
 ## 🌐 Browser Compatibility
 
 Share code between Node.js and browsers:
 
 ```javascript
-// Universal WebGPU code (works in both!)
+// Universal WebGPU-style code
 export async function initGPU() {
     // Detect environment
     const gpu = typeof navigator !== 'undefined'
@@ -411,7 +413,7 @@ export async function initGPU() {
     const adapter = await gpu.requestAdapter()
     const device = await adapter.requestDevice()
 
-    // All code below is identical!
+    // Keep shared code on documented WebGPU descriptor shapes.
     const buffer = device.createBuffer({
         size: 256,
         usage: GPUBufferUsage.STORAGE
@@ -520,9 +522,11 @@ npm test
 - @kmamal/gpu: 1-3 hours (Dawn + depot_tools)
 
 **Runtime Performance:**
-- GPU operations: Zero overhead (thin wrapper)
-- CPU overhead: <10% for descriptor transformation
-- Compute/Render: Limited by GPU, not bindings
+- GPU work is submitted through the native Rust/wgpu backend.
+- JavaScript wrapper overhead depends on descriptor shape, buffer movement, and
+  synchronization points.
+- Consumer benchmarks should record package version, platform package,
+  adapter/backend info, and workload shape before making performance claims.
 
 ## 🛠️ Architecture
 

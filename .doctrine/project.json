@@ -92,11 +92,6 @@
         "type": "manifest",
         "name": "Vendor-neutral project manifest",
         "location": "project.manifest.json"
-      },
-      {
-        "type": "test",
-        "name": "Project-control boundary test",
-        "location": "test/project-control.node-test.mjs"
       }
     ],
     "allowedDependencies": [
@@ -156,7 +151,7 @@
     }
   },
   "delivery": {
-    "ciModel": "legacy-native-ci-with-groundatlas",
+    "ciModel": "legacy-ci",
     "requiredContexts": [
       "Build",
       "Test",
@@ -186,7 +181,7 @@
     ]
   },
   "adoption": {
-    "status": "adopted",
+    "status": "migrating",
     "gaps": [
       {
         "id": "adr29-not-adopted",

@@ -267,7 +267,7 @@ async function testGetMappedRangeEdgeCases() {
     console.log('')
     console.log('Note: Pending state validated via code review (state == "mapped" check)')
     console.log('')
-    console.log('🎉 100% WebGPU Standard Compliant!')
+    console.log('✅ Covered mapped buffer edge cases verified')
     console.log('═══════════════════════════════════════════════════════')
 }
 
