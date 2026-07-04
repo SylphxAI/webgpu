@@ -54,8 +54,12 @@ not internal Rust modules, unpublished native files, or private CI artifacts.
 
 Pull requests run legacy native build and test workflows across supported
 platforms. Main pushes run the release workflow, including native artifact
-builds and central reusable release handling. Published package and native
-artifact changes require CI, artifact readback, package readback, and consumer
-smoke evidence because source revert alone does not unpublish packages.
+builds and central reusable release handling. Direct local publish is disabled;
+package publication must go through `.github/workflows/release.yml`.
+
+Published package and native artifact changes require CI, artifact readback,
+`release:readback` registry verification for the main package and platform
+optional dependencies, provenance/attestation evidence, changelog evidence, and
+consumer smoke proof because source revert alone does not unpublish packages.
 
 The authoritative control-plane record is `.doctrine/project.json`.

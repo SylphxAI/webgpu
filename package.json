@@ -42,7 +42,8 @@
     "test:watch": "bun test --watch",
     "test:coverage": "bun test --coverage",
     "version-packages": "changeset version && node scripts/sync-platform-versions.js",
-    "release": "changeset publish",
+    "release:readback": "bun scripts/verify-npm-readback.js",
+    "release": "echo \"Direct changeset publish is unsafe for native platform packages; use the Sylphx release workflow.\" && exit 1",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs"

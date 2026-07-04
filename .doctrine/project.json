@@ -147,9 +147,18 @@
       "Test",
       "Release"
     ],
-    "deployPath": "Pull requests run native build and test workflows; main pushes run the release workflow, build platform artifacts, and delegate package release handling to the central reusable release workflow.",
+    "deployPath": "Pull requests run native build and test workflows; main pushes run the release workflow, build platform artifacts, and delegate package release handling to the central reusable release workflow. Direct local changeset publish is disabled; package publication must go through the Release workflow.",
     "productionProof": "Published package changes require CI, native artifact readback, package registry readback, and consumer smoke evidence for affected exports and platform packages.",
-    "recoveryClass": "forward-fix-only"
+    "recoveryClass": "forward-fix-only",
+    "packageRelease": {
+      "publishesPackages": true,
+      "ecosystems": ["npm"],
+      "releaseIntent": "Changesets under .changeset/ are the release-intent source. Direct local publish is disabled; package publication must go through .github/workflows/release.yml and the central Sylphx reusable release workflow.",
+      "versionPr": "Declared through the central Sylphx reusable release workflow, which runs changesets/action for version PRs when release intent exists. A dedicated Sylphx release-bot/GitHub App identity remains a release-hardening gap before full doctrine adoption.",
+      "publisher": "Declared through the protected central Sylphx reusable release workflow with id-token: write OIDC posture and inherited bounded NPM_TOKEN fallback.",
+      "requiredContexts": ["Build", "Test", "Release", "release:readback"],
+      "publishProof": "Required after publish: release:readback must verify the main npm package and all platform optionalDependencies in the npm registry. Provenance/attestation evidence, native artifact evidence, changelog evidence, and consumer smoke proof are still required for affected exports and platform packages."
+    }
   },
   "adoption": {
     "status": "baseline",
@@ -161,8 +170,14 @@
         "target": "Before full adoption"
       },
       {
-        "id": "release-proof-missing",
-        "description": "Document registry readback, artifact integrity, and consumer smoke evidence required after native package releases.",
+        "id": "release-workflow-readback-unproven",
+        "description": "Release workflow, packageRelease manifest facts, and npm readback are declared, but a successful release run using the new postpublish readback hook has not been observed yet.",
+        "owner": "SylphxAI/webgpu",
+        "target": "Before commercial-grade package operation"
+      },
+      {
+        "id": "release-bot-identity-unproven",
+        "description": "The central reusable workflow runs Changesets automation, but a dedicated Sylphx release-bot/GitHub App version-PR identity is not proven from this repo-local evidence.",
         "owner": "SylphxAI/webgpu",
         "target": "Before commercial-grade package operation"
       },
