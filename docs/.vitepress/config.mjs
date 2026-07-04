@@ -2,7 +2,8 @@ import { defineConfig } from 'vitepress'
 
 export default defineConfig({
   title: '@sylphx/webgpu',
-  description: 'WebGPU for Node.js & Bun - Modern, lightweight alternative to Dawn',
+  description:
+    'WebGPU for Node.js and Bun via Rust/wgpu, built for graphics, compute, and TypeScript numerical backends',
 
   ignoreDeadLinks: true,
 
@@ -11,7 +12,14 @@ export default defineConfig({
     ['meta', { name: 'theme-color', content: '#646cff' }],
     ['meta', { property: 'og:type', content: 'website' }],
     ['meta', { property: 'og:title', content: '@sylphx/webgpu' }],
-    ['meta', { property: 'og:description', content: 'WebGPU for Node.js & Bun via wgpu-rs' }],
+    [
+      'meta',
+      {
+        property: 'og:description',
+        content:
+          'WebGPU for Node.js and Bun via Rust/wgpu, built for graphics, compute, and TypeScript numerical backends',
+      },
+    ],
   ],
 
   themeConfig: {
