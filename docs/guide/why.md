@@ -2,26 +2,25 @@
 
 ## The Problem with Existing Solutions
 
-### Dawn (Google's WebGPU - via @kmamal/gpu)
-- **Binary size**: 50-150MB (per platform)
-- **Build time**: 1-3 hours (requires depot_tools, Chromium build system)
-- **Dependencies**: Entire Chromium toolchain
-- **Complexity**: Non-standard custom API
+### Native WebGPU stacks
+- Large platform packages can make server-side installs heavy.
+- Local native builds can require extra toolchains.
+- API drift makes it harder to share browser-shaped WebGPU code.
 
-### Other Bindings
-- Incomplete API coverage
-- Poor documentation
-- Limited platform support
-- Non-standard APIs
+### Evaluation Criteria
+- Documented API coverage
+- Clear runtime and platform support
+- Browser-style descriptor shapes
+- Release readback for published packages
 
 ## Our Solution
 
 ### Built with Rust + wgpu
 `@sylphx/webgpu` uses Mozilla's battle-tested `wgpu` implementation (same as Firefox, Deno, Bevy), providing:
 
-- **20-50x smaller binary**: 1.9-4.6MB vs 50-150MB (actual measured sizes)
-- **120x faster builds**: ~30 seconds vs 1-3 hours (actual clean build times)
-- **WebGPU-standard API**: Browser-compatible API shape for portable code
+- **Small prebuilt packages**: Published platform packages are 1.9-4.6MB
+- **Consumer install path**: No local Dawn/depot_tools build step expected
+- **WebGPU-style API**: Browser-style descriptor shapes for portable code
 - **Modern architecture**: Pure Rust, no C++ complexity
 
 ### Production Ready
@@ -29,7 +28,8 @@
 ✅ **Documented API coverage**: Covered package surface is implemented and tested
 ✅ **Cross-platform**: macOS, Linux, Windows (x64 + ARM64)
 ✅ **Runtime support**: Node.js 18+ and Bun 1.0+
-✅ **Well tested**: 58-test local suite with real GPU operations
+✅ **Well tested**: Local suite covering the documented package surface with
+real GPU operations
 ✅ **Minimal dependencies**: Just native bindings, no bloat
 
 ## Role in the SylphxAI Python-Class TypeScript Stack
@@ -70,7 +70,9 @@ For the durable boundary decision, see
 No unnecessary abstractions. Thin binding layer that exposes WebGPU API directly.
 
 ### Fast
-Built with Rust and napi-rs for maximum performance. Zero-copy buffer operations where possible.
+Built with Rust and napi-rs on top of wgpu. Runtime performance claims should
+be tied to measured workloads that record package version, platform package,
+adapter/backend info, and synchronization/readback boundaries.
 
 ### Reliable
 Comprehensive error handling. Validation at API boundaries. Clear error messages.

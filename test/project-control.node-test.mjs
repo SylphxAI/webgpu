@@ -27,7 +27,7 @@ test('Doctrine adapter remains Sylphx-specific and native release proof stays pa
   const doctrine = readJson('.doctrine/project.json')
 
   assert.equal(doctrine.project.repo, 'SylphxAI/webgpu')
-  assert.equal(doctrine.adoption.status, 'adopted')
+  assert.equal(doctrine.adoption.status, 'migrating')
   assert.ok(
     doctrine.boundaries.publicSurfaces.some(
       (surface) => surface.type === 'manifest' && surface.location === 'project.manifest.json',

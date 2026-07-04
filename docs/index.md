@@ -18,12 +18,12 @@ hero:
 
 features:
   - icon: ⚡
-    title: Lightning Fast
-    details: Built with Rust and wgpu. Ultra-small binaries (1.9-4.6MB vs 50-150MB), 120x faster build (~30s vs 1-3 hours).
+    title: Native Rust Backend
+    details: Built with Rust and wgpu. Published prebuilt platform packages are 1.9-4.6MB and avoid a local Dawn/depot_tools build step for consumers.
 
   - icon: 🎯
-    title: WebGPU-Standard API
-    details: Browser-compatible API shape for Node.js and Bun. Share WebGPU code across runtime boundaries with minimal changes.
+    title: WebGPU-style API
+    details: Browser-style naming and descriptor shapes for Node.js and Bun. Keep shared code on the documented package surface.
 
   - icon: 🚀
     title: Production Ready (v1.0.4)
@@ -135,17 +135,17 @@ array or tensor APIs backed by an accelerator.
 ::: info v1.0.4 - Production Ready
 - 🎉 **Stable Release** - Production-ready v1.0.4
 - ✅ **58 Tests Passing** - Local suite covers the documented package surface
-- 🚀 **Bun Support** - Works perfectly with Bun 1.0+
-- 📚 **Complete Documentation** - Full guides and API reference
-- 🌐 **Browser Compatible** - Share code between Node.js and browsers
+- 🚀 **Bun Support** - Tested with Bun 1.0+
+- 📚 **Documentation** - Guides and API reference
+- 🌐 **WebGPU-style API** - Keep shared code on documented descriptor shapes
 :::
 
 ## Performance
 
 ```
-Binary Size:     1.9-4.6MB  (20-50x smaller than Dawn)
-Build Time:      ~30s       (120x faster than Dawn)
-Tests:           58 pass    (local package suite)
+Platform packages: 1.9-4.6MB prebuilt native binaries
+Consumer install:  No local Dawn/depot_tools build step expected
+Tests:            58 pass local package suite
 ```
 
 ## Community
