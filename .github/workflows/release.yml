@@ -105,6 +105,7 @@ jobs:
     uses: SylphxAI/.github/.github/workflows/release.yml@main
     with:
       artifact: 'bindings-*'
+      postpublish: bun run release:readback
       prepublish: |
         mkdir -p npm/darwin-x64 npm/darwin-arm64 npm/linux-x64-gnu npm/linux-arm64-gnu npm/win32-x64-msvc npm/win32-arm64-msvc
         mv artifacts/bindings-x86_64-apple-darwin/*.node npm/darwin-x64/ 2>/dev/null || true
