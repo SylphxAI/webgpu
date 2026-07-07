@@ -588,7 +588,8 @@ npm install @sylphx/webgpu
 This repository dogfoods [GroundAtlas](https://github.com/SylphxAI/groundatlas)
 through CI. The vendor-neutral project facts live in `project.manifest.json`;
 Sylphx-specific governance facts stay in `.doctrine/project.json`; generated
-`.groundatlas*` reports are evidence/navigation only, not source of truth.
+`.groundatlas*` reports and JSON/Markdown GroundAtlas reports are
+evidence/navigation read models only, not source of truth.
 
 Package releases run through the shared Sylphx release workflow and are complete
 only after native build artifacts, the Release workflow, `release:readback`, npm

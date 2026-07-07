@@ -76,5 +76,6 @@ main package and all six platform optional dependencies from Release run
 
 `project.manifest.json` is the vendor-neutral control file for GroundAtlas and
 external agents. `.doctrine/project.json` remains the Sylphx Doctrine adapter and
-local governance catalog. Generated `.groundatlas*` reports are evidence and
-navigation only; they are not source of truth.
+local governance catalog. Generated `.groundatlas*` reports and JSON/Markdown
+GroundAtlas reports are evidence and navigation read models only; they are not
+source of truth.

@@ -13,10 +13,11 @@ For control-plane-only changes, validate with:
 
 ```bash
 node --test test/project-control.node-test.mjs
-npm exec --yes --package groundatlas@0.1.2 -- ga update --out .groundatlas-pilot
-npm exec --yes --package groundatlas@0.1.2 -- ga audit --out .groundatlas-pilot
-npm exec --yes --package groundatlas@0.1.2 -- ga manifest --out .groundatlas-pilot --json
-npm exec --yes --package groundatlas@0.1.2 -- ga fleet . --out .groundatlas-pilot --require-atlas --strict --json
+npm exec --yes --package groundatlas@0.1.3 -- ga update --out .groundatlas-pilot
+npm exec --yes --package groundatlas@0.1.3 -- ga audit --out .groundatlas-pilot
+npm exec --yes --package groundatlas@0.1.3 -- ga manifest --out .groundatlas-pilot --json
+npm exec --yes --package groundatlas@0.1.3 -- ga fleet . --out .groundatlas-pilot --require-atlas --strict --json
+npm exec --yes --package groundatlas@0.1.3 -- ga fleet . --out .groundatlas-pilot --require-atlas --strict
 python3 /Users/kyle/.doctrine/scripts/project-control-plane-audit.py --local . --fail-on-drift --json
 git diff --check
 ```
@@ -28,7 +29,8 @@ platform build, docs, package readback, and consumer smoke checks.
 
 `project.manifest.json` is the vendor-neutral GroundAtlas control file;
 `.doctrine/project.json` is the Sylphx-specific adapter and generated
-`.groundatlas*` reports are not SSOT. The CI native build matrix is gated by
+`.groundatlas*` reports plus JSON/Markdown GroundAtlas reports are evidence
+and read models only. The CI native build matrix is gated by
 `needs: groundatlas`; release proof remains native artifacts, Release workflow,
 `release:readback`, package registry readback, and consumer smoke evidence for
 changed packages.
