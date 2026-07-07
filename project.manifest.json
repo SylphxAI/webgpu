@@ -120,12 +120,12 @@
     {
       "name": "test:project-control",
       "command": "node --test test/project-control.node-test.mjs",
-      "purpose": "Verify neutral manifest, Doctrine adapter, released GroundAtlas workflow, and release caller boundary."
+      "purpose": "Verify neutral manifest, Doctrine adapter, GroundAtlas 0.1.3 workflow, Markdown scorecard, and release caller boundary."
     },
     {
       "name": "groundatlas:fleet",
-      "command": "npm exec --yes --package groundatlas@0.1.2 -- ga fleet . --out .groundatlas-pilot --require-atlas --strict --json",
-      "purpose": "Prove the vendor-neutral manifest is selected and generated GroundAtlas files are navigation-only."
+      "command": "npm exec --yes --package groundatlas@0.1.3 -- ga fleet . --out .groundatlas-pilot --require-atlas --strict --json",
+      "purpose": "Prove the vendor-neutral manifest is selected and generated GroundAtlas JSON/Markdown files are navigation-only read models."
     },
     {
       "name": "install",
@@ -150,6 +150,6 @@
   ],
   "adoption": {
     "status": "adopted",
-    "notes": "Vendor-neutral GroundAtlas manifest for package/action dogfooding. .doctrine/project.json remains the Sylphx Doctrine adapter and local governance catalog. Generated .groundatlas* reports are evidence/navigation only, not source of truth."
+    "notes": "Vendor-neutral GroundAtlas manifest for package/action dogfooding. .doctrine/project.json remains the Sylphx Doctrine adapter and local governance catalog. Generated .groundatlas* reports plus JSON/Markdown GroundAtlas reports are evidence/navigation read models only, not source of truth."
   }
 }

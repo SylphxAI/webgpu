@@ -43,12 +43,15 @@ test('CI gates native build matrix behind the released GroundAtlas package and a
   assert.ok(workflow.includes('groundatlas:'))
   assert.ok(workflow.includes('needs: groundatlas'))
   assert.ok(workflow.includes('needs.groundatlas.result'))
-  assert.ok(workflow.includes('uses: SylphxAI/groundatlas@v0.1.2'))
-  assert.ok(workflow.includes('package-spec: groundatlas@0.1.2'))
+  assert.ok(workflow.includes('uses: SylphxAI/groundatlas@v0.1.3'))
+  assert.ok(workflow.includes('package-spec: groundatlas@0.1.3'))
+  assert.ok(workflow.includes('fleet-markdown-report-path'))
   assert.ok(workflow.includes('require-atlas: "true"'))
   assert.ok(workflow.includes('strict: "true"'))
   assert.ok(workflow.includes('project.manifest.json'))
   assert.ok(workflow.includes('.doctrine/project.json'))
+  assert.ok(workflow.includes('# GroundAtlas fleet adoption report'))
+  assert.ok(workflow.includes('Summary: 1 adopted, 0 warning, 0 blocked, 1 total.'))
 })
 
 test('release workflow keeps trusted publishing and package readback boundary', () => {
