@@ -1,0 +1,360 @@
+{
+  "schemaVersion": 3,
+  "repo": "SylphxAI/webgpu",
+  "repoLedgerPath": "docs/specs/migration-ledger.json",
+  "lockedAt": "2026-07-10T21:30:00Z",
+  "programSpec": {
+    "id": "rust-first-fleet-migration",
+    "controlPlaneRepo": "SylphxAI/rust-first-fleet-control-plane",
+    "programSpecPath": "PROGRAM-SPEC.json",
+    "completionStandard": "COMPLETION-STANDARD.md",
+    "parityStandard": "PARITY-VERIFICATION-STANDARD.md"
+  },
+  "adrRefs": [
+    {
+      "path": "docs/adr/ADR-PROPOSED-fleet-webgpu-rust-north-star.md",
+      "status": "proposed",
+      "note": "pending — ADR number will equal introducing PR per Doctrine"
+    }
+  ],
+  "inventorySource": ["manual"],
+  "reauditRef": "rej-010",
+  "verificationRef": "verification/webgpu-cycle50-webgpu-constants-rust-impl.json",
+  "inScopeBoundary": {
+    "includeGlobs": [
+      "src/**",
+      "index.js",
+      "index.d.ts",
+      "webgpu.js",
+      "webgpu.d.ts",
+      "npm/**",
+      "test/**",
+      "build.rs",
+      "docs/adr/**"
+    ],
+    "excludeGlobs": [
+      "docs/**",
+      "!docs/adr/**",
+      "examples/**",
+      "node_modules/**",
+      "*.node"
+    ]
+  },
+  "capabilities": [
+    {
+      "id": "native/gpu-device-queue",
+      "domain": "native",
+      "weight": 5,
+      "state": "authority_rust",
+      "rustSurface": "src/gpu.rs; src/device.rs; src/queue.rs; src/adapter.rs",
+      "tsSurface": "index.d.ts; webgpu.d.ts (generated types)",
+      "parityTest": "test/webgpu-standard.test.ts",
+      "differentialTest": "tests/webgpu_differential.rs",
+      "prodProbe": "release:readback @sylphx/webgpu@1.0.4 + platform optional deps",
+      "promotionHold": {
+        "active": true,
+        "reason": "rej-010: differential_green at bound SHAs — promotion_hold until prod_audit_pass",
+        "rejectionRef": "rej-010",
+        "since": "2026-07-10T21:30:00Z"
+      },
+      "proof": {
+        "status": "differential_green",
+        "baselineTsSha": "eecd67b8e81d13ef0585f58a4700359a3fe42d8c",
+        "rustCandidateSha": "65a84d756b8e0f7f25b21acd816aabfb8f4304ec",
+        "lastComparedMainSha": "65a84d756b8e0f7f25b21acd816aabfb8f4304ec",
+        "mergeGroupSha": "65a84d756b8e0f7f25b21acd816aabfb8f4304ec",
+        "behaviorSpecHash": "66e4cd11e76462849a270cae31e342bb9b25c20333eab1ac1e55b52f803c6abd",
+        "fixtureCorpusHash": "2933a9ca62421ac7ba60289c44f092f32381272c015d7e0d12861972211752c2",
+        "verifiedAt": "2026-07-10T10:43:15+00:00",
+        "verificationRef": "verification/webgpu-differential-green.json",
+        "dependencyGlobs": [
+          "src/gpu.rs",
+          "src/device.rs",
+          "src/queue.rs",
+          "src/adapter.rs",
+          "webgpu.js",
+          "scripts/differential/**",
+          "scripts/run-webgpu-differential.sh"
+        ]
+      },
+      "notes": "Downgraded ts_deleted→authority_rust per rej-010. wgpu native implementation via napi-rs; JS is auto-generated loader + webgpu.js standard wrapper. Differential v1 covers constants slice; GPU adapter/device parity via bun test gate."
+    },
+    {
+      "id": "native/buffer-mapping",
+      "domain": "native",
+      "weight": 5,
+      "state": "authority_rust",
+      "rustSurface": "src/buffer.rs",
+      "parityTest": "test/mapped-buffer.test.js; test/getmappedrange-edgecases.test.js",
+      "differentialTest": "tests/webgpu_differential.rs",
+      "prodProbe": "npm test test/mapped-buffer.test.js (58 pass suite)",
+      "promotionHold": {
+        "active": true,
+        "reason": "rej-010: differential_green at bound SHAs — promotion_hold until prod_audit_pass",
+        "rejectionRef": "rej-010",
+        "since": "2026-07-10T21:30:00Z"
+      },
+      "proof": {
+        "status": "differential_green",
+        "baselineTsSha": "eecd67b8e81d13ef0585f58a4700359a3fe42d8c",
+        "rustCandidateSha": "65a84d756b8e0f7f25b21acd816aabfb8f4304ec",
+        "lastComparedMainSha": "65a84d756b8e0f7f25b21acd816aabfb8f4304ec",
+        "mergeGroupSha": "65a84d756b8e0f7f25b21acd816aabfb8f4304ec",
+        "behaviorSpecHash": "66e4cd11e76462849a270cae31e342bb9b25c20333eab1ac1e55b52f803c6abd",
+        "fixtureCorpusHash": "2933a9ca62421ac7ba60289c44f092f32381272c015d7e0d12861972211752c2",
+        "verifiedAt": "2026-07-10T10:43:15+00:00",
+        "verificationRef": "verification/webgpu-differential-green.json",
+        "dependencyGlobs": [
+          "src/buffer.rs",
+          "webgpu.js#GpuBuffer",
+          "scripts/differential/**"
+        ]
+      },
+      "notes": "Mapped-at-creation and getMappedRange semantics owned by Rust; webgpu.js wraps unmap flush only."
+    },
+    {
+      "id": "native/render-pipeline",
+      "domain": "native",
+      "weight": 5,
+      "state": "authority_rust",
+      "rustSurface": "src/pipeline.rs; src/render_pass.rs; src/render_bundle.rs",
+      "parityTest": "test/webgpu-render-standard.test.ts",
+      "prodProbe": "npm test test/webgpu-render-standard.test.ts",
+      "promotionHold": {
+        "active": true,
+        "reason": "rej-010: GPU bun test gate only — no constants differential slice",
+        "rejectionRef": "rej-010",
+        "since": "2026-07-10T21:30:00Z"
+      },
+      "proof": {
+        "status": "missing",
+        "dependencyGlobs": [
+          "src/pipeline.rs",
+          "src/render_pass.rs",
+          "src/render_bundle.rs",
+          "test/webgpu-render-standard.test.ts"
+        ],
+        "staleReason": "rej-010 re-audit — prior ts_deleted lacked SHA-bound differential proof",
+        "verificationRef": "test/webgpu-render-standard.test.ts"
+      },
+      "notes": "Render pipeline authority in Rust; full GPU parity requires bun test in GPU-capable CI."
+    },
+    {
+      "id": "native/compute-pipeline",
+      "domain": "native",
+      "weight": 4,
+      "state": "authority_rust",
+      "rustSurface": "src/compute_pass.rs; src/bind_group.rs",
+      "parityTest": "test/webgpu-compute-standard.test.ts",
+      "prodProbe": "npm test test/webgpu-compute-standard.test.ts",
+      "promotionHold": {
+        "active": true,
+        "reason": "rej-010: GPU bun test gate only — no constants differential slice",
+        "rejectionRef": "rej-010",
+        "since": "2026-07-10T21:30:00Z"
+      },
+      "proof": {
+        "status": "missing",
+        "dependencyGlobs": [
+          "src/compute_pass.rs",
+          "src/bind_group.rs",
+          "test/webgpu-compute-standard.test.ts"
+        ],
+        "staleReason": "rej-010 re-audit — prior ts_deleted lacked SHA-bound differential proof",
+        "verificationRef": "test/webgpu-compute-standard.test.ts"
+      },
+      "notes": "Compute pipeline authority in Rust; GPU env required for full parity probe."
+    },
+    {
+      "id": "native/texture-sampler",
+      "domain": "native",
+      "weight": 4,
+      "state": "authority_rust",
+      "rustSurface": "src/texture.rs; src/sampler.rs",
+      "parityTest": "test/webgpu-standard.test.ts#createTexture; #createSampler",
+      "prodProbe": "npm test test/webgpu-standard.test.ts",
+      "promotionHold": {
+        "active": true,
+        "reason": "rej-010: GPU bun test gate only — no constants differential slice",
+        "rejectionRef": "rej-010",
+        "since": "2026-07-10T21:30:00Z"
+      },
+      "proof": {
+        "status": "missing",
+        "dependencyGlobs": [
+          "src/texture.rs",
+          "src/sampler.rs",
+          "test/webgpu-standard.test.ts"
+        ],
+        "staleReason": "rej-010 re-audit — prior ts_deleted lacked SHA-bound differential proof",
+        "verificationRef": "test/webgpu-standard.test.ts"
+      }
+    },
+    {
+      "id": "native/limits-features",
+      "domain": "native",
+      "weight": 3,
+      "state": "authority_rust",
+      "rustSurface": "src/limits.rs; src/features.rs; src/constants.rs",
+      "parityTest": "test/webgpu-standard.test.ts#adapter.limits; #adapter.features",
+      "differentialTest": "tests/webgpu_differential.rs",
+      "prodProbe": "npm test test/webgpu-standard.test.ts",
+      "promotionHold": {
+        "active": true,
+        "reason": "rej-010: differential_green at bound SHAs — promotion_hold until prod_audit_pass",
+        "rejectionRef": "rej-010",
+        "since": "2026-07-10T21:30:00Z"
+      },
+      "proof": {
+        "status": "differential_green",
+        "baselineTsSha": "eecd67b8e81d13ef0585f58a4700359a3fe42d8c",
+        "rustCandidateSha": "65a84d756b8e0f7f25b21acd816aabfb8f4304ec",
+        "lastComparedMainSha": "65a84d756b8e0f7f25b21acd816aabfb8f4304ec",
+        "mergeGroupSha": "65a84d756b8e0f7f25b21acd816aabfb8f4304ec",
+        "behaviorSpecHash": "66e4cd11e76462849a270cae31e342bb9b25c20333eab1ac1e55b52f803c6abd",
+        "fixtureCorpusHash": "2933a9ca62421ac7ba60289c44f092f32381272c015d7e0d12861972211752c2",
+        "verifiedAt": "2026-07-10T10:43:15+00:00",
+        "verificationRef": "verification/webgpu-differential-green.json",
+        "dependencyGlobs": [
+          "src/limits.rs",
+          "src/features.rs",
+          "src/constants.rs",
+          "src/constants_ssot.rs",
+          "scripts/differential/**"
+        ]
+      },
+      "notes": "WebGPU constants SSOT in Rust; adapter limits/features require GPU for full observable parity."
+    },
+    {
+      "id": "bindings/npm-platform-packages",
+      "domain": "distribution",
+      "weight": 4,
+      "state": "rust_impl",
+      "rustSurface": "npm/*/package.json; index.js",
+      "parityTest": "scripts/verify-npm-readback.js; npm/*/package.json version parity vs root optionalDependencies",
+      "prodProbe": ".github/workflows/release.yml; scripts/verify-npm-readback.js",
+      "promotionHold": {
+        "active": true,
+        "reason": "rej-010: distribution/loader surface — no codec authority",
+        "rejectionRef": "rej-010",
+        "since": "2026-07-10T21:30:00Z"
+      },
+      "proof": {
+        "status": "missing",
+        "dependencyGlobs": [
+          "npm/**",
+          "index.js",
+          "scripts/verify-npm-readback.js"
+        ],
+        "staleReason": "rej-010 re-audit — prior ts_deleted lacked differential proof",
+        "verificationRef": "scripts/verify-npm-readback.js"
+      },
+      "notes": "Six platform optional dependencies; index.js is napi-rs generated loader only."
+    },
+    {
+      "id": "bindings/js-typescript-surface",
+      "domain": "distribution",
+      "weight": 2,
+      "state": "rust_impl",
+      "tsSurface": "index.d.ts; webgpu.d.ts",
+      "parityTest": "index.d.ts generated from napi-rs; cargo test compiles native exports",
+      "prodProbe": "npm pack dry-run; index.js napi-rs loader only",
+      "promotionHold": {
+        "active": true,
+        "reason": "rej-010: generated declarations retained — not backend authority",
+        "rejectionRef": "rej-010",
+        "since": "2026-07-10T21:30:00Z"
+      },
+      "proof": {
+        "status": "missing",
+        "dependencyGlobs": [
+          "index.d.ts",
+          "webgpu.d.ts",
+          "webgpu.js"
+        ],
+        "staleReason": "rej-010 re-audit — bindings layer not eligible for ts_deleted without canary proof",
+        "verificationRef": "cargo test"
+      },
+      "notes": "Type declarations describe Rust exports; no TS backend runtime."
+    }
+  ],
+  "summary": {
+    "total": 8,
+    "ts_only": 0,
+    "contracted": 0,
+    "rust_impl": 2,
+    "parity_proven": 0,
+    "authority_rust": 6,
+    "ts_deleted": 0,
+    "proof_stale": 0,
+    "proof_missing": 5,
+    "completion_progress": 0,
+    "authority_progress": 0.75,
+    "verified_authority_progress": 0,
+    "weighted_progress": 0.8125,
+    "summaryNote": "rej-010/rej-011 — differential_green recorded for constants harness slice; promotion_hold until prod_audit_pass",
+    "cycle50_delta": {
+      "rust_impl_verified": 1,
+      "slice": "webgpu.constants",
+      "verificationRef": "verification/webgpu-cycle50-webgpu-constants-rust-impl.json",
+      "notes": "rej-010 rust_impl ONLY — cycle50 highest-value unimplemented slice: webgpu.constants bounded differential (3 constantCases)"
+    }
+  },
+  "priorClaims": {
+    "ts_deleted": 8,
+    "completion_progress": 1.0,
+    "authority_progress": 1.0,
+    "revertedAt": "2026-07-10T21:30:00Z",
+    "reason": "rej-010 promotion freeze — 0 capabilities with differential_green or canary_green proof"
+  },
+  "rej010Reaudit": {
+    "appliedAt": "2026-07-10T21:30:00Z",
+    "harness": "scripts/run-webgpu-differential.sh",
+    "differentialTest": "tests/webgpu_differential.rs",
+    "oracle": "scripts/differential/webgpu-standard-oracle.ts",
+    "capabilitiesDowngraded": 8,
+    "capabilitiesWithDifferentialHarness": 3
+  },
+  "cycle46Slice": "webgpu.constants — TS contract oracle vs native constants SSOT; bash scripts/run-webgpu-differential.sh",
+  "cycle46": {
+    "boundedSlice": "webgpu.constants",
+    "status": "rust_impl_on_disk_verified",
+    "reauditRef": "rej-010",
+    "verificationRef": "verification/webgpu-cycle46-constants-rust-impl.json",
+    "deliverables": [
+      "scripts/run-webgpu-differential.sh",
+      "tests/webgpu_differential.rs",
+      "scripts/differential/webgpu-standard-oracle.ts",
+      "scripts/differential/fixtures/webgpu-corpus.json",
+      "docs/specs/webgpu-standard-parity-slice.json"
+    ],
+    "caseCounts": { "constantCases": 3 },
+    "notes": "cycle46 pilot/P0 rej-010: WebGPU constants differential harness on-disk re-verify. rust_impl ONLY — proof.status missing until differential_green."
+  },
+  "cycle50Slice": "webgpu.constants — TS contract oracle vs native constants SSOT; bash scripts/run-webgpu-differential.sh",
+  "cycle50": {
+    "boundedSlice": "webgpu.constants",
+    "status": "rust_impl_on_disk_verified",
+    "reauditRef": "rej-010",
+    "verificationRef": "verification/webgpu-cycle50-webgpu-constants-rust-impl.json",
+    "harnessPath": "scripts/run-webgpu-differential.sh",
+    "deliverables": [
+      "scripts/run-webgpu-differential.sh",
+      "tests/webgpu_differential.rs",
+      "scripts/differential/webgpu-standard-oracle.ts",
+      "scripts/differential/fixtures/webgpu-corpus.json",
+      "docs/specs/webgpu-standard-parity-slice.json"
+    ],
+    "caseCounts": { "constantCases": 3 },
+    "notes": "cycle50 rej-010: webgpu.constants bounded differential harness on-disk verify. rust_impl ONLY — proof.status missing until differential_green at bound SHAs."
+  },
+  "differentialGreenSlice": "webgpu.constants.bufferUsage|webgpu.constants.mapMode|webgpu.constants.textureUsage",
+  "differentialGreen": {
+    "boundedSlice": "webgpu.constants",
+    "status": "differential_green",
+    "reauditRef": "rej-010",
+    "verificationRef": "verification/webgpu-differential-green.json",
+    "harnessPath": "scripts/run-webgpu-differential.sh",
+    "notes": "pilot harness executed — differential_green at bound SHAs; promotion_hold until prod_audit_pass"
+  }
+}
