@@ -29,8 +29,11 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Install JS deps (napi CLI)
+        run: bun install --frozen-lockfile
+
       - name: Build native binding (host)
-        run: bun run build
+        run: bunx napi build --platform --release
 
       - name: Run buffer-mapping differential
         run: bash scripts/run-webgpu-differential.sh
