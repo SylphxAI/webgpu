@@ -1,5 +1,11 @@
 # @sylphx/webgpu
 
+## 1.0.5
+
+### Patch Changes
+
+- 6d20c0e: Publish SHA-bound npm + platform packages after buffer-mapping differential harness lands on main (TICK030 prod-fail-cohort remediation). Binds consumer artifact gitHead to tip for deployDigestAlignment.
+
 ## 1.0.4
 
 ### Patch Changes
