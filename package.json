@@ -1,6 +1,6 @@
 {
   "name": "@sylphx/webgpu",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "WebGPU for Node.js and Bun via Rust/wgpu, built for graphics, compute, and TypeScript numerical backends",
   "main": "webgpu.js",
   "types": "webgpu.d.ts",
