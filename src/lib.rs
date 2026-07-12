@@ -7,6 +7,8 @@ mod device;
 mod buffer;
 mod texture;
 mod constants;
+mod constants_pure;
+pub use constants_pure::{buffer_usage_flags, map_mode_flags, texture_usage_flags};
 mod bind_group;
 mod pipeline;
 mod sampler;
