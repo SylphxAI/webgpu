@@ -1,15 +1,16 @@
-# Repository Instructions
+# webgpu — local agent notes only
 
-Start with `PROJECT.md` and `.doctrine/project.json` before changing this
-repository. They define the project goal, lifecycle, boundaries, public
-surfaces, delivery model, and adoption gaps.
+Doctrine and fleet delivery law live in the **host always-on constitution**
+(`~/.grok/AGENTS.md` / Doctrine template). This file must **not** restate,
+weaken, or fork that law (including PR-vs-direct-trunk delivery).
 
-Use `SylphxAI/doctrine` for enterprise standards. Keep `@sylphx/webgpu`
-consumer-neutral: product-specific rendering policy, shader assets, benchmark
-narratives, and GPU workload assumptions belong in consuming applications or
-documented examples, not hidden package behavior.
+Local truth: `PROJECT.md`, `.doctrine/project.json` when present.
 
-For control-plane-only changes, validate with:
+## Boundary hazards
+
+- Never commit secrets, tokens, `.env` files, or credentials.
+
+## Local commands
 
 ```bash
 node --test test/project-control.node-test.mjs
@@ -22,15 +23,7 @@ python3 /Users/kyle/.doctrine/scripts/project-control-plane-audit.py --local . -
 git diff --check
 ```
 
-For native package changes, also run the relevant Rust, Bun, napi, test,
-platform build, docs, package readback, and consumer smoke checks.
+## Validation notes
 
-## GroundAtlas Boundary
-
-`project.manifest.json` is the vendor-neutral GroundAtlas control file;
-`.doctrine/project.json` is the Sylphx-specific adapter and generated
-`.groundatlas*` reports plus JSON/Markdown GroundAtlas reports are evidence
-and read models only. The CI native build matrix is gated by
-`needs: groundatlas`; release proof remains native artifacts, Release workflow,
-`release:readback`, package registry readback, and consumer smoke evidence for
-changed packages.
+- Prefer the **narrowest** affected check before full workspace runs.
+- Report layers honestly: local diff · trunk FF · deploy · prod proof (do not collapse).
