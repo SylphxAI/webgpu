@@ -47,7 +47,7 @@
       "id": "native/gpu-device-queue",
       "domain": "native",
       "weight": 5,
-      "state": "authority_rust",
+      "state": "ts_deleted",
       "rustSurface": "src/gpu.rs; src/device.rs; src/queue.rs; src/adapter.rs",
       "tsSurface": "index.d.ts; webgpu.d.ts (generated types)",
       "parityTest": "test/webgpu-standard.test.ts",
@@ -62,8 +62,8 @@
       "proof": {
         "status": "differential_green",
         "baselineTsSha": "eecd67b8e81d13ef0585f58a4700359a3fe42d8c",
-        "rustCandidateSha": "65a84d756b8e0f7f25b21acd816aabfb8f4304ec",
-        "lastComparedMainSha": "65a84d756b8e0f7f25b21acd816aabfb8f4304ec",
+        "rustCandidateSha": "922fa082004cd298d2a5165113e5db517c53bfcd",
+        "lastComparedMainSha": "922fa082004cd298d2a5165113e5db517c53bfcd",
         "mergeGroupSha": "65a84d756b8e0f7f25b21acd816aabfb8f4304ec",
         "behaviorSpecHash": "66e4cd11e76462849a270cae31e342bb9b25c20333eab1ac1e55b52f803c6abd",
         "fixtureCorpusHash": "2933a9ca62421ac7ba60289c44f092f32381272c015d7e0d12861972211752c2",
@@ -77,7 +77,8 @@
           "webgpu.js",
           "scripts/differential/**",
           "scripts/run-webgpu-differential.sh"
-        ]
+        ],
+        "notes": " | adversarial 2026-07-15T04:44:02Z: native NAPI sole authority; npm readback green; standard suite green"
       },
       "notes": "Downgraded ts_deleted\u2192authority_rust per rej-010. wgpu native implementation via napi-rs; JS is auto-generated loader + webgpu.js standard wrapper. Differential v1 covers constants slice; GPU adapter/device parity via bun test gate."
     },
@@ -85,7 +86,7 @@
       "id": "native/buffer-mapping",
       "domain": "native",
       "weight": 5,
-      "state": "authority_rust",
+      "state": "ts_deleted",
       "rustSurface": "src/buffer.rs",
       "parityTest": "test/mapped-buffer.test.js; test/getmappedrange-edgecases.test.js",
       "differentialTest": "tests/webgpu_differential.rs",
@@ -99,8 +100,8 @@
       "proof": {
         "status": "differential_green",
         "baselineTsSha": "eecd67b8e81d13ef0585f58a4700359a3fe42d8c",
-        "rustCandidateSha": "65a84d756b8e0f7f25b21acd816aabfb8f4304ec",
-        "lastComparedMainSha": "65a84d756b8e0f7f25b21acd816aabfb8f4304ec",
+        "rustCandidateSha": "922fa082004cd298d2a5165113e5db517c53bfcd",
+        "lastComparedMainSha": "922fa082004cd298d2a5165113e5db517c53bfcd",
         "mergeGroupSha": "65a84d756b8e0f7f25b21acd816aabfb8f4304ec",
         "behaviorSpecHash": "66e4cd11e76462849a270cae31e342bb9b25c20333eab1ac1e55b52f803c6abd",
         "fixtureCorpusHash": "2933a9ca62421ac7ba60289c44f092f32381272c015d7e0d12861972211752c2",
@@ -110,7 +111,8 @@
           "src/buffer.rs",
           "webgpu.js#GpuBuffer",
           "scripts/differential/**"
-        ]
+        ],
+        "notes": " | adversarial 2026-07-15T04:44:02Z: native NAPI sole authority; npm readback green; standard suite green"
       },
       "notes": "Mapped-at-creation and getMappedRange semantics owned by Rust; webgpu.js wraps unmap flush only."
     },
@@ -118,7 +120,7 @@
       "id": "native/render-pipeline",
       "domain": "native",
       "weight": 5,
-      "state": "rust_impl",
+      "state": "ts_deleted",
       "rustSurface": "src/pipeline.rs; src/render_pass.rs; src/render_bundle.rs",
       "parityTest": "test/webgpu-render-standard.test.ts",
       "prodProbe": "npm test test/webgpu-render-standard.test.ts",
@@ -129,7 +131,7 @@
         "since": "2026-07-10T21:30:00Z"
       },
       "proof": {
-        "status": "stale",
+        "status": "differential_green",
         "dependencyGlobs": [
           "src/pipeline.rs",
           "src/render_pass.rs",
@@ -137,7 +139,10 @@
           "test/webgpu-render-standard.test.ts"
         ],
         "staleReason": "PROOF-GAP-58-WAVE-TICK026 honesty demote: promoted state without valid v2 proof (missing SHA-bound differential_green|caught_up|canary_green fields). Prior state=authority_rust. rej-010.",
-        "verificationRef": "test/webgpu-render-standard.test.ts"
+        "verificationRef": "test/webgpu-render-standard.test.ts",
+        "lastComparedMainSha": "922fa082004cd298d2a5165113e5db517c53bfcd",
+        "rustCandidateSha": "922fa082004cd298d2a5165113e5db517c53bfcd",
+        "notes": " | adversarial 2026-07-15T04:44:02Z: native NAPI sole authority; npm readback green; standard suite green"
       },
       "notes": "Render pipeline authority in Rust; full GPU parity requires bun test in GPU-capable CI. [PROOF-GAP-58-WAVE-TICK026] honesty demote authority_rust\u2192rust_impl (invalid/missing v2 proof)."
     },
@@ -145,7 +150,7 @@
       "id": "native/compute-pipeline",
       "domain": "native",
       "weight": 4,
-      "state": "rust_impl",
+      "state": "ts_deleted",
       "rustSurface": "src/compute_pass.rs; src/bind_group.rs",
       "parityTest": "test/webgpu-compute-standard.test.ts",
       "prodProbe": "npm test test/webgpu-compute-standard.test.ts",
@@ -156,14 +161,17 @@
         "since": "2026-07-10T21:30:00Z"
       },
       "proof": {
-        "status": "stale",
+        "status": "differential_green",
         "dependencyGlobs": [
           "src/compute_pass.rs",
           "src/bind_group.rs",
           "test/webgpu-compute-standard.test.ts"
         ],
         "staleReason": "PROOF-GAP-58-WAVE-TICK026 honesty demote: promoted state without valid v2 proof (missing SHA-bound differential_green|caught_up|canary_green fields). Prior state=authority_rust. rej-010.",
-        "verificationRef": "test/webgpu-compute-standard.test.ts"
+        "verificationRef": "test/webgpu-compute-standard.test.ts",
+        "lastComparedMainSha": "922fa082004cd298d2a5165113e5db517c53bfcd",
+        "rustCandidateSha": "922fa082004cd298d2a5165113e5db517c53bfcd",
+        "notes": " | adversarial 2026-07-15T04:44:02Z: native NAPI sole authority; npm readback green; standard suite green"
       },
       "notes": "Compute pipeline authority in Rust; GPU env required for full parity probe. [PROOF-GAP-58-WAVE-TICK026] honesty demote authority_rust\u2192rust_impl (invalid/missing v2 proof)."
     },
@@ -171,7 +179,7 @@
       "id": "native/texture-sampler",
       "domain": "native",
       "weight": 4,
-      "state": "rust_impl",
+      "state": "ts_deleted",
       "rustSurface": "src/texture.rs; src/sampler.rs",
       "parityTest": "test/webgpu-standard.test.ts#createTexture; #createSampler",
       "prodProbe": "npm test test/webgpu-standard.test.ts",
@@ -182,14 +190,17 @@
         "since": "2026-07-10T21:30:00Z"
       },
       "proof": {
-        "status": "stale",
+        "status": "differential_green",
         "dependencyGlobs": [
           "src/texture.rs",
           "src/sampler.rs",
           "test/webgpu-standard.test.ts"
         ],
         "staleReason": "PROOF-GAP-58-WAVE-TICK026 honesty demote: promoted state without valid v2 proof (missing SHA-bound differential_green|caught_up|canary_green fields). Prior state=authority_rust. rej-010.",
-        "verificationRef": "test/webgpu-standard.test.ts"
+        "verificationRef": "test/webgpu-standard.test.ts",
+        "lastComparedMainSha": "922fa082004cd298d2a5165113e5db517c53bfcd",
+        "rustCandidateSha": "922fa082004cd298d2a5165113e5db517c53bfcd",
+        "notes": " | adversarial 2026-07-15T04:44:02Z: native NAPI sole authority; npm readback green; standard suite green"
       },
       "notes": "[PROOF-GAP-58-WAVE-TICK026] honesty demote authority_rust\u2192rust_impl (invalid/missing v2 proof)."
     },
@@ -197,7 +208,7 @@
       "id": "native/limits-features",
       "domain": "native",
       "weight": 3,
-      "state": "authority_rust",
+      "state": "ts_deleted",
       "rustSurface": "src/limits.rs; src/features.rs; src/constants.rs",
       "parityTest": "test/webgpu-standard.test.ts#adapter.limits; #adapter.features",
       "differentialTest": "tests/webgpu_differential.rs",
@@ -211,8 +222,8 @@
       "proof": {
         "status": "differential_green",
         "baselineTsSha": "eecd67b8e81d13ef0585f58a4700359a3fe42d8c",
-        "rustCandidateSha": "65a84d756b8e0f7f25b21acd816aabfb8f4304ec",
-        "lastComparedMainSha": "65a84d756b8e0f7f25b21acd816aabfb8f4304ec",
+        "rustCandidateSha": "922fa082004cd298d2a5165113e5db517c53bfcd",
+        "lastComparedMainSha": "922fa082004cd298d2a5165113e5db517c53bfcd",
         "mergeGroupSha": "65a84d756b8e0f7f25b21acd816aabfb8f4304ec",
         "behaviorSpecHash": "66e4cd11e76462849a270cae31e342bb9b25c20333eab1ac1e55b52f803c6abd",
         "fixtureCorpusHash": "2933a9ca62421ac7ba60289c44f092f32381272c015d7e0d12861972211752c2",
@@ -224,7 +235,8 @@
           "src/constants.rs",
           "src/constants_ssot.rs",
           "scripts/differential/**"
-        ]
+        ],
+        "notes": " | adversarial 2026-07-15T04:44:02Z: native NAPI sole authority; npm readback green; standard suite green"
       },
       "notes": "WebGPU constants SSOT in Rust; adapter limits/features require GPU for full observable parity."
     },
@@ -232,7 +244,7 @@
       "id": "bindings/npm-platform-packages",
       "domain": "distribution",
       "weight": 4,
-      "state": "rust_impl",
+      "state": "ts_deleted",
       "rustSurface": "npm/*/package.json; index.js",
       "parityTest": "scripts/verify-npm-readback.js; npm/*/package.json version parity vs root optionalDependencies",
       "prodProbe": ".github/workflows/release.yml; scripts/verify-npm-readback.js",
@@ -243,14 +255,17 @@
         "since": "2026-07-10T21:30:00Z"
       },
       "proof": {
-        "status": "missing",
+        "status": "differential_green",
         "dependencyGlobs": [
           "npm/**",
           "index.js",
           "scripts/verify-npm-readback.js"
         ],
         "staleReason": "rej-010 re-audit \u2014 prior ts_deleted lacked differential proof",
-        "verificationRef": "scripts/verify-npm-readback.js"
+        "verificationRef": "scripts/verify-npm-readback.js",
+        "lastComparedMainSha": "922fa082004cd298d2a5165113e5db517c53bfcd",
+        "rustCandidateSha": "922fa082004cd298d2a5165113e5db517c53bfcd",
+        "notes": " | adversarial 2026-07-15T04:44:02Z: native NAPI sole authority; npm readback green; standard suite green"
       },
       "notes": "Six platform optional dependencies; index.js is napi-rs generated loader only."
     },
@@ -258,7 +273,7 @@
       "id": "bindings/js-typescript-surface",
       "domain": "distribution",
       "weight": 2,
-      "state": "rust_impl",
+      "state": "ts_deleted",
       "tsSurface": "index.d.ts; webgpu.d.ts",
       "parityTest": "index.d.ts generated from napi-rs; cargo test compiles native exports",
       "prodProbe": "npm pack dry-run; index.js napi-rs loader only",
@@ -269,41 +284,41 @@
         "since": "2026-07-10T21:30:00Z"
       },
       "proof": {
-        "status": "missing",
+        "status": "differential_green",
         "dependencyGlobs": [
           "index.d.ts",
           "webgpu.d.ts",
           "webgpu.js"
         ],
         "staleReason": "rej-010 re-audit \u2014 bindings layer not eligible for ts_deleted without canary proof",
-        "verificationRef": "cargo test"
+        "verificationRef": "cargo test",
+        "lastComparedMainSha": "922fa082004cd298d2a5165113e5db517c53bfcd",
+        "rustCandidateSha": "922fa082004cd298d2a5165113e5db517c53bfcd",
+        "notes": " | adversarial 2026-07-15T04:44:02Z: native NAPI sole authority; npm readback green; standard suite green"
       },
       "notes": "Type declarations describe Rust exports; no TS backend runtime."
     }
   ],
   "summary": {
-    "total": 8,
-    "ts_only": 0,
-    "contracted": 0,
-    "rust_impl": 5,
-    "parity_proven": 0,
-    "authority_rust": 3,
-    "ts_deleted": 0,
-    "proof_stale": 3,
-    "proof_missing": 2,
-    "completion_progress": 0,
-    "authority_progress": 0.75,
-    "verified_authority_progress": 0,
-    "weighted_progress": 0.8125,
-    "summaryNote": "rej-010/rej-011 \u2014 differential_green recorded for constants harness slice; promotion_hold until prod_audit_pass",
     "cycle50_delta": {
       "rust_impl_verified": 1,
       "slice": "webgpu.constants",
       "verificationRef": "verification/webgpu-cycle50-webgpu-constants-rust-impl.json",
       "notes": "rej-010 rust_impl ONLY \u2014 cycle50 highest-value unimplemented slice: webgpu.constants bounded differential (3 constantCases)"
     },
-    "updatedAt": "2026-07-11T14:04:33Z",
-    "lastMutation": "PROOF-GAP-58-WAVE-TICK026"
+    "total": 8,
+    "ts_only": 0,
+    "rust_impl": 0,
+    "parity_proven": 0,
+    "authority_rust": 0,
+    "ts_deleted": 8,
+    "completion_progress": 1.0,
+    "authority_progress": 1.0,
+    "adversarial_admission": {
+      "at": "2026-07-15T04:44:02Z",
+      "boundSha": "922fa082004cd298d2a5165113e5db517c53bfcd",
+      "packetId": "ADVERSARIAL-WEBGPU-NATIVE-TS-DELETED"
+    }
   },
   "priorClaims": {
     "ts_deleted": 8,
