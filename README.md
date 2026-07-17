@@ -1,9 +1,8 @@
 # @sylphx/webgpu
 
 <p align="center">
-  <img src="docs/banner.png" alt="webgpu banner" width="100%" />
+  <img src="https://mark.sylphx.com/api/v1/banner?type=liquid&theme=tokyonight&text=webgpu&desc=WebGPU+for+Node.js+via+wgpu-rs+%28modern%2C+lightweight+alternative+to+Dawn%29&height=200&animation=rise&credit=0" alt="webgpu — Sylphx Mark banner" width="100%" />
 </p>
-
 
 [![npm version](https://img.shields.io/npm/v/@sylphx/webgpu.svg)](https://www.npmjs.com/package/@sylphx/webgpu)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
