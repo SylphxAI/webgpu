@@ -157,8 +157,8 @@
       "Test",
       "Release"
     ],
-    "deployPath": "Pull requests run a GroundAtlas project-control gate before the native build matrix plus the existing test workflow; main pushes run the release workflow, build platform artifacts, and delegate package release handling to the central reusable workflow. Direct local changeset publish is disabled; package publication must go through the Release workflow.",
-    "productionProof": "Control-plane proof is CI evidence including GroundAtlas package dogfood. Published package changes require CI, native artifact readback, package registry readback, release:readback, and consumer smoke evidence for affected exports and platform packages.",
+    "deployPath": "Pull requests run the existing CI and test workflows; main pushes run the release workflow, build platform artifacts, and delegate package release handling to the central reusable workflow. Direct local changeset publish is disabled; package publication must go through the Release workflow.",
+    "productionProof": "Control-plane proof is CI evidence. Published package changes require CI, native artifact readback, package registry readback, release:readback, and consumer smoke evidence for affected exports and platform packages.",
     "recoveryClass": "forward-fix-only",
     "packageRelease": {
       "publishesPackages": true,
