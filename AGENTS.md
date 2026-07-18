@@ -27,3 +27,8 @@ git diff --check
 
 - Prefer the **narrowest** affected check before full workspace runs.
 - Report layers honestly: local diff · trunk FF · deploy · prod proof (do not collapse).
+
+
+## GroundAtlas
+
+GroundAtlas package dogfood is **retired** (Control Plane ADR-0014). Do not re-add required groundatlas CI jobs.

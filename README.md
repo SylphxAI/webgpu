@@ -599,3 +599,8 @@ Package releases run through the shared Sylphx release workflow and are complete
 only after native build artifacts, the Release workflow, `release:readback`, npm
 registry readback for `@sylphx/webgpu` and platform optional dependencies, and
 consumer smoke evidence for changed native behavior.
+
+
+## GroundAtlas
+
+GroundAtlas package dogfood is **retired** (Control Plane ADR-0014). Do not re-add required groundatlas CI jobs.
