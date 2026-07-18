@@ -79,3 +79,8 @@ external agents. `.doctrine/project.json` remains the Sylphx Doctrine adapter an
 local governance catalog. Generated `.groundatlas*` reports and JSON/Markdown
 GroundAtlas reports are evidence and navigation read models only; they are not
 source of truth.
+
+
+## GroundAtlas
+
+GroundAtlas package dogfood is **retired** (Control Plane ADR-0014). Do not re-add required groundatlas CI jobs.
