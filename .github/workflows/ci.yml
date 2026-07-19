@@ -32,9 +32,6 @@ jobs:
     runs-on: ${{ matrix.settings.host }}
 
     steps:
-        run: |
-          exit 1
-
       - uses: actions/checkout@v4
 
       - name: Setup Bun
