@@ -114,11 +114,6 @@
         "repo": "napi-rs/napi-rs",
         "surface": "documented napi-rs build and binding behavior",
         "direction": "external"
-      },
-      {
-        "repo": "SylphxAI/groundatlas",
-        "surface": "Released GroundAtlas package/action for vendor-neutral project manifest validation and fleet dogfooding.",
-        "direction": "peer-public"
       }
     ],
     "forbiddenCouplings": [
@@ -176,9 +171,7 @@
       ],
       "publishProof": "Required after publish: release:readback must verify the main npm package and all platform optionalDependencies in the npm registry. Provenance/attestation evidence, native artifact evidence, changelog evidence, and consumer smoke proof are still required for affected exports and platform packages."
     },
-    "localContexts": [
-      "CI GroundAtlas job gates native build matrix through needs: groundatlas"
-    ]
+    "localContexts": []
   },
   "adoption": {
     "status": "migrating",
@@ -197,7 +190,7 @@
       },
       {
         "id": "compatibility-contract-needs-adr",
-        "description": "Supported platforms, native ABI compatibility, WebGPU compliance scope, and benchmark methodology still need a fuller generated compatibility report beyond ADR-001 and the GroundAtlas control gate.",
+        "description": "Supported platforms, native ABI compatibility, WebGPU compliance scope, and benchmark methodology still need a durable compatibility contract beyond ADR-001.",
         "owner": "SylphxAI/webgpu",
         "target": "Before full package adoption"
       }

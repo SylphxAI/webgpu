@@ -32,6 +32,3 @@ coverage/
 .sylphx-flow/
 .claude/
 .mcp.json
-
-# GroundAtlas generated evidence/navigation reports
-.groundatlas*/

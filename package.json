@@ -50,8 +50,7 @@
     "release": "echo \"Direct changeset publish is unsafe for native platform packages; use the Sylphx release workflow.\" && exit 1",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
-    "docs:preview": "vitepress preview docs",
-    "check:webgpu-differential": "bash scripts/run-webgpu-differential.sh"
+    "docs:preview": "vitepress preview docs"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.7",
