@@ -50,15 +50,13 @@ not internal Rust modules, unpublished native files, or private CI artifacts.
 - `examples/` and `test/` provide executable compatibility evidence.
 - `.github/workflows/ci.yml`, `test.yml`, and `release.yml` define build,
   test, and release paths.
-- `project.manifest.json` is the vendor-neutral project manifest for
-  GroundAtlas and external agents.
+- `project.manifest.json` is optional vendor-neutral project metadata.
 - `.doctrine/project.json` is the Sylphx Doctrine adapter and local governance
   catalog.
 
 ## Delivery
 
-Pull requests run a GroundAtlas project-control gate before the native build
-matrix, then legacy native build and test workflows across supported platforms.
+Pull requests run the native build and test workflows across supported platforms.
 Main pushes run the release workflow, including native artifact builds and
 central reusable release handling. Direct local publish is disabled; package
 publication must go through `.github/workflows/release.yml`.
@@ -71,16 +69,3 @@ consumer smoke proof because source revert alone does not unpublish packages.
 The `@sylphx/webgpu@1.0.4` release has npm registry readback evidence for the
 main package and all six platform optional dependencies from Release run
 `28689182140`. Future releases must preserve that readback boundary.
-
-## Project Control
-
-`project.manifest.json` is the vendor-neutral control file for GroundAtlas and
-external agents. `.doctrine/project.json` remains the Sylphx Doctrine adapter and
-local governance catalog. Generated `.groundatlas*` reports and JSON/Markdown
-GroundAtlas reports are evidence and navigation read models only; they are not
-source of truth.
-
-
-## GroundAtlas
-
-GroundAtlas package dogfood is **retired** (Control Plane ADR-0014). Do not re-add required groundatlas CI jobs.

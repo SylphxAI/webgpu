@@ -587,20 +587,9 @@ npm install @sylphx/webgpu
 
 **v1.0.4 - Production Ready**
 
-## Project Control and Release Proof
-
-This repository dogfoods [GroundAtlas](https://github.com/SylphxAI/groundatlas)
-through CI. The vendor-neutral project facts live in `project.manifest.json`;
-Sylphx-specific governance facts stay in `.doctrine/project.json`; generated
-`.groundatlas*` reports and JSON/Markdown GroundAtlas reports are
-evidence/navigation read models only, not source of truth.
+## Release Proof
 
 Package releases run through the shared Sylphx release workflow and are complete
 only after native build artifacts, the Release workflow, `release:readback`, npm
 registry readback for `@sylphx/webgpu` and platform optional dependencies, and
 consumer smoke evidence for changed native behavior.
-
-
-## GroundAtlas
-
-GroundAtlas package dogfood is **retired** (Control Plane ADR-0014). Do not re-add required groundatlas CI jobs.

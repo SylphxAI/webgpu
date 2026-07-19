@@ -13,12 +13,6 @@ Local truth: `PROJECT.md`, `.doctrine/project.json` when present.
 ## Local commands
 
 ```bash
-node --test test/project-control.node-test.mjs
-npm exec --yes --package groundatlas@0.1.3 -- ga update --out .groundatlas-pilot
-npm exec --yes --package groundatlas@0.1.3 -- ga audit --out .groundatlas-pilot
-npm exec --yes --package groundatlas@0.1.3 -- ga manifest --out .groundatlas-pilot --json
-npm exec --yes --package groundatlas@0.1.3 -- ga fleet . --out .groundatlas-pilot --require-atlas --strict --json
-npm exec --yes --package groundatlas@0.1.3 -- ga fleet . --out .groundatlas-pilot --require-atlas --strict
 python3 /Users/kyle/.doctrine/scripts/project-control-plane-audit.py --local . --fail-on-drift --json
 git diff --check
 ```
@@ -27,8 +21,3 @@ git diff --check
 
 - Prefer the **narrowest** affected check before full workspace runs.
 - Report layers honestly: local diff · trunk FF · deploy · prod proof (do not collapse).
-
-
-## GroundAtlas
-
-GroundAtlas package dogfood is **retired** (Control Plane ADR-0014). Do not re-add required groundatlas CI jobs.
