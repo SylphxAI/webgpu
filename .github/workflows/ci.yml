@@ -7,6 +7,7 @@ name: CI
 # - Concurrency cancels superseded PR/branch tip runs
 
 on:
+  merge_group:
   push:
     branches:
       - main
@@ -14,7 +15,7 @@ on:
 
 concurrency:
   # Fast Trunk: supersede obsolete runs for the same PR or branch tip.
-  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.event.merge_group.head_sha || github.ref }}
   cancel-in-progress: true
 
 jobs:
