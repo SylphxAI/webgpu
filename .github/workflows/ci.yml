@@ -24,6 +24,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # Windows MSVC residual: no Sylphx self-hosted Windows runners yet.
+        # Re-add win32 targets when windows runners exist (do not use GitHub-hosted).
         settings:
           - host: [self-hosted, sylphx, macos, standard]
             target: x86_64-apple-darwin
@@ -35,10 +37,6 @@ jobs:
           - host: sylphx-linux-standard
             target: aarch64-unknown-linux-gnu
             docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian-aarch64
-          - host: sylphx-linux-standard
-            target: x86_64-pc-windows-msvc
-          - host: sylphx-linux-standard
-            target: aarch64-pc-windows-msvc
 
     name: Build - ${{ matrix.settings.target }}
     runs-on: ${{ matrix.settings.host }}
