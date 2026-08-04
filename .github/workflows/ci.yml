@@ -1,9 +1,9 @@
 name: CI
 
-# Fast Trunk (Agent-native):
+# Agent-Native Queued Trunk:
 # - Aggregate source verdict: source-ci/pass
 # - CI = source correctness only; Platform builds production once
-# - Merge Queue off by default (no merge_group trigger)
+# - merge_group required for Merge Queue admission
 # - Concurrency cancels superseded PR/branch tip runs
 
 on:
@@ -14,7 +14,7 @@ on:
   pull_request:
 
 concurrency:
-  # Fast Trunk: supersede obsolete runs for the same PR or branch tip.
+  # Queued Trunk: supersede obsolete runs for the same PR or branch tip.
   group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.event.merge_group.head_sha || github.ref }}
   cancel-in-progress: true
 
@@ -24,10 +24,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # Windows MSVC residual: no Sylphx self-hosted Windows runners yet.
+        # Re-add win32 targets when windows runners exist (do not use GitHub-hosted).
         settings:
-          - host: sylphx-linux-standard
+          - host: [self-hosted, sylphx, macos, standard]
             target: x86_64-apple-darwin
-          - host: sylphx-linux-standard
+          - host: [self-hosted, sylphx, macos, standard]
             target: aarch64-apple-darwin
           - host: sylphx-linux-standard
             target: x86_64-unknown-linux-gnu
@@ -35,10 +37,6 @@ jobs:
           - host: sylphx-linux-standard
             target: aarch64-unknown-linux-gnu
             docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian-aarch64
-          - host: sylphx-linux-standard
-            target: x86_64-pc-windows-msvc
-          - host: sylphx-linux-standard
-            target: aarch64-pc-windows-msvc
 
     name: Build - ${{ matrix.settings.target }}
     runs-on: ${{ matrix.settings.host }}
