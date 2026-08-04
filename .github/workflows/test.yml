@@ -16,7 +16,7 @@ jobs:
       matrix:
         # Runtime WebGPU tests need a runner with a suitable GPU adapter.
         # Cross-platform native artifact compilation remains covered by ci.yml.
-        os: [macos-latest]
+        os: [self-hosted-macos]
 
     steps:
       - uses: actions/checkout@v4
