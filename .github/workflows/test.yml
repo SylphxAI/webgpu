@@ -10,15 +10,8 @@ on:
 
 jobs:
   test:
-    name: Test on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        # Runtime WebGPU tests need a runner with a suitable GPU adapter.
-        # Cross-platform native artifact compilation remains covered by ci.yml.
-        os:
-          - [self-hosted, sylphx, macos, standard]
-
+    name: Test on self-hosted macOS
+    runs-on: [self-hosted, sylphx, macos, standard]
     steps:
       - uses: actions/checkout@v4
 
