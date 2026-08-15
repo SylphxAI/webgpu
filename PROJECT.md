@@ -10,8 +10,8 @@ Bun consumers.
 
 - Lifecycle: `production`
 - Layer: `foundation`
-- Vendor-neutral project manifest: `project.manifest.json`
-- Doctrine adapter manifest: `.doctrine/project.json`
+- Vendor-neutral project manifest: ``
+- Doctrine adapter manifest: ``
 
 ## Goals
 
@@ -50,8 +50,8 @@ not internal Rust modules, unpublished native files, or private CI artifacts.
 - `examples/` and `test/` provide executable compatibility evidence.
 - `.github/workflows/ci.yml`, `test.yml`, and `release.yml` define build,
   test, and release paths.
-- `project.manifest.json` is optional vendor-neutral project metadata.
-- `.doctrine/project.json` is the Sylphx Doctrine adapter and local governance
+- `` is optional vendor-neutral project metadata.
+- `` is the Sylphx Doctrine adapter and local governance
   catalog.
 
 ## Delivery
