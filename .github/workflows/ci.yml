@@ -27,14 +27,14 @@ jobs:
         # Windows MSVC residual: no Sylphx self-hosted Windows runners yet.
         # Re-add win32 targets when windows runners exist (do not use GitHub-hosted).
         settings:
-          - host: [self-hosted, sylphx, macos, standard]
+          - host: macos-latest
             target: x86_64-apple-darwin
-          - host: [self-hosted, sylphx, macos, standard]
+          - host: macos-latest
             target: aarch64-apple-darwin
-          - host: sylphx-linux-standard
+          - host: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian
-          - host: sylphx-linux-standard
+          - host: ubuntu-latest
             target: aarch64-unknown-linux-gnu
             docker: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-debian-aarch64
 

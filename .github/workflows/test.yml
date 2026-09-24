@@ -11,7 +11,7 @@ on:
 jobs:
   test:
     name: Test on self-hosted macOS
-    runs-on: [self-hosted, sylphx, macos, standard]
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
 
